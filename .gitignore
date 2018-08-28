@@ -1,0 +1,10 @@
+*.pyc
+*.egg-info
+.tox
+.coverage*
+htmlcov
+docs/_*
+build
+dist
+example/db.sqlite3
+mock*

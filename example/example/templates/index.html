@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>django-gdpr-assist example</title>
+    <link rel="stylesheet" href="">
+    <script src=""></script>
+    <meta name="viewport" content="width=device-width" />
+</head>
+<body>
+
+<h1>Example site for django-gdpr-assist</h1>
+
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<form action="." method="POST">
+    {% csrf_token %}
+    <input type="submit" name="action" value="Populate data">
+</form>
+
+<h2>Person.objects.all()</h2>
+
+<p>In this example the <code>Person</code> object controls the other models.</p>
+
+<table>
+    <tr>
+        <th>PK</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Action</th>
+    </tr>
+
+    {% for person in people %}
+    <tr>
+        <td>{{ person.pk }}</td>
+        <td>{{ person.name }}</td>
+        <td>{{ person.email }}</td>
+        <td>
+            <form action="." method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="person_pk", value="{{ person.pk }}">
+                <input type="submit" name="action" value="Delete">
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+<h2>HealthRecord.objects.all()</h2>
+
+<p>The <code>HealthRecord</code> has <code>on_delete=CASCADE</code>, so deleted <code>Person</code> objects will delete the corresponding <code>HealthRecord</code> as normal.</p>
+
+<table>
+    <tr>
+        <th>Person PK</th>
+        <th>Person name</th>
+        <th>Notes</th>
+    </tr>
+
+    {% for record in health_records %}
+    <tr>
+        <td>{{ record.person.pk }}</td>
+        <td>{{ record.person.name }}</td>
+        <td>{{ record.notes }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+<h2>PersonProfile.objects.all()</h2>
+
+<p>The <code>PersonProfile</code> has <code>on_delete=ANONYMISE</code>, so deleted <code>Person</code> objects will anonymise the corresponding <code>PersonProfile</code> object.</p>
+
+<table>
+    <tr>
+        <th>Person PK</th>
+        <th>Person name</th>
+        <th>Age</th>
+        <th>Address</th>
+        <th>Has children</th>
+    </tr>
+
+    {% for profile in person_profiles %}
+    <tr>
+        <td>{{ profile.person.pk }}</td>
+        <td>{{ profile.person.name }}</td>
+        <td>{{ profile.age }}</td>
+        <td>{{ profile.address }}</td>
+        <td>{{ profile.has_children }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+<h2>MailingListLog.objects.all()</h2>
+
+<p>The <code>MailingListLog</code> does not have a direct database relationship with the <code>Person</code>, but there is a <code>pre_delete</code> hook to match any corresponding log items with a <code>Person</code> when it is deleted, and anonymise these records.</p>
+
+<table>
+    <tr>
+        <th>Email</th>
+        <th>Sent at</th>
+    </tr>
+
+    {% for log in mailing_list_logs %}
+    <tr>
+        <td>{{ log.email }}</td>
+        <td>{{ log.sent_at }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+</body>
+</html>

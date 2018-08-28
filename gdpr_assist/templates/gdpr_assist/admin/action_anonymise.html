@@ -1,0 +1,22 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+
+    <form action="." method="POST">
+        {% csrf_token %}
+
+        <p>Are you sure you want to anonymise the following {{ verbose_name }}:</p>
+        <ul>
+            {% for object in objects %}
+                <li>{{ object }}</li>
+            {% endfor %}
+        </ul>
+
+        <input type="hidden" name="ids" value="{{ ids|escape }}">
+
+        <input type="submit" name="_save" class="default" style="float: none" value="Anonymise">
+        <a href="{{ changelist_url }}" class="btn">Cancel</a>
+    </form>
+
+{% endblock %}

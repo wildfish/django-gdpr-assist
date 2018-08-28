@@ -1,0 +1,111 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}" />
+  {% if cl.formset %}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />
+  {% endif %}
+  {% if cl.formset or action_form %}
+    <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+  {% endif %}
+  {{ media.css }}
+
+  <style>
+    #changelist table td:first-child {
+        width: 1.5em;
+    }
+    #changelist table td.group-head {
+        padding: 1em 0 0 0;
+    }
+  </style>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ media.js }}
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; GDPR
+&rsaquo; Personal Data
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div id="changelist" class="module filtered">
+
+        <div id="toolbar">
+            <div class="search">
+                <form action="." method="POST">
+                    {% csrf_token %}
+                    {{ form.term }}
+                    <input type="submit" value="Search">
+                </form>
+            </div>
+        </div>
+
+        <form action="." method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="{{ form.term.name }}" value="{{ form.term.value }}">
+
+    {% for group in results %}
+        {% if forloop.first %}
+        <div class="actions">
+            <label>{{ form.action.label }}{{ form.action }} {{ form.action.errors }}</label>
+            <button type="submit" class="button" title="{% trans "Run the selected action" %}">{% trans "Go" %}</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col" class="action-checkbox-column">
+                       <div class="text"><span><input id="action-toggle" type="checkbox"></span></div>
+                       <div class="clear"></div>
+                    </th>
+
+                    <th scope="col">
+                        <div class="text">Select all</div>
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+        {% endif %}
+
+                <tr>
+                    <td colspan="2" class="group-head">
+                        <h2>{{ group.app_label.title }}: {{ group.model_name.title }}</h2>
+                    </td>
+                </tr>
+
+                {% for obj in group.results %}
+                <tr class="row1">
+                    <td class="action-checkbox">
+                        <input name="obj_pk" value="{{ group.content_type.pk }}-{{ obj.pk }}" class="action-select" type="checkbox">
+                    </td>
+                    <td class="field-username">
+                        {% url group.url_name obj.pk as obj_url %}
+                        {% if obj_url %}<a href="{{ obj_url }}">{% endif %}{{ obj }}{% if obj_url %}</a>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+        {% if forloop.last %}
+            </tbody>
+        </table>
+        {% endif %}
+    {% empty %}
+        <p>No results found.</p>
+    {% endfor %}
+
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+

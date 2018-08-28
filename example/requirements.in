@@ -1,0 +1,9 @@
+# Dev
+pip-tools
+flake8
+ipython
+ipdb
+
+# Example project
+Django<2.0
+django-autofixture
