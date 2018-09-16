@@ -17,7 +17,7 @@ There are no upgrade instructions yet.
 Changelog
 =========
 
-1.0.0, 2018-08-28
+1.0.0, 2018-09-16
 -----------------
 
 Initial public release
