@@ -65,18 +65,24 @@ class TestModelAdmin(AdminTestCase):
             follow=True,
         )
 
+        test_url = '{root_url}anonymise/?ids={pk1},{pk2}'.format(
+            root_url=model_root_url,
+            pk1=obj_1.pk,
+            pk2=obj_2.pk,
+        )
+
         if django.VERSION <= (1, 9):
             # Django 1.8 support - redirects include host
             self.assertEqual(len(response.redirect_chain), 1)
             self.assertTrue(response.redirect_chain[0][0].endswith(
-                model_root_url + 'anonymise/?ids=1,2'
+                test_url
             ))
             self.assertEqual(response.redirect_chain[0][1], 302)
         else:
             # Django 1.9+
             self.assertEqual(
                 response.redirect_chain,
-                [(model_root_url + 'anonymise/?ids=1,2', 302)],
+                [(test_url, 302)],
             )
         self.assertContains(
             response,
@@ -84,7 +90,10 @@ class TestModelAdmin(AdminTestCase):
         )
         self.assertContains(
             response,
-            '<input type="hidden" name="ids" value="1,2">',
+            '<input type="hidden" name="ids" value="{pk1},{pk2}">'.format(
+                pk1=obj_1.pk,
+                pk2=obj_2.pk,
+            ),
         )
 
     def test_anonymise_view_submit__redirect_to_anonymise_view(self):
