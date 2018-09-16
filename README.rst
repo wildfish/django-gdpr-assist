@@ -2,7 +2,7 @@
 django-GDPR-assist
 ==================
 
-Tools to help manage your customers' data in the age of GDPR
+Tools to help manage your users' data in the age of GDPR
 
 https://github.com/wildfish/django-gdpr-assist
 
@@ -12,6 +12,8 @@ https://github.com/wildfish/django-gdpr-assist
 .. image:: https://coveralls.io/repos/wildfish/django-gdpr-assist/badge.svg?branch=master&service=github
     :target: https://coveralls.io/github/wildfish/django-gdpr-assist?branch=master
 
+.. image:: https://readthedocs.org/projects/django-gdpr-assist/badge/?version=latest
+    :target: https://django-gdpr-assist.readthedocs.io/en/latest/?badge=latest
 
 Features
 ========
@@ -23,13 +25,17 @@ Features
 
 Version 1.0.0; supports Django 1.8 to 2.1, on Python 2.7 and 3.4+.
 
-See the documentation for details of how GDPR-assist works;
-in particular:
+See the `full documentation <https://django-gdpr-assist.readthedocs.io>`_ for details
+of how GDPR-assist works; in particular:
 
-* Installation - how to install
-* Usage - overview of how to use it with your project
-* Upgrading - what has changed from previous versions and how to upgrade
-* Contributing - how to contribute to the project
+* `Installation <https://django-gdpr-assist.readthedocs.io/en/latest/installation.html>`_
+  - how to install
+* `Usage <https://django-gdpr-assist.readthedocs.io/en/latest/usage.html>`_
+  - overview of how to use it with your project
+* `Upgrading <https://django-gdpr-assist.readthedocs.io/en/latest/upgrading.html>`_
+  - what has changed from previous versions and how to upgrade
+* `Contributing <https://django-gdpr-assist.readthedocs.io/en/latest/contributing.html>`_
+  - how to contribute to the project
 
 
 Quickstart
@@ -48,7 +54,7 @@ Then start adding privacy metadata to your models::
         class PrivacyMeta:
             fields = ['name', 'age']
             search_fields = ['name']
-            export_fields = ['name', 'age', 'comment']
+            export_fields = ['name', 'age', 'message']
 
 This will allow you to anonymise and export data in this model using the
 standard gdpr-assist admin tool. You can also configure anonymisation or
