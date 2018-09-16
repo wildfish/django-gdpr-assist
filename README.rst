@@ -6,7 +6,7 @@ Tools to help manage your users' data in the age of GDPR
 
 https://github.com/wildfish/django-gdpr-assist
 
-.. image:: https://travis-ci.org/wildfish/django-gdpr-assist?branch=master
+.. image:: https://travis-ci.org/wildfish/django-gdpr-assist.svg?branch=master
     :target: https://travis-ci.org/wildfish/django-gdpr-assist
 
 .. image:: https://coveralls.io/repos/wildfish/django-gdpr-assist/badge.svg?branch=master&service=github
