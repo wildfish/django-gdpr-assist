@@ -58,11 +58,16 @@ def runtests(args):
             SETTINGS['MIDDLEWARE_CLASSES'] = SETTINGS['MIDDLEWARE']
 
         # Build database settings
-        DATABASE = {
+        MEMORY_DATABASE = {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': ':memory:',
         }
-        DATABASE['TEST'] = DATABASE.copy()
+        DATABASE = MEMORY_DATABASE.copy()
+        GDPR_DATABASE = MEMORY_DATABASE.copy()
+
+        DATABASE['TEST'] = MEMORY_DATABASE.copy()
+        GDPR_DATABASE['TEST'] = MEMORY_DATABASE.copy()
+
         engine = os.environ.get('DATABASE_ENGINE')
         if engine:
             if engine == "pgsql":
@@ -72,13 +77,10 @@ def runtests(args):
                 DATABASE['ENGINE'] = 'django.db.backends.mysql'
 
                 # Make sure test DB is going to be UTF8
-                DATABASE_TEST = {
-                    'TEST': {
-                        'CHARSET': 'utf8',
-                        'COLLATION': 'utf8_general_ci',
-                    }
+                DATABASE['TEST'] = {
+                    'CHARSET': 'utf8',
+                    'COLLATION': 'utf8_general_ci',
                 }
-                DATABASE.update(DATABASE_TEST)
 
             else:
                 raise ValueError("Unknown database engine")
@@ -89,7 +91,7 @@ def runtests(args):
                     DATABASE[key] = os.environ['DATABASE_' + key]
         SETTINGS['DATABASES'] = {
             'default': DATABASE,
-            'gdpr_log': DATABASE,
+            'gdpr_log': GDPR_DATABASE,
         }
         SETTINGS['DATABASE_ROUTERS'] = ['gdpr_assist.routers.EventLogRouter']
 
