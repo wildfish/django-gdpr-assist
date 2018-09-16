@@ -40,6 +40,8 @@ matrix:
     env: TOXENV=py35-django1.11
   - python: '3.6'
     env: TOXENV=py35-django2.0
+  - python: '3.6'
+    env: TOXENV=py35-django2.1
 deploy:
   provider: pypi
   user: wildfish-deployer
