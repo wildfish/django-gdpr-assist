@@ -8,7 +8,7 @@ backcall==0.1.0           # via ipython
 click==6.7                # via pip-tools
 decorator==4.3.0          # via ipython, traitlets
 django-autofixture==0.12.1
-django==1.11.13
+django==1.11.16
 first==2.0.1              # via pip-tools
 flake8==3.5.0
 ipdb==0.11
