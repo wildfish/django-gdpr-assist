@@ -169,7 +169,7 @@ class PersonalDataAdmin(admin.ModelAdmin):
                     csv_writer.writerow(obj_export)
 
                 # Add CSV file to zip
-                privacy_meta =  getattr(
+                privacy_meta = getattr(
                     model,
                     app_settings.GDPR_PRIVACY_INSTANCE_NAME,
                 )

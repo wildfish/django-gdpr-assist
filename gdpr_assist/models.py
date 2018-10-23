@@ -99,7 +99,7 @@ class PrivacyManager(models.Manager):
         """
         # Check bases are as expected from _cast_class
         bases = self.__class__.__bases__
-        if len(bases) != 2:
+        if len(bases) != 2:  # pragma: no cover
             raise ValueError('Unexpected base classes for CastPrivacyManager')
 
         # Original is second - instatiate and deconstruct it
@@ -283,7 +283,7 @@ class EventLog(models.Model):
     model_name = models.CharField(max_length=255)
     target_pk = models.TextField()
 
-    objects = EventLogManager() #.db_manager(app_settings.GDPR_LOG_DATABASE_NAME)
+    objects = EventLogManager()
 
     def get_target(self):
         model = apps.get_model(self.app_label, self.model_name)

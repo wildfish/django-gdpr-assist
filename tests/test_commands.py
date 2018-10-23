@@ -91,7 +91,6 @@ class TestAnonymiseCommand(CommandTestCase):
         )
 
 
-
 class TestRerunCommand(CommandTestCase):
     def test_gdpr_delete__deletes_object(self):
         obj_1 = ModelWithPrivacyMeta.objects.create(

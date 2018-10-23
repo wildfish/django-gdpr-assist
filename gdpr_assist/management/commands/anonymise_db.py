@@ -1,8 +1,6 @@
 """
 Anonymise all personal data in the database
 """
-import six
-
 from django.core.management import BaseCommand
 
 from ... import app_settings
