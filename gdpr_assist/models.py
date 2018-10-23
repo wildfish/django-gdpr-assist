@@ -56,9 +56,11 @@ class PrivacyQuerySet(models.query.QuerySet):
 class PrivacyManager(models.Manager):
     """
     A manager with support for anonymising data
+
+    Don't subclass this directly - write your manager as normal, this will be
+    applied automatically.
     """
-    # The class of a privacy queryset. Here so a custom PrivacyManager can
-    # replace it with a custom PrivacyQuerySet subclass.
+    # The class of a privacy queryset.
     privacy_queryset = PrivacyQuerySet
 
     def _enhance_queryset(self, qs):
@@ -90,6 +92,22 @@ class PrivacyManager(models.Manager):
             str('CastPrivacy{}'.format(orig_cls.__name__)), (cls, orig_cls), {},
         )
         return manager
+
+    def deconstruct(self):
+        """
+        Deconstruct the original manager - it will be cast again next time.
+        """
+        # Check bases are as expected from _cast_class
+        bases = self.__class__.__bases__
+        if len(bases) != 2:
+            raise ValueError('Unexpected base classes for CastPrivacyManager')
+
+        # Original is second - instatiate and deconstruct it
+        orig_cls = bases[1]
+        orig_args = self._constructor_args[0]
+        orig_kwargs = self._constructor_args[1]
+        orig_manager = orig_cls(*orig_args, **orig_kwargs)
+        return orig_manager.deconstruct()
 
 
 class PrivacyMeta(object):
