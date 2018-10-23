@@ -3,7 +3,8 @@ import re
 import sys
 from setuptools import setup, find_packages
 
-from gdpr_assist import __version__ as VERSION
+
+VERSION = '1.0.1'
 
 
 def read(fname):
@@ -134,7 +135,6 @@ setup(
         'Framework :: Django :: 2.1',
     ],
     install_requires=[
-        'Django>=1.8',
         'django-yaa-settings',
     ],
     extras_require={
