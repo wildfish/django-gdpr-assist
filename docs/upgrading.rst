@@ -17,7 +17,7 @@ There are no upgrade instructions yet.
 Changelog
 =========
 
-1.0.1, 2018-10-
+1.0.1, 2018-10-23
 -----------------
 
 Bugfix:
