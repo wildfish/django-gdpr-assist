@@ -24,6 +24,7 @@ from .gdpr_assist_tests_app.models import (
     ModelWithPrivacyMeta,
     ModelWithoutPrivacyMeta,
 )
+from .base import MigrationTestCase
 
 
 class TestRegistry(TestCase):
@@ -210,3 +211,17 @@ class TestAppConfig(TestCase):
                 ),
                 str(cm.exception),
             )
+
+
+class TestRegisteredModelMigration(MigrationTestCase):
+    """
+    Check registered models can be migratated
+    """
+    def test_manager_deconstruct__deconstructs(self):
+        # This should serialise to the original manager
+        string, imports = self.serialize(ModelWithPrivacyMeta.objects)
+        self.assertEqual(string, 'django.db.models.manager.Manager()')
+
+        # And check it serialises back
+        obj = self.serialize_round_trip(ModelWithPrivacyMeta.objects)
+        self.assertIsInstance(obj, models.Manager)

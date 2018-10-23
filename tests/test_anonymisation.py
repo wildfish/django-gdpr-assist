@@ -9,7 +9,6 @@ import six
 import uuid
 
 from django.db import models
-from django.db.migrations.writer import MigrationWriter
 from django.test import TestCase
 
 from model_mommy import mommy
@@ -28,6 +27,7 @@ from .gdpr_assist_tests_app.models import (
     ForeignKeyModel,
     ForeignKeyToUnregisteredModel,
 )
+from .base import MigrationTestCase
 
 
 class TestAnonymisationBase(TestCase):
@@ -63,27 +63,12 @@ class TestOnDeleteAnonymise(TestCase):
         self.assertEqual('Cannot ANONYMISE(PROTECT)', str(cm.exception))
 
 
-class TestOnDeleteAnonymiseDeconstruct(TestCase):
+class TestOnDeleteAnonymiseDeconstruct(MigrationTestCase):
     """
-    Based on django.tests.migrations.test_+writer.WriterTests
+    Test on_delete=ANONYMISE can be deconstructed
     """
-    def safe_exec(self, string, value=None):
-        d = {}
-        try:
-            exec(string, globals(), d)
-        except Exception as e:
-            if value:
-                self.fail("Could not exec %r (from value %r): %s" % (string.strip(), value, e))
-            else:
-                self.fail("Could not exec %r: %s" % (string.strip(), e))
-        return d
-
-    def serialize_round_trip(self, value):
-        string, imports = MigrationWriter.serialize(value)
-        return self.safe_exec("%s\ntest_value_result = %s" % ("\n".join(imports), string), value)['test_value_result']
-
     def test_anonymise_deconstruct__deconstructs(self):
-        string, imports = MigrationWriter.serialize(
+        string, imports = self.serialize(
             gdpr_assist.ANONYMISE(models.SET_NULL),
         )
         self.assertEqual(
