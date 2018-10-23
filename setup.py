@@ -133,7 +133,10 @@ setup(
         'Framework :: Django :: 2.0',
         'Framework :: Django :: 2.1',
     ],
-    install_requires=['django-yaa-settings'],
+    install_requires=[
+        'Django>=1.8',
+        'django-yaa-settings',
+    ],
     extras_require={
         'dev': [
             # Testing
