@@ -4,11 +4,9 @@ Test admin tools
 from io import BytesIO, TextIOWrapper
 import csv
 import six
-import sys
 import zipfile
 
 import django
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.test import Client, TestCase
@@ -17,7 +15,6 @@ from model_mommy import mommy
 
 import gdpr_assist
 
-from .gdpr_assist_tests_app.admin import ModelWithPrivacyMetaAdmin
 from .gdpr_assist_tests_app.models import (
     ModelWithPrivacyMeta,
     FirstSearchModel,
@@ -48,7 +45,7 @@ class AdminTestCase(TestCase):
 
 class TestModelAdmin(AdminTestCase):
     def test_changelist__anonymise_action_present(self):
-        obj = mommy.make(ModelWithPrivacyMeta)
+        mommy.make(ModelWithPrivacyMeta)
         response = self.client.get(model_root_url)
         self.assertContains(response, '<option value="anonymise">')
 
@@ -126,13 +123,13 @@ class TestModelAdmin(AdminTestCase):
 
         self.assertContains(
             response,
-             '<li class="success">2 Model With Privacy Metas anonymised</li>',
+            '<li class="success">2 Model With Privacy Metas anonymised</li>',
         )
 
 
 class TestAdminTool(AdminTestCase):
     def test_tool_is_available(self):
-        obj = mommy.make(FirstSearchModel)
+        mommy.make(FirstSearchModel)
         response = self.client.get(tool_root_url)
         self.assertContains(response, '<h1>Personal Data</h1>')
 
@@ -141,7 +138,7 @@ class TestAdminTool(AdminTestCase):
             FirstSearchModel,
             email='one@example.com',
         )
-        obj_2 = mommy.make(
+        mommy.make(
             FirstSearchModel,
             email='two@example.com',
         )
