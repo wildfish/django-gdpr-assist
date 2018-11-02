@@ -54,7 +54,7 @@ For example::
     class UserPrivacyMeta:
         fields = ['first_name', 'last_name', 'email']
 
-    gdpr_assist.register_model(User, UserPrivacyMeta)
+    gdpr_assist.register(User, UserPrivacyMeta)
 
 If you omit the privacy meta class, one will be generated for you with the
 default attributes.
