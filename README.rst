@@ -23,7 +23,7 @@ Features
   backups
 * Anonymise all models to sanitise working copies of a production database
 
-Supports Django 1.8 to 2.1, on Python 2.7 and 3.4+.
+Supports Django 1.8 to 2.1, on 3.4+.
 
 See the `full documentation <https://django-gdpr-assist.readthedocs.io>`_ for details
 of how GDPR-assist works; in particular:
