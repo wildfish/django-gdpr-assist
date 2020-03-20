@@ -17,6 +17,18 @@ There are no upgrade instructions yet.
 Changelog
 =========
 
+1.1.0, 2020-03-20
+-----------------
+
+Python 2.7:
+
+* This version removes python 2.7 support.
+
+Bugfix:
+
+* Allow managers Manager with delete to have custom additional parameters.
+
+
 1.0.1, 2018-10-23
 -----------------
 
