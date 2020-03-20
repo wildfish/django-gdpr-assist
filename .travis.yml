@@ -16,14 +16,10 @@ script:
 - tox
 env:
   matrix:
-  - TOXENV=py27-django1.8
   - TOXENV=py34-django1.8
-  - TOXENV=py27-django1.11
   - TOXENV=py34-django1.11
   - TOXENV=py35-django1.11
   - TOXENV=py36-django1.11 DEPLOY=true
-  - TOXENV=py27-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
-  - TOXENV=py27-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
   - TOXENV=py36-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
   - TOXENV=py36-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
   - TOXENV=py34-django2.0
