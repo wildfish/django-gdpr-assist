@@ -3,7 +3,6 @@ Test admin tools
 """
 from io import BytesIO, TextIOWrapper
 import csv
-import six
 import zipfile
 
 import django
@@ -282,10 +281,7 @@ class TestAdminTool(AdminTestCase):
             ],
         )
 
-        if six.PY2:
-            mode = 'rU'
-        else:
-            mode = 'r'
+        mode = 'r'
 
         with zip_file.open(
             'gdpr_assist_tests_app-FirstSearchModel.csv',

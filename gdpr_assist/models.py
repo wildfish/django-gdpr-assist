@@ -26,14 +26,14 @@ class PrivacyQuerySet(models.query.QuerySet):
         for obj in self:
             obj.anonymise()
 
-    def delete(self):
+    def delete(self, *args, **kwargs):
         """
         Anonymise privacy-registered objects related to this queryset
         """
         for obj in self:
             anonymise_related_objects(obj)
 
-        super(PrivacyQuerySet, self).delete()
+        super(PrivacyQuerySet, self).delete(*args, **kwargs)
 
     @classmethod
     def _cast_class(cls, queryset):
