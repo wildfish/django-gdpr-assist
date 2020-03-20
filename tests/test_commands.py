@@ -3,6 +3,7 @@ Test management commands
 """
 import six
 import sys
+from io import StringIO
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -20,10 +21,6 @@ class Capturing(list):
     def __enter__(self):
         self._stdout = sys.stdout
         self._stderr = sys.stderr
-        if six.PY2:
-            from StringIO import StringIO
-        else:
-            from io import StringIO
         sys.stdout = sys.stderr = self._stringio = StringIO()
         return self
 

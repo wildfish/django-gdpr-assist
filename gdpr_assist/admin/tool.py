@@ -143,10 +143,7 @@ class PersonalDataAdmin(admin.ModelAdmin):
         with zipfile.ZipFile(zipfile_buffer, 'w') as zipped_file:
             for model, queryset in querysets.items():
                 # Generate CSV data in memory
-                if six.PY2:
-                    csv_buffer = BytesIO()
-                else:
-                    csv_buffer = StringIO()
+                csv_buffer = StringIO()
                 csv_writer = None
                 for obj in queryset:
                     privacy_meta = getattr(
