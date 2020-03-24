@@ -3,6 +3,7 @@ Model-related functionality
 """
 from copy import copy
 import six
+import sys
 
 from django.apps import apps
 from django.db import models
@@ -47,9 +48,13 @@ class PrivacyQuerySet(models.query.QuerySet):
         """
         # Make a subclass of PrivacyQuerySet and the original class
         orig_cls = queryset.__class__
-        queryset.__class__ = type(
-            str('CastPrivacy{}'.format(orig_cls.__name__)), (cls, orig_cls), {},
-        )
+        new_cls_name = str('CastPrivacy{}'.format(orig_cls.__name__))
+        queryset.__class__ = type(new_cls_name, (cls, orig_cls), {},)
+
+        # add to current module
+        current_module = sys.modules[__name__]
+        setattr(current_module, new_cls_name, queryset.__class__)
+
         return queryset
 
 
@@ -85,29 +90,19 @@ class PrivacyManager(models.Manager):
         The new class is given the same name as the old class, but with the prefix
         'CastPrivacy' to indicate the type of the object has changed, eg a normal
         Manager will become CastPrivacyManager
+
+        Also add the new manager to the module, so it can be imported for migrations.
         """
         # Make a subclass of PrivacyQuerySet and the original class
         orig_cls = manager.__class__
-        manager.__class__ = type(
-            str('CastPrivacy{}'.format(orig_cls.__name__)), (cls, orig_cls), {},
-        )
+        new_cls_name = str('CastPrivacy{}'.format(orig_cls.__name__))
+        manager.__class__ = type(new_cls_name, (cls, orig_cls), {},)
+
+        # add to current module
+        current_module = sys.modules[__name__]
+        setattr(current_module, new_cls_name, manager.__class__)
+
         return manager
-
-    def deconstruct(self):
-        """
-        Deconstruct the original manager - it will be cast again next time.
-        """
-        # Check bases are as expected from _cast_class
-        bases = self.__class__.__bases__
-        if len(bases) != 2:  # pragma: no cover
-            raise ValueError('Unexpected base classes for CastPrivacyManager')
-
-        # Original is second - instatiate and deconstruct it
-        orig_cls = bases[1]
-        orig_args = self._constructor_args[0]
-        orig_kwargs = self._constructor_args[1]
-        orig_manager = orig_cls(*orig_args, **orig_kwargs)
-        return orig_manager.deconstruct()
 
 
 class PrivacyMeta(object):
