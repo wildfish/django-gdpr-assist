@@ -281,7 +281,6 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
             self.get_model(models.FileField),
             _fill_optional=True,
             _create_files=True,
-            anonymised=False,
         )
         self.assertFalse(obj.anonymised)
         orig = obj.field
@@ -313,7 +312,6 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
             self.get_model(models.ImageField),
             _fill_optional=True,
             _create_files=True,
-            anonymised=False,
         )
         self.assertFalse(obj.anonymised)
         orig = obj.field
@@ -402,7 +400,6 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
             self.get_model(models.ForeignKey),
             _fill_optional=True,
             _create_files=True,
-            anonymised=False,
         )
         self.assertFalse(obj.anonymised)
 
@@ -418,7 +415,6 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
             self.get_model(models.OneToOneField),
             _fill_optional=True,
             _create_files=True,
-            anonymised=False,
         )
         self.assertFalse(obj.anonymised)
 
@@ -630,7 +626,6 @@ class TestNullableAnonymisation(TestAnonymisationBase):
             self.get_model(models.FileField),
             _fill_optional=True,
             _create_files=True,
-            anonymised=False,
         )
         self.assertFalse(obj.anonymised)
         orig = obj.field
@@ -657,7 +652,6 @@ class TestNullableAnonymisation(TestAnonymisationBase):
             self.get_model(models.ImageField),
             _fill_optional=True,
             _create_files=True,
-            anonymised=False,
         )
         self.assertFalse(obj.anonymised)
         orig = obj.field
@@ -717,7 +711,6 @@ class TestNullableAnonymisation(TestAnonymisationBase):
             self.get_model(models.ForeignKey),
             _fill_optional=True,
             _create_files=True,
-            anonymised=False,
         )
         self.assertFalse(obj.anonymised)
 
@@ -730,7 +723,6 @@ class TestNullableAnonymisation(TestAnonymisationBase):
             self.get_model(models.OneToOneField),
             _fill_optional=True,
             _create_files=True,
-            anonymised=False,
         )
         self.assertFalse(obj.anonymised)
 
@@ -761,7 +753,6 @@ class TestForbiddenAnonymisation(TestAnonymisationBase):
             self.get_model(models.ManyToManyField),
             _fill_optional=True,
             _create_files=True,
-            anonymised=False,
         )
         self.assertFalse(obj.anonymised)
 

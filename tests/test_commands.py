@@ -66,7 +66,6 @@ class TestAnonymiseCommand(CommandTestCase):
         obj_1 = ModelWithPrivacyMeta.objects.create(
             chars='test',
             email='test@example.com',
-            anonymised=False,
         )
         self.assertFalse(obj_1.anonymised)
         self.run_command('anonymise_db', interactive=False)
@@ -106,7 +105,6 @@ class TestRerunCommand(CommandTestCase):
         obj_1 = ModelWithPrivacyMeta.objects.create(
             chars='test',
             email='test@example.com',
-            anonymised=False,
         )
 
         # Log anonymise without anonymising to simulate deletion and db restore

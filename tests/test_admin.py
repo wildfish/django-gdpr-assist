@@ -93,8 +93,8 @@ class TestModelAdmin(AdminTestCase):
         )
 
     def test_anonymise_view_submit__redirect_to_anonymise_view(self):
-        obj_1 = mommy.make(ModelWithPrivacyMeta, anonymised=False)
-        obj_2 = mommy.make(ModelWithPrivacyMeta, anonymised=False)
+        obj_1 = mommy.make(ModelWithPrivacyMeta)
+        obj_2 = mommy.make(ModelWithPrivacyMeta)
 
         response = self.client.post(
             model_root_url + 'anonymise/',
@@ -159,12 +159,10 @@ class TestAdminTool(AdminTestCase):
         obj_1 = mommy.make(
             FirstSearchModel,
             email='one@example.com',
-            anonymised=False,
         )
         obj_2 = mommy.make(
             FirstSearchModel,
             email='two@example.com',
-            anonymised=False,
         )
         content_type = ContentType.objects.get_for_model(FirstSearchModel).pk
 
@@ -225,22 +223,18 @@ class TestAdminTool(AdminTestCase):
         obj_1 = FirstSearchModel.objects.create(
             chars='test1',
             email='one@example.com',
-            anonymised=False,
         )
         obj_2 = FirstSearchModel.objects.create(
             chars='test2',
             email='two@example.com',
-            anonymised=False,
         )
         obj_3 = SecondSearchModel.objects.create(
             chars='test3',
             email='one@example.com',
-            anonymised=False,
         )
         obj_4 = SecondSearchModel.objects.create(
             chars='test4',
             email='one@example.com',
-            anonymised=False,
         )
         content_type_1 = ContentType.objects.get_for_model(FirstSearchModel).pk
         content_type_2 = ContentType.objects.get_for_model(SecondSearchModel).pk

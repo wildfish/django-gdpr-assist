@@ -5,6 +5,8 @@ from copy import copy
 import six
 
 from django.apps import apps
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.functional import cached_property
@@ -136,7 +138,7 @@ class PrivacyMeta(object):
         if self.fields is None:
             return [
                 field.name for field in self.model._meta.get_fields()
-                if field.name not in [self.model._meta.pk.name, 'anonymised']
+                if field.name not in [self.model._meta.pk.name, 'anonymised_relation']
             ]
         return self.fields
 
@@ -160,7 +162,7 @@ class PrivacyMeta(object):
             field.name for field in self.model._meta.get_fields()
             if (
                 (not field.auto_created or field.concrete) and
-                field.name not in [self.model._meta.pk.name, 'anonymised']
+                field.name not in [self.model._meta.pk.name, 'anonymised_relation']
             )
         ]
         if self.export_exclude:
@@ -182,11 +184,17 @@ class PrivacyMeta(object):
         )
 
 
+class PrivacyAnonymised(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    anonymised_object = GenericForeignKey('content_type', 'object_id')
+
+
 class PrivacyModel(models.Model):
     """
-    An abstract model base class with support for anonymising data
+        An abstract model base class with support for anonymising data.
     """
-    anonymised = models.BooleanField(default=False)
+    anonymised_relation = GenericRelation(PrivacyAnonymised)
 
     def anonymise(self, force=False):
         # Only anonymise things once to avoid a circular anonymisation
@@ -196,7 +204,8 @@ class PrivacyModel(models.Model):
         pre_anonymise.send(sender=self.__class__, instance=self)
 
         # Anonymise data
-        self.anonymised = True
+        PrivacyAnonymised.objects.create(anonymised_object=self)
+
         privacy_meta = getattr(self, app_settings.GDPR_PRIVACY_INSTANCE_NAME)
         for field_name in privacy_meta._anonymise_fields:
             anonymiser = getattr(
@@ -210,6 +219,13 @@ class PrivacyModel(models.Model):
 
         self.save()
         post_anonymise.send(sender=self.__class__, instance=self)
+
+    @property
+    def anonymised(self):
+        """
+        Property is to maintain backwards compatibility prior to generic relation change.
+        """
+        return self.anonymised_relation.exists()
 
     def _log_gdpr_delete(self):
         EventLog.objects.log_delete(self)
@@ -233,8 +249,8 @@ class PrivacyModel(models.Model):
         # Tell the field it's now a member of the new model
         # We need to do this manually, as the base class has been added after
         # the class thinks it has been prepared
-        field = copy(PrivacyModel._meta.get_field('anonymised'))
-        field.contribute_to_class(model, 'anonymised')
+        field = copy(PrivacyModel._meta.get_field('anonymised_relation'))
+        field.contribute_to_class(model, 'anonymised_relation')
 
         # Make the managers subclass PrivacyManager
         # TODO: loop through all managers
