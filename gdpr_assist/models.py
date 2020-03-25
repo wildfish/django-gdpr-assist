@@ -21,12 +21,16 @@ class PrivacyQuerySet(models.query.QuerySet):
     """
     A QuerySet with support anonymising data
     """
-    def anonymise(self):
+    def anonymise(self, for_bulk=True):
         """
         Anonymise all privacy-registered objects in this queryset
         """
+        bulk_objects = []
         for obj in self:
-            obj.anonymise()
+            bulk_objects.append(obj.anonymise(for_bulk=for_bulk))
+
+        if bulk_objects and for_bulk:
+            PrivacyAnonymised.objects.bulk_create(bulk_objects)
 
     def delete(self, *args, **kwargs):
         """
@@ -76,6 +80,7 @@ class PrivacyManager(models.Manager):
         Get the original queryset and then enhance it
         """
         qs = super(PrivacyManager, self).get_queryset(*args, **kwargs)
+        qs = qs.prefetch_related('anonymised_relation')
         return self._enhance_queryset(qs)
 
     @classmethod
@@ -196,7 +201,7 @@ class PrivacyModel(models.Model):
     """
     anonymised_relation = GenericRelation(PrivacyAnonymised)
 
-    def anonymise(self, force=False):
+    def anonymise(self, force=False, for_bulk=False):
         # Only anonymise things once to avoid a circular anonymisation
         if self.is_anonymised() and not force:
             return
@@ -204,7 +209,10 @@ class PrivacyModel(models.Model):
         pre_anonymise.send(sender=self.__class__, instance=self)
 
         # Anonymise data
-        PrivacyAnonymised.objects.create(anonymised_object=self)
+        privacy_obj = PrivacyAnonymised(anonymised_object=self)
+        if not for_bulk:
+            privacy_obj.save()
+
         privacy_meta = getattr(self, app_settings.GDPR_PRIVACY_INSTANCE_NAME)
         for field_name in privacy_meta._anonymise_fields:
             anonymiser = getattr(
@@ -218,6 +226,8 @@ class PrivacyModel(models.Model):
 
         self.save()
         post_anonymise.send(sender=self.__class__, instance=self)
+
+        return privacy_obj
 
     def is_anonymised(self):
         return self.anonymised_relation.exists()

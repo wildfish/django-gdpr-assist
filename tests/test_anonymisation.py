@@ -14,6 +14,7 @@ from django.test import TestCase
 from model_mommy import mommy
 
 import gdpr_assist
+from gdpr_assist.models import PrivacyAnonymised
 
 from .gdpr_assist_tests_app.models import (
     not_nullable_models,
@@ -940,3 +941,57 @@ class TestQuerySet(TestCase):
         for i in range(5):
             objs[i].refresh_from_db()
             self.assertEqual(objs[i].chars, '')
+
+    def test_queryset_anonymise__bulk_pinned_query(self):
+        objs = []
+        for i in range(5):
+            objs.append(
+                PrivateTargetModel.objects.create(chars='Test {}'.format(i))
+            )
+
+        qs = PrivateTargetModel.objects.filter(
+            pk__in=[obj.pk for obj in objs],
+        )
+
+        # Expects 8
+        # 1 query to get objects from PrivateTargetModel
+        # 1 query to ger objects to prefetch to PrivacyAnonymised
+        # 5 (1 per object to anonymise it)
+        # 1 bulk insert of the PrivacyAnonymised objects
+        with self.assertNumQueries(8):
+            qs.anonymise()
+
+        self.assertEqual(PrivacyAnonymised.objects.count(), 5)
+
+        # Check it's still anonymised.
+        for i in range(5):
+            objs[i].refresh_from_db()
+            self.assertEqual(objs[i].chars, '')
+
+    def test_queryset_anonymise__no_bulk(self):
+        objs = []
+        for i in range(5):
+            objs.append(
+                PrivateTargetModel.objects.create(chars='Test {}'.format(i))
+            )
+
+        qs = PrivateTargetModel.objects.filter(
+            pk__in=[obj.pk for obj in objs],
+        )
+
+        # Expects 12
+        # 1 query to get objects from PrivateTargetModel
+        # 1 query to ger objects to prefetch to PrivacyAnonymised
+        # 5 (1 per object to anonymise it)
+        # 5 (1 per object to create PrivacyAnonymised)
+        # 1 bulk insert of the PrivacyAnonymised objects
+        with self.assertNumQueries(12):
+            qs.anonymise(for_bulk=False)
+
+        self.assertEqual(PrivacyAnonymised.objects.count(), 5)
+
+        # Check it's still anonymised.
+        for i in range(5):
+            objs[i].refresh_from_db()
+            self.assertEqual(objs[i].chars, '')
+
