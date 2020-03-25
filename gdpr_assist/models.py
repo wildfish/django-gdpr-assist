@@ -198,14 +198,13 @@ class PrivacyModel(models.Model):
 
     def anonymise(self, force=False):
         # Only anonymise things once to avoid a circular anonymisation
-        if self.anonymised and not force:
+        if self.is_anonymised() and not force:
             return
 
         pre_anonymise.send(sender=self.__class__, instance=self)
 
         # Anonymise data
         PrivacyAnonymised.objects.create(anonymised_object=self)
-
         privacy_meta = getattr(self, app_settings.GDPR_PRIVACY_INSTANCE_NAME)
         for field_name in privacy_meta._anonymise_fields:
             anonymiser = getattr(
@@ -220,11 +219,7 @@ class PrivacyModel(models.Model):
         self.save()
         post_anonymise.send(sender=self.__class__, instance=self)
 
-    @property
-    def anonymised(self):
-        """
-        Property is to maintain backwards compatibility prior to generic relation change.
-        """
+    def is_anonymised(self):
         return self.anonymised_relation.exists()
 
     def _log_gdpr_delete(self):

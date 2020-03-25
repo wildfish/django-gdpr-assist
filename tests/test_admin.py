@@ -105,8 +105,8 @@ class TestModelAdmin(AdminTestCase):
         )
         obj_1.refresh_from_db()
         obj_2.refresh_from_db()
-        self.assertTrue(obj_1.anonymised)
-        self.assertTrue(obj_2.anonymised)
+        self.assertTrue(obj_1.is_anonymised())
+        self.assertTrue(obj_2.is_anonymised())
 
         if django.VERSION <= (1, 9):
             # Django 1.8 support - redirects include host
@@ -178,8 +178,8 @@ class TestAdminTool(AdminTestCase):
 
         obj_1.refresh_from_db()
         obj_2.refresh_from_db()
-        self.assertTrue(obj_1.anonymised)
-        self.assertFalse(obj_2.anonymised)
+        self.assertTrue(obj_1.is_anonymised())
+        self.assertFalse(obj_2.is_anonymised())
 
         if django.VERSION <= (1, 9):
             # Django 1.8 support - redirects include host
@@ -258,10 +258,10 @@ class TestAdminTool(AdminTestCase):
         obj_2.refresh_from_db()
         obj_3.refresh_from_db()
         obj_4.refresh_from_db()
-        self.assertFalse(obj_1.anonymised)
-        self.assertFalse(obj_2.anonymised)
-        self.assertFalse(obj_3.anonymised)
-        self.assertFalse(obj_4.anonymised)
+        self.assertFalse(obj_1.is_anonymised())
+        self.assertFalse(obj_2.is_anonymised())
+        self.assertFalse(obj_3.is_anonymised())
+        self.assertFalse(obj_4.is_anonymised())
 
         # Download zip into memory and check it's as expected
         zip_data = BytesIO()
