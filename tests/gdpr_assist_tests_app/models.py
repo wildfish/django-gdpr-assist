@@ -27,6 +27,18 @@ class ModelWithoutPrivacyMeta(models.Model):
     email = models.EmailField()
 
 
+class ModelWithPrivacyMetaCanNotAnonymise(models.Model):
+    """
+    Test PrivacyMeta definition on the model
+    """
+    chars = models.CharField(max_length=255)
+    email = models.EmailField()
+
+    class PrivacyMeta:
+        fields = ['chars', 'email']
+        can_anonymise = False
+
+
 class TargetModel(models.Model):
     """
     Target model for tests, no private data
@@ -49,6 +61,16 @@ class PrivateUnregisteredTargetModel(models.Model):
     Target model which isn't registered with gdpr-assist
     """
     chars = models.CharField(max_length=255, blank=True)
+
+
+class PrivateTargetCanNotAnonymiseModel(models.Model):
+    """
+    Target model which is register but anonymisation is disabled.
+    """
+    chars = models.CharField(max_length=255, blank=True)
+
+    class PrivacyMeta:
+        fields = ['chars']
 
 
 def field_model_factory(model_name, field_instance, field_name='field'):
@@ -247,6 +269,21 @@ class ForeignKeyToUnregisteredModel(models.Model):
         fields = ['chars']
 
 
+class ForeignKeyToCanNotAnonymisedModel(models.Model):
+    chars = models.CharField(max_length=255, blank=True)
+    target = models.ForeignKey(
+        'PrivateTargetCanNotAnonymiseModel',
+        null=True,
+        blank=True,
+        on_delete=gdpr_assist.ANONYMISE(models.SET_NULL),
+        related_name='foreignkey',
+    )
+
+    class PrivacyMeta:
+        fields = ['chars']
+        can_anonymise = False
+
+
 class FirstSearchModel(models.Model):
     """
     Test PrivacyMeta search and export
@@ -284,3 +321,17 @@ class ThirdSearchModel(models.Model):
         fields = ['chars', 'email']
         search_fields = ['email']
         export_exclude = ['email']
+
+
+class ForthSearchModel(models.Model):
+    """
+    Test PrivacyMeta search and export
+    """
+    chars = models.CharField(max_length=255)
+    email = models.EmailField()
+
+    class PrivacyMeta:
+        fields = ['chars', 'email']
+        search_fields = ['email']
+        export_exclude = ['email']
+        can_anonymise = False

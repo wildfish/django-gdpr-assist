@@ -26,7 +26,8 @@ from .gdpr_assist_tests_app.models import (
     OneToOneFieldModel,
     ForeignKeyModel,
     ForeignKeyToUnregisteredModel,
-)
+    ForeignKeyToCanNotAnonymisedModel,
+    PrivateTargetCanNotAnonymiseModel)
 from .base import MigrationTestCase
 
 
@@ -838,6 +839,18 @@ class TestRelation(TestCase):
         obj.refresh_from_db()
         self.assertTrue(obj.anonymised)
         self.assertEqual(obj.chars, '')
+
+    def test_foreignkey_delete__can_anonymise_disabled__anonymise_not_propagated(self):
+        target = PrivateTargetCanNotAnonymiseModel.objects.create(chars='Test')
+        obj = ForeignKeyToCanNotAnonymisedModel.objects.create(
+            chars='Test',
+            target=target,
+        )
+
+        target.delete()
+        obj.refresh_from_db()
+        self.assertFalse(obj.anonymised)
+        self.assertEqual(obj.chars, 'Test')
 
 
 class TestOtherAnonymisation(TestAnonymisationBase):

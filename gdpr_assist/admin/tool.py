@@ -123,6 +123,10 @@ class PersonalDataAdmin(admin.ModelAdmin):
                         model._meta.app_label,
                         model._meta.model_name,
                     ),
+                    'url_change_name': 'admin:{}_{}_changelist'.format(
+                        model._meta.app_label,
+                        model._meta.model_name,
+                    ),
                 }
                 for model, model_results in raw_results
                 if model_results
@@ -183,15 +187,37 @@ class PersonalDataAdmin(admin.ModelAdmin):
         """
         Handle an anonymisation request
         """
-        count = 0
-        for model, queryset in querysets.items():
-            queryset.anonymise()
-            count += queryset.count()
+        result = {
+            'annonymised': [],
+            'not_annonymised': []
+        }
 
-        messages.success(
-            request,
-            "{} records anonymised".format(count),
-        )
+        for model, queryset in querysets.items():
+            name = '{} {}'.format(model._meta.app_label, model._meta.model_name)
+            if model.check_can_anonymise():
+                queryset.anonymise()
+                result['annonymised'].append((name, queryset.count()))
+            else:
+                result['not_annonymised'].append((name, queryset.count()))
+
+        if result['annonymised']:
+            messages.info(
+                request,
+                "{} records anonymised for {}".format(
+                    sum([count for _, count in result['annonymised']]),
+                    ', '.join([name for name, _ in result['annonymised']])
+                ),
+            )
+
+        if result['not_annonymised']:
+            messages.success(
+                request,
+                "{} records skipped and not anonymised for {}".format(
+                    sum([count for _, count in result['not_annonymised']]),
+                    ', '.join([name for name, _ in result['not_annonymised']])
+                ),
+            )
+
         return HttpResponseRedirect(
             reverse(
                 'admin:{}_{}_changelist'.format(

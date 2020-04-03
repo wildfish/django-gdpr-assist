@@ -23,8 +23,9 @@ class PrivacyQuerySet(models.query.QuerySet):
         """
         Anonymise all privacy-registered objects in this queryset
         """
-        for obj in self:
-            obj.anonymise()
+        if getattr(self.model, app_settings.GDPR_PRIVACY_INSTANCE_NAME).can_anonymise:
+            for obj in self:
+                obj.anonymise()
 
     def delete(self, *args, **kwargs):
         """
@@ -111,6 +112,7 @@ class PrivacyManager(models.Manager):
 
 
 class PrivacyMeta(object):
+    can_anonymise = True
     fields = None
     search_fields = None
     export_fields = None
@@ -188,7 +190,21 @@ class PrivacyModel(models.Model):
     """
     anonymised = models.BooleanField(default=False)
 
+    @classmethod
+    def get_privacy_meta(cls):
+        return getattr(cls, app_settings.GDPR_PRIVACY_INSTANCE_NAME)
+
+    @classmethod
+    def check_can_anonymise(cls):
+        return cls.get_privacy_meta().can_anonymise
+
     def anonymise(self, force=False):
+        privacy_meta = self.get_privacy_meta()
+
+        # Only anonymise if allowed
+        if not self.check_can_anonymise():
+            return
+
         # Only anonymise things once to avoid a circular anonymisation
         if self.anonymised and not force:
             return
@@ -197,7 +213,6 @@ class PrivacyModel(models.Model):
 
         # Anonymise data
         self.anonymised = True
-        privacy_meta = getattr(self, app_settings.GDPR_PRIVACY_INSTANCE_NAME)
         for field_name in privacy_meta._anonymise_fields:
             anonymiser = getattr(
                 privacy_meta,

@@ -66,6 +66,9 @@ class Registry(object):
                 full_results.append((model, results))
         return full_results
 
+    def models_allowed_to_anonymise(self):
+        return [model for model, meta in self.models.items() if meta.can_anonymise]
+
     def _watch_on_delete(self, model):
         self.watching_on_delete.append(model)
 

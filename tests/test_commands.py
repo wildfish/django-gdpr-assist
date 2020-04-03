@@ -8,8 +8,7 @@ from io import StringIO
 from django.core.management import call_command
 from django.test import TestCase
 
-from .gdpr_assist_tests_app.models import ModelWithPrivacyMeta
-
+from .gdpr_assist_tests_app.models import ModelWithPrivacyMeta, ModelWithPrivacyMetaCanNotAnonymise
 
 # If True, display output from call_command - use for debugging tests
 DISPLAY_CALL_COMMAND = False
@@ -86,6 +85,18 @@ class TestAnonymiseCommand(CommandTestCase):
             'Database anonymisation is not enabled',
             str(cm.exception),
         )
+
+    def test_anonymise_command__does_notanonymises_data(self):
+        obj_1 = ModelWithPrivacyMetaCanNotAnonymise.objects.create(
+            chars='test',
+            email='test@example.com',
+            anonymised=False,
+        )
+        self.assertFalse(obj_1.anonymised)
+        self.run_command('anonymise_db', interactive=False)
+
+        obj_1.refresh_from_db()
+        self.assertFalse(obj_1.anonymised)
 
 
 class TestRerunCommand(CommandTestCase):
