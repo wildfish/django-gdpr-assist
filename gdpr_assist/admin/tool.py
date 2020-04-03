@@ -201,7 +201,7 @@ class PersonalDataAdmin(admin.ModelAdmin):
                 result['not_annonymised'].append((name, queryset.count()))
 
         if result['annonymised']:
-            messages.info(
+            messages.success(
                 request,
                 "{} records anonymised for {}".format(
                     sum([count for _, count in result['annonymised']]),
@@ -210,7 +210,7 @@ class PersonalDataAdmin(admin.ModelAdmin):
             )
 
         if result['not_annonymised']:
-            messages.success(
+            messages.info(
                 request,
                 "{} records skipped and not anonymised for {}".format(
                     sum([count for _, count in result['not_annonymised']]),

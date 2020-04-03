@@ -82,7 +82,7 @@
                         <h2>{{ group.app_label.title }}: {{ group.model_name.title }}</h2>
                     </td>
                 </tr>
-                [{{ group.model.check_can_anonymise  }}]
+
                 {% if not group.model.check_can_anonymise %}
                     <tr>
                         <td colspan="2">
