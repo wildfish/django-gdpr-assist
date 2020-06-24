@@ -1,6 +1,7 @@
 """
 Model-related functionality
 """
+from __future__ import unicode_literals
 from copy import copy
 import six
 
@@ -19,12 +20,12 @@ class PrivacyQuerySet(models.query.QuerySet):
     """
     A QuerySet with support anonymising data
     """
-    def anonymise(self):
+    def anonymise(self, user=None):
         """
         Anonymise all privacy-registered objects in this queryset
         """
         for obj in self:
-            obj.anonymise()
+            obj.anonymise(force=True, user=user)
 
     def delete(self):
         """
@@ -128,7 +129,7 @@ class PrivacyMeta(object):
         if item.startswith('anonymise_'):
             field_name = item[len('anonymise_'):]
             if field_name in self._anonymise_fields:
-                return lambda instance: anonymise_field(instance, field_name)
+                return lambda instance, user: anonymise_field(instance, field_name, user)
         raise AttributeError('Attribute {} not defined'.format(item))
 
     @cached_property
@@ -188,7 +189,7 @@ class PrivacyModel(models.Model):
     """
     anonymised = models.BooleanField(default=False)
 
-    def anonymise(self, force=False):
+    def anonymise(self, force=False, user=None):
         # Only anonymise things once to avoid a circular anonymisation
         if self.anonymised and not force:
             return
@@ -203,19 +204,19 @@ class PrivacyModel(models.Model):
                 privacy_meta,
                 'anonymise_{}'.format(field_name),
             )
-            anonymiser(self)
+            anonymiser(self, user)
 
         # Log the obj class and pk
-        self._log_gdpr_anonymise()
+        self._log_gdpr_anonymise(user)
 
         self.save()
         post_anonymise.send(sender=self.__class__, instance=self)
 
-    def _log_gdpr_delete(self):
-        EventLog.objects.log_delete(self)
+    def _log_gdpr_delete(self, user=None):
+        EventLog.objects.log_delete(self, user)
 
-    def _log_gdpr_anonymise(self):
-        EventLog.objects.log_anonymise(self)
+    def _log_gdpr_anonymise(self, user=None):
+        EventLog.objects.log_anonymise(self, user)
 
     @classmethod
     def _cast_class(cls, model, privacy_meta):
@@ -251,19 +252,20 @@ class PrivacyModel(models.Model):
 
 
 class EventLogManager(models.Manager):
-    def log_delete(self, instance):
-        self.log(self.model.EVENT_DELETE, instance)
+    def log_delete(self, instance, user=None):
+        self.log(self.model.EVENT_DELETE, instance, user)
 
-    def log_anonymise(self, instance):
-        self.log(self.model.EVENT_ANONYMISE, instance)
+    def log_anonymise(self, instance, user=None):
+        self.log(self.model.EVENT_ANONYMISE, instance, user)
 
-    def log(self, event, instance):
+    def log(self, event, instance, user=None):
         cls = instance.__class__
         self.create(
             event=event,
             app_label=cls._meta.app_label,
             model_name=cls._meta.object_name,
             target_pk=instance.pk,
+            acting_user=user
         )
 
 
@@ -281,6 +283,8 @@ class EventLog(models.Model):
     )
     app_label = models.CharField(max_length=255)
     model_name = models.CharField(max_length=255)
+    log_time = models.DateTimeField(auto_now_add=True)
+    acting_user = models.CharField(max_length=255, default="")
     target_pk = models.TextField()
 
     objects = EventLogManager()
@@ -292,3 +296,13 @@ class EventLog(models.Model):
         except model.DoesNotExist:
             return None
         return obj
+
+    def summary(self):
+        return "%s: %s performed on %s %s (app %s) [%s]" % (
+            self.log_time,
+            self.event,
+            self.model_name,
+            self.target_pk,
+            self.app_label,
+            self.acting_user,
+        )

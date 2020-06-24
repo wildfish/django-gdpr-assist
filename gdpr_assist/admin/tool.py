@@ -1,6 +1,7 @@
 """
 Personal data admin tool
 """
+from __future__ import unicode_literals
 from collections import defaultdict
 import csv
 from io import StringIO, BytesIO

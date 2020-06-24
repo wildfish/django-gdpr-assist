@@ -74,7 +74,7 @@ class ModelAdmin(admin.ModelAdmin):
         )
 
         if request.POST:
-            objects.anonymise()
+            objects.anonymise(user=request.user)
             count = objects.count()
             messages.success(
                 request,
