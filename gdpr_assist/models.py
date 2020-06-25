@@ -14,6 +14,7 @@ from . import app_settings
 from . import handlers  # noqa
 from .anonymiser import anonymise_field, anonymise_related_objects
 from .signals import pre_anonymise, post_anonymise
+from django.utils import timezone
 
 
 class PrivacyQuerySet(models.query.QuerySet):
@@ -188,6 +189,8 @@ class PrivacyModel(models.Model):
     An abstract model base class with support for anonymising data
     """
     anonymised = models.BooleanField(default=False)
+    retention_policy = models.ForeignKey(to="RetentionPolicyItem", on_delete=models.SET_NULL,
+                                         related_name="target_entity", null=True, blank=True)
 
     def anonymise(self, force=False, user=None):
         # Only anonymise things once to avoid a circular anonymisation
@@ -306,3 +309,16 @@ class EventLog(models.Model):
             self.app_label,
             self.acting_user,
         )
+
+
+class RetentionPolicyItem(models.Model):
+    start_date = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
+    # target_entity is a reverse FK from PrivacyModel
+
+    def should_be_anonymized(self):
+        if self.policy_length is None:
+            return False
+
+        return timezone.now() > start_date + policy_length
