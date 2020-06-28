@@ -184,12 +184,25 @@ class PrivacyMeta(object):
         )
 
 
+class RetentionPolicyItem(models.Model):
+    start_date = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
+    # target_entity is a reverse FK from PrivacyModel
+
+    def should_be_anonymized(self):
+        if self.policy_length is None:
+            return False
+
+        return timezone.now() > start_date + policy_length
+
+
 class PrivacyModel(models.Model):
     """
     An abstract model base class with support for anonymising data
     """
     anonymised = models.BooleanField(default=False)
-    retention_policy = models.ForeignKey(to="RetentionPolicyItem", on_delete=models.SET_NULL,
+    retention_policy = models.ForeignKey(to=RetentionPolicyItem, on_delete=models.SET_NULL,
                                          related_name="target_entity", null=True, blank=True)
 
     def anonymise(self, force=False, user=None):
@@ -313,14 +326,3 @@ class EventLog(models.Model):
         )
 
 
-class RetentionPolicyItem(models.Model):
-    start_date = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
-    # target_entity is a reverse FK from PrivacyModel
-
-    def should_be_anonymized(self):
-        if self.policy_length is None:
-            return False
-
-        return timezone.now() > start_date + policy_length
