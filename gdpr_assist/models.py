@@ -232,14 +232,16 @@ class PrivacyModel(models.Model):
             model   The model to turn into a PrivacyModel subclass.
         """
         # Make the model subclass PrivacyModel
-        model.__bases__ = (PrivacyModel,) + model.__bases__
+        try:
+            model.__bases__ = (PrivacyModel,) + model.__bases__
 
-        # Tell the field it's now a member of the new model
-        # We need to do this manually, as the base class has been added after
-        # the class thinks it has been prepared
-        field = copy(PrivacyModel._meta.get_field('anonymised'))
-        field.contribute_to_class(model, 'anonymised')
-
+            # Tell the field it's now a member of the new model
+            # We need to do this manually, as the base class has been added after
+            # the class thinks it has been prepared
+            field = copy(PrivacyModel._meta.get_field('anonymised'))
+            field.contribute_to_class(model, 'anonymised')
+        except TypeError:
+            pass  # already an explicit subclass
         # Make the managers subclass PrivacyManager
         # TODO: loop through all managers
         if (
