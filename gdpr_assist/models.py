@@ -15,6 +15,7 @@ from . import handlers  # noqa
 from .anonymiser import anonymise_field, anonymise_related_objects
 from .signals import pre_anonymise, post_anonymise
 from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
 
 
 class PrivacyQuerySet(models.query.QuerySet):
@@ -184,7 +185,9 @@ class PrivacyMeta(object):
         )
 
 
+@python_2_unicode_compatible
 class RetentionPolicyItem(models.Model):
+    description = models.CharField(default="", max_length=255)
     start_date = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
@@ -194,7 +197,13 @@ class RetentionPolicyItem(models.Model):
         if self.policy_length is None:
             return False
 
-        return timezone.now() > start_date + policy_length
+        return timezone.now() > self.start_date + self.policy_length
+
+    def __str__(self):
+        if self.description:
+            return self.description
+
+        return "Retention Policy %s starts %s days after %s" % (self.id, self.start_date, self.policy_length)
 
 
 class PrivacyModel(models.Model):
