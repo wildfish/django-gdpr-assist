@@ -37,8 +37,20 @@ class ModelWithPrivacyMetaCanNotAnonymise(models.Model):
     class PrivacyMeta:
         fields = ['chars', 'email']
         can_anonymise = False
+        
+        
+class ModelWithPrivacyMetaAlreadyMigrated(models.Model):
+    """
+    Test PrivacyMeta definition on the model, it already has a field anonymised.
+    """
+    chars = models.CharField(max_length=255)
+    email = models.EmailField()
+    anonymised = models.BooleanField(default=True)
 
-
+    class PrivacyMeta:
+        fields = ['chars', 'email']
+        
+        
 class TargetModel(models.Model):
     """
     Target model for tests, no private data

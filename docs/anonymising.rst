@@ -97,9 +97,9 @@ object.
 
 Example::
 
-    from gdpr_assist.signals import pre_anonymise
+    from gdpr_assist.signals import post_anonymise
 
-    @receiver(pre_anonymise, sender=MyModel)
+    @receiver(post_anonymise, sender=MyModel)
     def anonymise_related(sender, instance):
         instance.my_related_obj.anonymise()
 

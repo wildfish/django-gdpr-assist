@@ -19,7 +19,6 @@ class Migration(migrations.Migration):
             name='HealthRecord',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('anonymised', models.BooleanField(default=False)),
                 ('notes', models.CharField(max_length=255)),
             ],
         ),
@@ -27,7 +26,6 @@ class Migration(migrations.Migration):
             name='MailingListLog',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('anonymised', models.BooleanField(default=False)),
                 ('email', models.EmailField(max_length=254)),
                 ('sent_at', models.DateTimeField()),
             ],
@@ -36,7 +34,6 @@ class Migration(migrations.Migration):
             name='Person',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('anonymised', models.BooleanField(default=False)),
                 ('name', models.CharField(max_length=255)),
                 ('email', models.EmailField(max_length=254)),
             ],
@@ -48,7 +45,6 @@ class Migration(migrations.Migration):
             name='PersonProfile',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('anonymised', models.BooleanField(default=False)),
                 ('age', models.IntegerField(blank=True, null=True)),
                 ('address', models.TextField(blank=True)),
                 ('has_children', models.NullBooleanField()),

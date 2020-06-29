@@ -87,7 +87,7 @@ class TestModelDefinitionWithPrivacyMeta(TestCase):
             email='test@example.com',
         )
         obj.refresh_from_db()
-        self.assertFalse(obj.anonymised)
+        self.assertFalse(obj.is_anonymised())
 
     def test_manager_cast_to_privacy_manager(self):
         self.assertIsInstance(ModelWithPrivacyMeta.objects, PrivacyManager)
@@ -224,9 +224,9 @@ class TestRegisteredModelMigration(MigrationTestCase):
     Check registered models can be migratated
     """
     def test_manager_deconstruct__deconstructs(self):
-        # This should serialise to the original manager
+        # This should serialise to the privacy manager
         string, imports = self.serialize(ModelWithPrivacyMeta.objects)
-        self.assertEqual(string, 'django.db.models.manager.Manager()')
+        self.assertEqual(string, 'gdpr_assist.models.CastPrivacyManager()')
 
         # And check it serialises back
         obj = self.serialize_round_trip(ModelWithPrivacyMeta.objects)

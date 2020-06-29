@@ -93,8 +93,8 @@ class TestModelAdmin(AdminTestCase):
         )
 
     def test_anonymise_view_submit__redirect_to_anonymise_view(self):
-        obj_1 = mommy.make(ModelWithPrivacyMeta, anonymised=False)
-        obj_2 = mommy.make(ModelWithPrivacyMeta, anonymised=False)
+        obj_1 = mommy.make(ModelWithPrivacyMeta)
+        obj_2 = mommy.make(ModelWithPrivacyMeta)
 
         response = self.client.post(
             model_root_url + 'anonymise/',
@@ -105,8 +105,8 @@ class TestModelAdmin(AdminTestCase):
         )
         obj_1.refresh_from_db()
         obj_2.refresh_from_db()
-        self.assertTrue(obj_1.anonymised)
-        self.assertTrue(obj_2.anonymised)
+        self.assertTrue(obj_1.is_anonymised())
+        self.assertTrue(obj_2.is_anonymised())
 
         if django.VERSION <= (1, 9):
             # Django 1.8 support - redirects include host
@@ -193,12 +193,10 @@ class TestAdminTool(AdminTestCase):
         obj_1 = mommy.make(
             FirstSearchModel,
             email='one@example.com',
-            anonymised=False,
         )
         obj_2 = mommy.make(
             FirstSearchModel,
             email='two@example.com',
-            anonymised=False,
         )
         content_type = ContentType.objects.get_for_model(FirstSearchModel).pk
 
@@ -214,8 +212,8 @@ class TestAdminTool(AdminTestCase):
 
         obj_1.refresh_from_db()
         obj_2.refresh_from_db()
-        self.assertTrue(obj_1.anonymised)
-        self.assertFalse(obj_2.anonymised)
+        self.assertTrue(obj_1.is_anonymised())
+        self.assertFalse(obj_2.is_anonymised())
 
         if django.VERSION <= (1, 9):
             # Django 1.8 support - redirects include host
@@ -334,22 +332,18 @@ class TestAdminTool(AdminTestCase):
         obj_1 = FirstSearchModel.objects.create(
             chars='test1',
             email='one@example.com',
-            anonymised=False,
         )
         obj_2 = FirstSearchModel.objects.create(
             chars='test2',
             email='two@example.com',
-            anonymised=False,
         )
         obj_3 = SecondSearchModel.objects.create(
             chars='test3',
             email='one@example.com',
-            anonymised=False,
         )
         obj_4 = SecondSearchModel.objects.create(
             chars='test4',
             email='one@example.com',
-            anonymised=False,
         )
         content_type_1 = ContentType.objects.get_for_model(FirstSearchModel).pk
         content_type_2 = ContentType.objects.get_for_model(SecondSearchModel).pk
@@ -373,10 +367,10 @@ class TestAdminTool(AdminTestCase):
         obj_2.refresh_from_db()
         obj_3.refresh_from_db()
         obj_4.refresh_from_db()
-        self.assertFalse(obj_1.anonymised)
-        self.assertFalse(obj_2.anonymised)
-        self.assertFalse(obj_3.anonymised)
-        self.assertFalse(obj_4.anonymised)
+        self.assertFalse(obj_1.is_anonymised())
+        self.assertFalse(obj_2.is_anonymised())
+        self.assertFalse(obj_3.is_anonymised())
+        self.assertFalse(obj_4.is_anonymised())
 
         # Download zip into memory and check it's as expected
         zip_data = BytesIO()

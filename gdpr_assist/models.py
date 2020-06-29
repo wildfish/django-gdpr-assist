@@ -3,8 +3,11 @@ Model-related functionality
 """
 from copy import copy
 import six
+import sys
 
 from django.apps import apps
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.functional import cached_property
@@ -19,13 +22,20 @@ class PrivacyQuerySet(models.query.QuerySet):
     """
     A QuerySet with support anonymising data
     """
-    def anonymise(self):
+    def anonymise(self, for_bulk=True):
         """
         Anonymise all privacy-registered objects in this queryset
         """
-        if getattr(self.model, app_settings.GDPR_PRIVACY_INSTANCE_NAME).can_anonymise:
-            for obj in self:
-                obj.anonymise()
+        # Abandon if we can't anonymise
+        if not getattr(self.model, app_settings.GDPR_PRIVACY_INSTANCE_NAME).can_anonymise:
+            return
+
+        bulk_objects = []
+        for obj in self:
+            bulk_objects.append(obj.anonymise(for_bulk=for_bulk))
+
+        if bulk_objects and for_bulk:
+            PrivacyAnonymised.objects.bulk_create(bulk_objects)
 
     def delete(self, *args, **kwargs):
         """
@@ -48,9 +58,13 @@ class PrivacyQuerySet(models.query.QuerySet):
         """
         # Make a subclass of PrivacyQuerySet and the original class
         orig_cls = queryset.__class__
-        queryset.__class__ = type(
-            str('CastPrivacy{}'.format(orig_cls.__name__)), (cls, orig_cls), {},
-        )
+        new_cls_name = str('CastPrivacy{}'.format(orig_cls.__name__))
+        queryset.__class__ = type(new_cls_name, (cls, orig_cls), {},)
+
+        # add to current module
+        current_module = sys.modules[__name__]
+        setattr(current_module, new_cls_name, queryset.__class__)
+
         return queryset
 
 
@@ -75,6 +89,7 @@ class PrivacyManager(models.Manager):
         Get the original queryset and then enhance it
         """
         qs = super(PrivacyManager, self).get_queryset(*args, **kwargs)
+        qs = qs.prefetch_related('anonymised_relation')
         return self._enhance_queryset(qs)
 
     @classmethod
@@ -86,29 +101,19 @@ class PrivacyManager(models.Manager):
         The new class is given the same name as the old class, but with the prefix
         'CastPrivacy' to indicate the type of the object has changed, eg a normal
         Manager will become CastPrivacyManager
+
+        Also add the new manager to the module, so it can be imported for migrations.
         """
         # Make a subclass of PrivacyQuerySet and the original class
         orig_cls = manager.__class__
-        manager.__class__ = type(
-            str('CastPrivacy{}'.format(orig_cls.__name__)), (cls, orig_cls), {},
-        )
+        new_cls_name = str('CastPrivacy{}'.format(orig_cls.__name__))
+        manager.__class__ = type(new_cls_name, (cls, orig_cls), {},)
+
+        # add to current module
+        current_module = sys.modules[__name__]
+        setattr(current_module, new_cls_name, manager.__class__)
+
         return manager
-
-    def deconstruct(self):
-        """
-        Deconstruct the original manager - it will be cast again next time.
-        """
-        # Check bases are as expected from _cast_class
-        bases = self.__class__.__bases__
-        if len(bases) != 2:  # pragma: no cover
-            raise ValueError('Unexpected base classes for CastPrivacyManager')
-
-        # Original is second - instatiate and deconstruct it
-        orig_cls = bases[1]
-        orig_args = self._constructor_args[0]
-        orig_kwargs = self._constructor_args[1]
-        orig_manager = orig_cls(*orig_args, **orig_kwargs)
-        return orig_manager.deconstruct()
 
 
 class PrivacyMeta(object):
@@ -138,7 +143,7 @@ class PrivacyMeta(object):
         if self.fields is None:
             return [
                 field.name for field in self.model._meta.get_fields()
-                if field.name not in [self.model._meta.pk.name, 'anonymised']
+                if field.name not in [self.model._meta.pk.name, 'anonymised_relation']
             ]
         return self.fields
 
@@ -162,7 +167,7 @@ class PrivacyMeta(object):
             field.name for field in self.model._meta.get_fields()
             if (
                 (not field.auto_created or field.concrete) and
-                field.name not in [self.model._meta.pk.name, 'anonymised']
+                field.name not in [self.model._meta.pk.name, 'anonymised_relation']
             )
         ]
         if self.export_exclude:
@@ -184,11 +189,17 @@ class PrivacyMeta(object):
         )
 
 
+class PrivacyAnonymised(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    anonymised_object = GenericForeignKey('content_type', 'object_id')
+
+
 class PrivacyModel(models.Model):
     """
-    An abstract model base class with support for anonymising data
+        An abstract model base class with support for anonymising data.
     """
-    anonymised = models.BooleanField(default=False)
+    anonymised_relation = GenericRelation(PrivacyAnonymised)
 
     @classmethod
     def get_privacy_meta(cls):
@@ -206,13 +217,16 @@ class PrivacyModel(models.Model):
             return
 
         # Only anonymise things once to avoid a circular anonymisation
-        if self.anonymised and not force:
+        if self.is_anonymised() and not force:
             return
 
         pre_anonymise.send(sender=self.__class__, instance=self)
 
         # Anonymise data
-        self.anonymised = True
+        privacy_obj = PrivacyAnonymised(anonymised_object=self)
+        if not for_bulk:
+            privacy_obj.save()
+
         for field_name in privacy_meta._anonymise_fields:
             anonymiser = getattr(
                 privacy_meta,
@@ -225,6 +239,11 @@ class PrivacyModel(models.Model):
 
         self.save()
         post_anonymise.send(sender=self.__class__, instance=self)
+
+        return privacy_obj
+
+    def is_anonymised(self):
+        return self.anonymised_relation.exists()
 
     def _log_gdpr_delete(self):
         EventLog.objects.log_delete(self)
@@ -248,8 +267,8 @@ class PrivacyModel(models.Model):
         # Tell the field it's now a member of the new model
         # We need to do this manually, as the base class has been added after
         # the class thinks it has been prepared
-        field = copy(PrivacyModel._meta.get_field('anonymised'))
-        field.contribute_to_class(model, 'anonymised')
+        field = copy(PrivacyModel._meta.get_field('anonymised_relation'))
+        field.contribute_to_class(model, 'anonymised_relation')
 
         # Make the managers subclass PrivacyManager
         # TODO: loop through all managers
