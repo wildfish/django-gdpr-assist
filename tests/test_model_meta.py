@@ -87,7 +87,7 @@ class TestModelDefinitionWithPrivacyMeta(TestCase):
             email='test@example.com',
         )
         obj.refresh_from_db()
-        self.assertFalse(obj.anonymised)
+        self.assertFalse(obj.is_anonymised())
 
     def test_manager_cast_to_privacy_manager(self):
         self.assertIsInstance(ModelWithPrivacyMeta.objects, PrivacyManager)

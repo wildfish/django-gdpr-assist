@@ -66,13 +66,12 @@ class TestAnonymiseCommand(CommandTestCase):
         obj_1 = ModelWithPrivacyMeta.objects.create(
             chars='test',
             email='test@example.com',
-            anonymised=False,
         )
-        self.assertFalse(obj_1.anonymised)
+        self.assertFalse(obj_1.is_anonymised())
         self.run_command('anonymise_db', interactive=False)
 
         obj_1.refresh_from_db()
-        self.assertTrue(obj_1.anonymised)
+        self.assertTrue(obj_1.is_anonymised())
         self.assertEqual(obj_1.chars, six.text_type(obj_1.pk))
         self.assertEqual(obj_1.email, '{}@anon.example.com'.format(obj_1.pk))
 
@@ -106,7 +105,6 @@ class TestRerunCommand(CommandTestCase):
         obj_1 = ModelWithPrivacyMeta.objects.create(
             chars='test',
             email='test@example.com',
-            anonymised=False,
         )
 
         # Log anonymise without anonymising to simulate deletion and db restore
@@ -116,6 +114,6 @@ class TestRerunCommand(CommandTestCase):
 
         self.assertEqual(ModelWithPrivacyMeta.objects.count(), 1)
         obj_1.refresh_from_db()
-        self.assertTrue(obj_1.anonymised)
+        self.assertTrue(obj_1.is_anonymised())
         self.assertEqual(obj_1.chars, six.text_type(obj_1.pk))
         self.assertEqual(obj_1.email, '{}@anon.example.com'.format(obj_1.pk))
