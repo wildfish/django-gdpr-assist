@@ -175,27 +175,26 @@ def anonymise_uuid(instance, field_name, field, value, user):
 @register(
     models.ForeignKey,
     models.OneToOneField,
+    models.ManyToOneRel,
 )
 def anonymise_relationship(instance, field_name, field, value, user):
     if field.null:
         return None
-
-    raise AnonymiseError(
-        'Cannot anonymise {} - can only null relationship field'.format(
-            field_name,
-        )
-    )
+    try:
+        getattr(instance, field_name).anonymise()  # pass down to anonymise the related obj
+    except AttributeError:
+        print("Cannot call anonymise on field %s, please make its model %s a subclass of PrivacyModel" % (field_name, field.related_model.__name__))
 
 
 @register(
     models.ManyToManyField,
+    models.ManyToManyRel
 )
 def anonymise_manytomany(instance, field_name, field, value, user):
-    raise AnonymiseError(
-        'Cannot anonymise {} - cannot anonymise ManyToManyField'.format(
-            field_name,
-        )
-    )
+    try:
+        getattr(instance, field_name).all().anonymise()  # pass down to anonymise each of the related objs
+    except AttributeError:
+        print("Cannot call anonymise on field %s, please make its model %s a subclass of PrivacyModel" % (field_name, field.model.__name__))
 
 
 def anonymise_field(instance, field_name, user):
@@ -209,17 +208,26 @@ def anonymise_field(instance, field_name, user):
         raise AnonymiseError('Cannot anonymise primary key')
 
     # Find field
-    field = cls._meta.get_field(field_name)
-    value = getattr(instance, field_name)
+    from django.core.exceptions import FieldDoesNotExist
+    try:
+        field = cls._meta.get_field(field_name)
+        # Find anonymiser
+        if field.__class__ not in anonymisers:
+            raise AnonymiseError('Unknown field type for anonymiser')
+        anonymiser = anonymisers[field.__class__]
+        value = getattr(instance, field_name)
 
-    # Find anonymiser
-    if field.__class__ not in anonymisers:
-        raise AnonymiseError('Unknown field type for anonymiser')
-    anonymiser = anonymisers[field.__class__]
+    except FieldDoesNotExist:
+        field = getattr(instance, field_name)  # for related fields and m2ms
+        anonymiser = anonymise_manytomany
+        value = None  # this is meaningless for relationship fields
+
+
 
     # Anonymise
     anonymised = anonymiser(instance, field_name, field, value, user)
-    setattr(instance, field_name, anonymised)
+    if anonymiser not in [anonymise_manytomany, anonymise_relationship]:
+        setattr(instance, field_name, anonymised)
 
 
 def anonymise_related_objects(obj, anonymised=None, user=None):

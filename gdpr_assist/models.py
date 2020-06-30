@@ -115,6 +115,8 @@ class PrivacyManager(models.Manager):
 
 class PrivacyMeta(object):
     fields = None
+    fk_fields = []
+    set_fields = []
     search_fields = None
     export_fields = None
     export_exclude = None
@@ -136,12 +138,16 @@ class PrivacyMeta(object):
 
     @cached_property
     def _anonymise_fields(self):
-        if self.fields is None:
+        if self.fields is None and self.fk_fields is None and self.set_fields is None:
             return [
                 field.name for field in self.model._meta.get_fields()
                 if field.name not in [self.model._meta.pk.name, 'anonymised']
             ]
-        return self.fields
+
+        fields = self.fields if self.fields is not None else []
+        all_fields = fields + self.fk_fields + self.set_fields
+
+        return all_fields
 
     def search(self, term):
         """
@@ -212,7 +218,7 @@ class PrivacyModel(models.Model):
     """
     anonymised = models.BooleanField(default=False)
     retention_policy = models.ForeignKey(to=RetentionPolicyItem, on_delete=models.SET_NULL,
-                                         related_name="target_entity", null=True, blank=True)
+                                         related_name="target_%(app_label)s_%(class)s", null=True, blank=True)
 
     def anonymise(self, force=False, user=None):
         # Only anonymise things once to avoid a circular anonymisation
@@ -254,6 +260,8 @@ class PrivacyModel(models.Model):
             model   The model to turn into a PrivacyModel subclass.
         """
         # Make the model subclass PrivacyModel
+        # If done this way, the model will NOT have a link to retention policy
+        # To do that, make it an explicit subclass of PrivacyModel
         try:
             model.__bases__ = (PrivacyModel,) + model.__bases__
 
@@ -292,7 +300,7 @@ class EventLogManager(models.Manager):
             app_label=cls._meta.app_label,
             model_name=cls._meta.object_name,
             target_pk=instance.pk,
-            acting_user=user
+            acting_user=str(user)
         )
 
 
