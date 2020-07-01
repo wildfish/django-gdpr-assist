@@ -1,21 +1,22 @@
 """
 Model-related functionality
 """
-from copy import copy
-import six
 import sys
+from copy import copy
 
 from django.apps import apps
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
 from django.utils.functional import cached_property
+from django.utils.translation import ugettext_lazy as _
 
-from . import app_settings
+import six
+
 from . import handlers  # noqa
+from . import app_settings
 from .anonymiser import anonymise_field, anonymise_related_objects
-from .signals import pre_anonymise, post_anonymise
+from .signals import post_anonymise, pre_anonymise
 
 
 class PrivacyQuerySet(models.query.QuerySet):
@@ -32,7 +33,9 @@ class PrivacyQuerySet(models.query.QuerySet):
 
         bulk_objects = []
         for obj in self:
-            bulk_objects.append(obj.anonymise(for_bulk=for_bulk))
+            privacy_obj = obj.anonymise(for_bulk=for_bulk)
+            if privacy_obj:
+                bulk_objects.append(privacy_obj)
 
         if bulk_objects and for_bulk:
             PrivacyAnonymised.objects.bulk_create(bulk_objects)
@@ -209,7 +212,7 @@ class PrivacyModel(models.Model):
     def check_can_anonymise(cls):
         return cls.get_privacy_meta().can_anonymise
 
-    def anonymise(self, force=False):
+    def anonymise(self, force=False, for_bulk=False):
         privacy_meta = self.get_privacy_meta()
 
         # Only anonymise if allowed

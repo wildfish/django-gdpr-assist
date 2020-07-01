@@ -1,9 +1,9 @@
 """
 Test admin tools
 """
-from io import BytesIO, TextIOWrapper
 import csv
 import zipfile
+from io import BytesIO, TextIOWrapper
 
 import django
 from django.contrib.auth.models import User
@@ -15,10 +15,12 @@ from model_mommy import mommy
 import gdpr_assist
 
 from .gdpr_assist_tests_app.models import (
-    ModelWithPrivacyMeta,
     FirstSearchModel,
+    ForthSearchModel,
+    ModelWithPrivacyMeta,
+    ModelWithPrivacyMetaCanNotAnonymise,
     SecondSearchModel,
-    ModelWithPrivacyMetaCanNotAnonymise, ForthSearchModel)
+)
 
 
 model_root_url = '/admin/gdpr_assist_tests_app/modelwithprivacymeta/'
@@ -141,8 +143,8 @@ class TestModelAdmin(AdminTestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_anonymise_view_submit__can_anonymise_disabled__404(self):
-        obj_1 = mommy.make(ModelWithPrivacyMetaCanNotAnonymise, anonymised=False)
-        obj_2 = mommy.make(ModelWithPrivacyMetaCanNotAnonymise, anonymised=False)
+        obj_1 = mommy.make(ModelWithPrivacyMetaCanNotAnonymise)
+        obj_2 = mommy.make(ModelWithPrivacyMetaCanNotAnonymise)
 
         response = self.client.post(
             '/admin/gdpr_assist_tests_app/modelwithprivacymetacannotanonymise/anonymise/',
@@ -156,8 +158,8 @@ class TestModelAdmin(AdminTestCase):
 
         obj_1.refresh_from_db()
         obj_2.refresh_from_db()
-        self.assertFalse(obj_1.anonymised)
-        self.assertFalse(obj_2.anonymised)
+        self.assertFalse(obj_1.is_anonymised())
+        self.assertFalse(obj_2.is_anonymised())
 
 
 class TestAdminTool(AdminTestCase):
@@ -231,12 +233,11 @@ class TestAdminTool(AdminTestCase):
         obj_1 = mommy.make(
             FirstSearchModel,
             email='an@example.com',
-            anonymised=False,
         )
+        obj_1.anonymise()
         obj_4 = mommy.make(
             ForthSearchModel,
             email='an@example.com',
-            anonymised=False,
         )
         content_type_1 = ContentType.objects.get_for_model(FirstSearchModel).pk
         content_type_4 = ContentType.objects.get_for_model(ForthSearchModel).pk
@@ -256,8 +257,8 @@ class TestAdminTool(AdminTestCase):
 
         obj_1.refresh_from_db()
         obj_4.refresh_from_db()
-        self.assertTrue(obj_1.anonymised)
-        self.assertFalse(obj_4.anonymised)
+        self.assertTrue(obj_1.is_anonymised())
+        self.assertFalse(obj_4.is_anonymised())
 
         if django.VERSION <= (1, 9):
             # Django 1.8 support - redirects include host
@@ -275,7 +276,6 @@ class TestAdminTool(AdminTestCase):
         mommy.make(
             ForthSearchModel,
             email='an@example.com',
-            anonymised=False,
         )
 
         response = self.client.post(tool_root_url, {'term': 'an@example.com'})
@@ -291,7 +291,6 @@ class TestAdminTool(AdminTestCase):
         mommy.make(
             FirstSearchModel,
             email='an@example.com',
-            anonymised=False,
         )
 
         response = self.client.post(tool_root_url, {'term': 'an@example.com'})

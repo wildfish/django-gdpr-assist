@@ -841,7 +841,7 @@ class TestRelation(TestCase):
 
         target.delete()
         obj.refresh_from_db()
-        self.assertFalse(obj.anonymised)
+        self.assertFalse(obj.is_anonymised())
         self.assertEqual(obj.chars, 'Test')
 
 
