@@ -1,21 +1,22 @@
 """
 Model-related functionality
 """
-from copy import copy
-import six
 import sys
+from copy import copy
 
 from django.apps import apps
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
 from django.utils.functional import cached_property
+from django.utils.translation import ugettext_lazy as _
 
-from . import app_settings
+import six
+
 from . import handlers  # noqa
+from . import app_settings
 from .anonymiser import anonymise_field, anonymise_related_objects
-from .signals import pre_anonymise, post_anonymise
+from .signals import post_anonymise, pre_anonymise
 
 
 class PrivacyQuerySet(models.query.QuerySet):
@@ -26,9 +27,15 @@ class PrivacyQuerySet(models.query.QuerySet):
         """
         Anonymise all privacy-registered objects in this queryset
         """
+        # Abandon if we can't anonymise
+        if not getattr(self.model, app_settings.GDPR_PRIVACY_INSTANCE_NAME).can_anonymise:
+            return
+
         bulk_objects = []
         for obj in self:
-            bulk_objects.append(obj.anonymise(for_bulk=for_bulk))
+            privacy_obj = obj.anonymise(for_bulk=for_bulk)
+            if privacy_obj:
+                bulk_objects.append(privacy_obj)
 
         if bulk_objects and for_bulk:
             PrivacyAnonymised.objects.bulk_create(bulk_objects)
@@ -113,6 +120,7 @@ class PrivacyManager(models.Manager):
 
 
 class PrivacyMeta(object):
+    can_anonymise = True
     fields = None
     search_fields = None
     export_fields = None
@@ -196,7 +204,21 @@ class PrivacyModel(models.Model):
     """
     anonymised_relation = GenericRelation(PrivacyAnonymised)
 
+    @classmethod
+    def get_privacy_meta(cls):
+        return getattr(cls, app_settings.GDPR_PRIVACY_INSTANCE_NAME)
+
+    @classmethod
+    def check_can_anonymise(cls):
+        return cls.get_privacy_meta().can_anonymise
+
     def anonymise(self, force=False, for_bulk=False):
+        privacy_meta = self.get_privacy_meta()
+
+        # Only anonymise if allowed
+        if not self.check_can_anonymise():
+            return
+
         # Only anonymise things once to avoid a circular anonymisation
         if self.is_anonymised() and not force:
             return
@@ -208,7 +230,6 @@ class PrivacyModel(models.Model):
         if not for_bulk:
             privacy_obj.save()
 
-        privacy_meta = getattr(self, app_settings.GDPR_PRIVACY_INSTANCE_NAME)
         for field_name in privacy_meta._anonymise_fields:
             anonymiser = getattr(
                 privacy_meta,

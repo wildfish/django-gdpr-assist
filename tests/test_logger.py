@@ -12,7 +12,7 @@ from gdpr_assist.models import EventLog
 from .gdpr_assist_tests_app.models import (
     ModelWithPrivacyMeta,
     ModelWithoutPrivacyMeta,
-)
+    ModelWithPrivacyMetaCanNotAnonymise)
 
 
 class TestLogger(TestCase):
@@ -76,3 +76,10 @@ class TestLogger(TestCase):
         log = EventLog.objects.first()
         found = log.get_target()
         self.assertIsNone(found)
+
+    def test_anonymise_privacy_object__disabled_anonymise__anonymisation__not__logged(self):
+        obj = mommy.make(ModelWithPrivacyMetaCanNotAnonymise)
+        self.assertEqual(EventLog.objects.count(), 0)
+
+        obj.anonymise()
+        self.assertEqual(EventLog.objects.count(), 0)

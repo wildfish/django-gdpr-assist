@@ -65,6 +65,13 @@ Attributes
 
 The ``PrivacyMeta`` object can have the following attributes:
 
+``can_anonymise = Boolean``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`default: True`
+
+Whether or not gdpr-assist is used to anonymise the data for this model, if ``False``, you can
+still search and export using gdpr-assist.
+
 
 ``fields = [...]``
 ~~~~~~~~~~~~~~~~~~

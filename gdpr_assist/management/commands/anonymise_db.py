@@ -34,10 +34,10 @@ Are you sure you want to do this?
             confirm = 'yes'
 
         if confirm == 'yes':
-            for model in registry.models.keys():
+            for model in registry.models_allowed_to_anonymise():
                 model.objects.all().anonymise()
 
-            msg = "{} models anonymised.".format(len(registry.models.keys()))
+            msg = "{} models anonymised.".format(len(registry.models_allowed_to_anonymise()))
             self.stdout.write(msg)
 
         else:  # pragma: no cover

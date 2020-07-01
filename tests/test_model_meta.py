@@ -23,7 +23,7 @@ from gdpr_assist.models import (
 from .gdpr_assist_tests_app.models import (
     ModelWithPrivacyMeta,
     ModelWithoutPrivacyMeta,
-)
+    ModelWithPrivacyMetaCanNotAnonymise)
 from .base import MigrationTestCase
 
 
@@ -97,6 +97,12 @@ class TestModelDefinitionWithPrivacyMeta(TestCase):
             ModelWithPrivacyMeta.objects.all(),
             PrivacyQuerySet,
         )
+
+    def test_meta_class_can_anonymise__can(self):
+        self.assertTrue(ModelWithPrivacyMeta.check_can_anonymise())
+
+    def test_meta_class_can_anonymise__can_not(self):
+        self.assertFalse(ModelWithPrivacyMetaCanNotAnonymise.check_can_anonymise())
 
 
 class TestModelDefinitionWithoutPrivacyMeta(TestCase):

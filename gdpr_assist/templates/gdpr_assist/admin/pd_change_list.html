@@ -83,6 +83,15 @@
                     </td>
                 </tr>
 
+                {% if not group.model.check_can_anonymise %}
+                    <tr>
+                        <td colspan="2">
+                            {% url group.url_change_name as obj_change_url %}
+                            These records will not be anonymised, they can be exported or if you wish to delete them
+                            please do so via their <a href="{{ obj_change_url }}">admin page</a>.
+                        </td>
+                    </tr>
+                {% endif %}
                 {% for obj in group.results %}
                 <tr class="row1">
                     <td class="action-checkbox">

@@ -4,7 +4,7 @@ Anonymisation support for Django ModelAdmin classes
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.template.response import TemplateResponse
 from django.utils.translation import ugettext_lazy as _
 
@@ -22,7 +22,7 @@ class ModelAdmin(admin.ModelAdmin):
 
     def get_actions(self, request):
         actions = super(ModelAdmin, self).get_actions(request)
-        if getattr(self.model, app_settings.GDPR_PRIVACY_INSTANCE_NAME):
+        if getattr(self.model, app_settings.GDPR_PRIVACY_INSTANCE_NAME) and self.model.check_can_anonymise():
             actions['anonymise'] = (
                 self.anonymise_action,
                 'anonymise',
