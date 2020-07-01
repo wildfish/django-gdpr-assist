@@ -16,6 +16,7 @@ from .anonymiser import anonymise_field, anonymise_related_objects
 from .signals import pre_anonymise, post_anonymise
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
+from django.core.exceptions import ValidationError
 
 
 class PrivacyQuerySet(models.query.QuerySet):
@@ -240,7 +241,11 @@ class PrivacyModel(models.Model):
         # Log the obj class and pk
         self._log_gdpr_anonymise(user)
 
-        self.save()
+        try:
+            self.save()
+        except ValidationError as e:
+            self._log_gdpr_error(e, user)
+
         post_anonymise.send(sender=self.__class__, instance=self)
 
     def _log_gdpr_delete(self, user=None):
@@ -248,6 +253,9 @@ class PrivacyModel(models.Model):
 
     def _log_gdpr_anonymise(self, user=None):
         EventLog.objects.log_anonymise(self, user)
+
+    def _log_gdpr_error(self, error, user=None):
+        EventLog.objects.log_error(self, error, user)
 
     @classmethod
     def _cast_class(cls, model, privacy_meta):
@@ -293,6 +301,22 @@ class EventLogManager(models.Manager):
     def log_anonymise(self, instance, user=None):
         self.log(self.model.EVENT_ANONYMISE, instance, user)
 
+    def log_error(self, instance, error, user=None):
+        cls = instance.__class__
+
+        loglines = cls.objects.filter(
+            app_label=cls._meta.app_label,
+            model_name=cls._meta.object_name,
+            target_pk=instance.pk,
+        )
+
+        if loglines.count() > 0:
+            logline = loglines.last()
+            logline.error_message = str(error)
+            logline.save()
+        else:
+            print("Cannot log an error for %s.%s pk=%s, since there is no existing log message" % (cls._meta.app_label, cls._meta.object_name, instance.pk))
+
     def log(self, event, instance, user=None):
         cls = instance.__class__
         self.create(
@@ -320,6 +344,7 @@ class EventLog(models.Model):
     model_name = models.CharField(max_length=255)
     log_time = models.DateTimeField(auto_now_add=True)
     acting_user = models.CharField(max_length=255, default="")
+    error_message = models.CharField(max_length=1000, default=None, null=True, blank=True)
     target_pk = models.TextField()
 
     objects = EventLogManager()

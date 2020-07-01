@@ -192,7 +192,7 @@ def anonymise_relationship(instance, field_name, field, value, user):
 )
 def anonymise_manytomany(instance, field_name, field, value, user):
     try:
-        getattr(instance, field_name).all().anonymise()  # pass down to anonymise each of the related objs
+        [a.anonymise() for a in getattr(instance, field_name).all()]  # pass down to anonymise each of the related objs
     except AttributeError:
         print("Cannot call anonymise on field %s, please make its model %s a subclass of PrivacyModel" % (field_name, field.model.__name__))
 
