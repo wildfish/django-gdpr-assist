@@ -10,7 +10,7 @@ from django.utils.timezone import now
 from .deletion import ANONYMISE
 from .exceptions import AnonymiseError
 from .registry import registry
-
+from .app_settings import GDPR_PRIVACY_INSTANCE_NAME
 
 anonymisers = {}
 
@@ -22,6 +22,7 @@ def register(*field_classes):
             anonymisers[cls] = fn
 
         return fn
+
     return outer
 
 
@@ -175,26 +176,27 @@ def anonymise_uuid(instance, field_name, field, value, user):
 @register(
     models.ForeignKey,
     models.OneToOneField,
-    models.ManyToOneRel,
 )
 def anonymise_relationship(instance, field_name, field, value, user):
     if field.null:
         return None
-    try:
-        getattr(instance, field_name).anonymise()  # pass down to anonymise the related obj
-    except AttributeError:
-        print("Cannot call anonymise on field %s, please make its model %s a subclass of PrivacyModel" % (field_name, field.related_model.__name__))
+
+    raise AnonymiseError(
+        'Cannot anonymise {} - can only null relationship field. Put into fk_fields to do this.'.format(
+            field_name,
+        )
+    )
 
 
 @register(
     models.ManyToManyField,
-    models.ManyToManyRel
 )
 def anonymise_manytomany(instance, field_name, field, value, user):
-    try:
-        [a.anonymise() for a in getattr(instance, field_name).all()]  # pass down to anonymise each of the related objs
-    except AttributeError:
-        print("Cannot call anonymise on field %s, please make its model %s a subclass of PrivacyModel" % (field_name, field.model.__name__))
+    raise AnonymiseError(
+        'Cannot anonymise {} - cannot anonymise ManyToManyField. Put into set_fields to do this.'.format(
+            field_name,
+        )
+    )
 
 
 def anonymise_field(instance, field_name, user):
@@ -207,9 +209,16 @@ def anonymise_field(instance, field_name, user):
     if cls._meta.pk.name == field_name:
         raise AnonymiseError('Cannot anonymise primary key')
 
-    # Find field
-    from django.core.exceptions import FieldDoesNotExist
-    try:
+    privacy_meta = getattr(instance, GDPR_PRIVACY_INSTANCE_NAME)
+
+    if field_name in privacy_meta.fk_fields:
+        field = getattr(instance, field_name)
+        field.anonymise(user=user)
+    elif field_name in privacy_meta.set_fields:
+        field = getattr(instance, field_name).all()
+        [o.anonymise(user=user) for o in field]
+    else:
+        # Find field
         field = cls._meta.get_field(field_name)
         # Find anonymiser
         if field.__class__ not in anonymisers:
@@ -217,16 +226,9 @@ def anonymise_field(instance, field_name, user):
         anonymiser = anonymisers[field.__class__]
         value = getattr(instance, field_name)
 
-    except FieldDoesNotExist:
-        field = getattr(instance, field_name)  # for related fields and m2ms
-        anonymiser = anonymise_manytomany
-        value = None  # this is meaningless for relationship fields
+        # Anonymise
 
-
-
-    # Anonymise
-    anonymised = anonymiser(instance, field_name, field, value, user)
-    if anonymiser not in [anonymise_manytomany, anonymise_relationship]:
+        anonymised = anonymiser(instance, field_name, field, value, user)
         setattr(instance, field_name, anonymised)
 
 
@@ -243,11 +245,11 @@ def anonymise_related_objects(obj, anonymised=None, user=None):
     relation_fields = [
         field for field in type(obj)._meta.get_fields()
         if (
-            (field.one_to_many or field.one_to_one) and
-            field.auto_created and
-            not field.concrete and
-            field.related_model in registry and
-            isinstance(field.on_delete, ANONYMISE)
+                (field.one_to_many or field.one_to_one) and
+                field.auto_created and
+                not field.concrete and
+                field.related_model in registry and
+                isinstance(field.on_delete, ANONYMISE)
         )
     ]
 

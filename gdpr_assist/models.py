@@ -245,6 +245,7 @@ class PrivacyModel(models.Model):
             self.save()
         except ValidationError as e:
             self._log_gdpr_error(e, user)
+            print(e)
 
         post_anonymise.send(sender=self.__class__, instance=self)
 
@@ -304,7 +305,7 @@ class EventLogManager(models.Manager):
     def log_error(self, instance, error, user=None):
         cls = instance.__class__
 
-        loglines = cls.objects.filter(
+        loglines = self.filter(
             app_label=cls._meta.app_label,
             model_name=cls._meta.object_name,
             target_pk=instance.pk,
