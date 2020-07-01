@@ -296,13 +296,7 @@ class PrivacyModel(models.Model):
 
 
 class EventLogManager(models.Manager):
-    def log_delete(self, instance, user=None):
-        self.log(self.model.EVENT_DELETE, instance, user)
-
-    def log_anonymise(self, instance, user=None):
-        self.log(self.model.EVENT_ANONYMISE, instance, user)
-
-    def log_error(self, instance, error, user=None):
+    def for_instance(self, instance, user=None):
         cls = instance.__class__
 
         loglines = self.filter(
@@ -311,11 +305,31 @@ class EventLogManager(models.Manager):
             target_pk=instance.pk,
         )
 
+        if user is not None:
+            loglines = loglines.filter(user=user)
+
+        return loglines
+
+    def log_delete(self, instance, user=None):
+        self.log(self.model.EVENT_DELETE, instance, user)
+
+    def log_anonymise(self, instance, user=None):
+        self.log(self.model.EVENT_ANONYMISE, instance, user)
+
+    def log_error(self, instance, error, user=None):
+        """
+        Add an error_message to the last log line that matches this instance.
+        """
+        cls = instance.__class__
+
+        loglines = self.for_instance(instance, user=user)
+
         if loglines.count() > 0:
             logline = loglines.last()
             logline.error_message = str(error)
             logline.save()
         else:
+            # TODO throw an error? maybe create this message with an error?
             print("Cannot log an error for %s.%s pk=%s, since there is no existing log message" % (cls._meta.app_label, cls._meta.object_name, instance.pk))
 
     def log(self, event, instance, user=None):
