@@ -227,9 +227,9 @@ def anonymise_field(instance, field_name, user):
         value = getattr(instance, field_name)
 
         # Anonymise
-
-        anonymised = anonymiser(instance, field_name, field, value, user)
-        setattr(instance, field_name, anonymised)
+        if value is not None:
+            anonymised = anonymiser(instance, field_name, field, value, user)
+            setattr(instance, field_name, anonymised)
 
 
 def anonymise_related_objects(obj, anonymised=None, user=None):
