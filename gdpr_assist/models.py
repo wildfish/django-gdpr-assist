@@ -258,6 +258,9 @@ class PrivacyModel(models.Model):
     def _log_gdpr_error(self, error, user=None):
         EventLog.objects.log_error(self, error, user)
 
+    def _log_gdpr_recursive(self, user=None, start=True):
+        EventLog.objects.log_recursive(self, user, start)
+
     @classmethod
     def _cast_class(cls, model, privacy_meta):
         """
@@ -316,6 +319,13 @@ class EventLogManager(models.Manager):
     def log_anonymise(self, instance, user=None):
         self.log(self.model.EVENT_ANONYMISE, instance, user)
 
+    def log_recursive(self, instance, user=None, start=True):
+        if start:
+            self.log(self.model.EVENT_RECURSIVE_START, instance, user)
+        else:
+            self.log(self.model.EVENT_RECURSIVE_END, instance, user)
+
+
     def log_error(self, instance, error, user=None):
         """
         Add an error_message to the last log line that matches this instance.
@@ -343,12 +353,17 @@ class EventLogManager(models.Manager):
         )
 
 
+
 class EventLog(models.Model):
     EVENT_DELETE = 'delete'
     EVENT_ANONYMISE = 'anonymise'
+    EVENT_RECURSIVE_START = 'anonymisation recursion start'
+    EVENT_RECURSIVE_END = 'anonymisation recursion end'
     EVENT_CHOICES = (
         (EVENT_DELETE, _("Delete")),
         (EVENT_ANONYMISE, _("Anonymise")),
+        (EVENT_RECURSIVE_START, _("Anonymisation Recursion Start")),
+        (EVENT_RECURSIVE_END, _("Anonymisation Recursion End")),
     )
 
     event = models.CharField(

@@ -213,10 +213,24 @@ def anonymise_field(instance, field_name, user):
 
     if field_name in privacy_meta.fk_fields:
         field = getattr(instance, field_name)
-        field.anonymise(user=user)
+
+        if field is not None:
+            instance._log_gdpr_recursive(start=True)
+            field.anonymise(user=user)
+            instance._log_gdpr_recursive(start=False)
+
     elif field_name in privacy_meta.set_fields:
         field = getattr(instance, field_name).all()
+        num_items = field.count()
+
+        if num_items > 0:
+            instance._log_gdpr_recursive(start=True)
+
         [o.anonymise(user=user) for o in field]
+
+        if num_items > 0:
+            instance._log_gdpr_recursive(start=False)
+
     else:
         # Find field
         field = cls._meta.get_field(field_name)
