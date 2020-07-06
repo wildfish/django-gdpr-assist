@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.utils.translation import ugettext_lazy as _
+from ..models import PrivacyManager
 
 try:
     from django.urls import reverse
@@ -60,7 +61,11 @@ class ModelAdmin(admin.ModelAdmin):
 
     def anonymise_view(self, request):
         ids_raw = (request.POST or request.GET).get('ids')
-        objects = self.model.objects.filter(pk__in=ids_raw.split(','))
+        manager = self.model._meta.managers[0]
+        if not isinstance(manager, PrivacyManager):
+            manager = PrivacyManager._cast_class(manager)
+
+        objects = manager.filter(pk__in=ids_raw.split(','))
         verbose_name = (
             self.model._meta.verbose_name.title()
             if objects.count() == 1 else

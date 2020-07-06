@@ -195,10 +195,22 @@ class PrivacyMeta(object):
 @python_2_unicode_compatible
 class RetentionPolicyItem(models.Model):
     description = models.CharField(default="", max_length=255)
-    start_date = models.DateTimeField(auto_now_add=True)
+    start_date = models.DateTimeField(null=True, blank=False)
     updated_at = models.DateTimeField(auto_now=True)
     policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
     # target_entity is a reverse FK from PrivacyModel
+
+    @property
+    def target_entities(self):
+        objs = [
+            getattr(self, x).all()
+            for x in self._meta.fields_map.keys() if x.startswith("target")
+        ]
+        res = []
+        for o in objs:
+            res += list(o)
+
+        return res
 
     def should_be_anonymized(self):
         if self.policy_length is None:
