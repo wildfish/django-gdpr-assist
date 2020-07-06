@@ -294,6 +294,61 @@ class PrivacyModel(models.Model):
 
         return model
 
+    def get_anon_log(self):
+        """
+        See if there are any related models which need to be anonymised.
+
+        They will be any reverse relations to PrivacyModel subclasses where their
+        OneToOneField and ForeignKey on_delete is ANONYMISE.
+        """
+        if not self.anonymised:
+            return "%s is not anonymised yet." % self
+
+        from gdpr_assist.models import EventLog
+        logs = EventLog.objects.order_by('log_time')
+
+        top_level_log_lines = EventLog.objects.for_instance(self).values('log_time', 'event', 'app_label', 'model_name',
+                                                                        'target_pk', 'acting_user')
+
+        if top_level_log_lines.count() > 0:
+            actual_anon_log_line = top_level_log_lines.first()
+
+            lines = logs.filter(log_time__gte=actual_anon_log_line["log_time"],
+                                log_time__lte=top_level_log_lines.last()["log_time"]). \
+                values('log_time', 'event', 'app_label', 'model_name', 'target_pk', 'acting_user')
+
+            user = str(actual_anon_log_line["acting_user"]) if actual_anon_log_line[
+                                                                   "acting_user"] is not None else "[Non-descript user]"
+
+            res = "%s #%s starting to anonymise [by %s on %s].\n" % (
+                actual_anon_log_line['model_name'],
+                actual_anon_log_line['target_pk'],
+                user,
+                actual_anon_log_line["log_time"].strftime("%Y-%m-%d %H:%M:%S")
+            )
+            indent_level = 0
+
+            def tabify(x):
+                return "\t" * x if x > 0 else ""
+
+            for l in lines:
+
+                if l["event"] == EventLog.EVENT_RECURSIVE_START:
+                    res += "%sStarting recursive for %s #%s.\n" % (
+                    tabify(indent_level), l['model_name'], l['target_pk'])
+                    indent_level += 1
+
+                elif l["event"] == EventLog.EVENT_RECURSIVE_END:
+                    indent_level -= 1
+                    res += "%sEnding recursive for %s #%s.\n" % (tabify(indent_level), l['model_name'], l['target_pk'])
+                else:
+                    res += "%s%s #%s flat fields anonymised.\n" % (
+                    tabify(indent_level), l['model_name'], l['target_pk'])
+
+            return res
+        else:
+            return "%s is anonymised, but does not have matching logs." % self
+
     class Meta:
         abstract = True
 
@@ -396,5 +451,4 @@ class EventLog(models.Model):
             self.app_label,
             self.acting_user,
         )
-
 

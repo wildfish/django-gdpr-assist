@@ -215,21 +215,21 @@ def anonymise_field(instance, field_name, user):
         field = getattr(instance, field_name)
 
         if field is not None:
-            instance._log_gdpr_recursive(start=True)
+            instance._log_gdpr_recursive(user=user, start=True)
             field.anonymise(user=user)
-            instance._log_gdpr_recursive(start=False)
+            instance._log_gdpr_recursive(user=user, start=False)
 
     elif field_name in privacy_meta.set_fields:
         field = getattr(instance, field_name).all()
         num_items = field.count()
 
         if num_items > 0:
-            instance._log_gdpr_recursive(start=True)
+            instance._log_gdpr_recursive(user=user, start=True)
 
         [o.anonymise(user=user) for o in field]
 
         if num_items > 0:
-            instance._log_gdpr_recursive(start=False)
+            instance._log_gdpr_recursive(user=user, start=False)
 
     else:
         # Find field
@@ -277,55 +277,3 @@ def anonymise_related_objects(obj, anonymised=None, user=None):
                 anonymised.append(related_obj)
 
     return anonymised
-
-
-def get_anon_log_for(obj):
-    """
-    See if there are any related models which need to be anonymised.
-
-    They will be any reverse relations to PrivacyModel subclasses where their
-    OneToOneField and ForeignKey on_delete is ANONYMISE.
-    """
-    if not obj.anonymised:
-        return "%s is not anonymised yet." % obj
-
-    from gdpr_assist.models import EventLog
-    logs = EventLog.objects.order_by('log_time')
-
-    top_level_log_lines = EventLog.objects.for_instance(obj).values('log_time', 'event', 'app_label', 'model_name', 'target_pk', 'acting_user')
-
-    if top_level_log_lines.count() > 0:
-        actual_anon_log_line = top_level_log_lines.first()
-
-        lines = logs.filter(log_time__gte=actual_anon_log_line["log_time"],
-                            log_time__lte=top_level_log_lines.last()["log_time"]). \
-            values('log_time', 'event', 'app_label', 'model_name', 'target_pk', 'acting_user')
-
-        user = str(actual_anon_log_line["acting_user"]) if actual_anon_log_line["acting_user"] else "[Non-descript user]"
-
-        res = "%s #%s starting to anonymise [by %s on %s].\n" % (
-            actual_anon_log_line['model_name'],
-            actual_anon_log_line['target_pk'],
-            user,
-            actual_anon_log_line["log_time"].strftime("%Y-%m-%d %H:%M:%S")
-        )
-        indent_level = 0
-
-        tabify = lambda x: "\t" * x if x > 0 else ""
-
-        for l in lines:
-
-            if l["event"] == EventLog.EVENT_RECURSIVE_START:
-                res += "%sStarting recursive for %s #%s.\n" % (tabify(indent_level), l['model_name'], l['target_pk'])
-                indent_level += 1
-
-            elif l["event"] == EventLog.EVENT_RECURSIVE_END:
-                indent_level -= 1
-                res += "%sEnding recursive for %s #%s.\n" % (tabify(indent_level), l['model_name'], l['target_pk'])
-            else:
-                res += "%s%s #%s flat fields anonymised.\n" % (tabify(indent_level), l['model_name'], l['target_pk'])
-
-        print(res)
-        return res
-    else:
-        return "%s is anonymised, but does not have matching logs." % obj
