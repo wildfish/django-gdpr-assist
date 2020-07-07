@@ -361,6 +361,80 @@ class PrivacyModel(models.Model):
         else:
             return "%s is anonymised, but does not have matching logs." % self
 
+    @classmethod
+    def get_anonymization_tree(cls, prefix="", doprint=False):
+        """
+        Print the result of the nesting defined above for a given model.
+        Useful for sanity and loop checking. Example output:
+
+        Class:
+        |-> outcome_assessments = (OutcomeAssessment [set_field]):
+            |-> score
+            |-> comment
+        |-> class_polls = (ClassPoll [set_field]):
+            |-> poll = (Poll [fk]):
+                |-> title
+                |-> question
+                |-> pollchoice_set = (PollChoice [set_field]):
+                    |-> choice
+                |-> pollsession_set = (PollSession [set_field]):
+                    |-> outcome_assessments = (OutcomeAssessment [set_field]):
+                        |-> score
+                        |-> comment
+                    |-> pollresponse_set = (PollResponse [set_field]):
+                        |-> response
+
+        """
+        ABANDON_AFTER_N_LEVELS = 10
+        BASE_PREFIX = "    "
+        if len(prefix) > len(BASE_PREFIX) * ABANDON_AFTER_N_LEVELS:
+            return "ERROR: shouldn't go %s levels deep, check for loops." % ABANDON_AFTER_N_LEVELS
+        res = ''
+        if doprint:
+            res += cls.__name__ + ":\n"
+
+        privacy_meta_model = cls._privacy_meta
+
+        flat_fields = privacy_meta_model.fields
+        if flat_fields:
+            for f in flat_fields:
+                res += "%s|-> %s\n" % (prefix, f)
+
+        for fk in privacy_meta_model.fk_fields:
+
+            try:
+                f = getattr(cls, fk)
+                if hasattr(f, 'field'):
+                    f = f.field
+                elif hasattr(f, 'rel'):
+                    f = f.rel
+                child_model = f.related_model
+                res += "%s|-> %s = (%s [fk]):\n" % (prefix, fk, child_model.__name__)
+
+                res += child_model.get_anonymization_tree(prefix=BASE_PREFIX + prefix, doprint=False)
+            except AttributeError as e:
+                print(e)
+                res += 'ERROR: ' + str(e)
+
+        for set_field in privacy_meta_model.set_fields:
+            res += "%s|-> %s" % (prefix, set_field)
+
+            try:
+                f = getattr(cls, set_field)
+                if hasattr(f, "objects"):
+                    child_model = f.objects.model
+                else:
+                    child_model = f.rel.related_model
+                res += " = (%s [set_field]):\n" % child_model.__name__
+                res += child_model.get_anonymization_tree(prefix=BASE_PREFIX + prefix, doprint=False)
+            except AttributeError as e:
+                print(e)
+                res += 'ERROR: ' + str(e)
+
+        if doprint:
+            print(res)
+        return res
+
     class Meta:
         abstract = True
 
