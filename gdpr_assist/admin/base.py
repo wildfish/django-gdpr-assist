@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.utils.translation import ugettext_lazy as _
 from ..models import PrivacyManager
+from django.utils.safestring import mark_safe
 
 try:
     from django.urls import reverse
@@ -87,10 +88,19 @@ class ModelAdmin(admin.ModelAdmin):
             )
             return HttpResponseRedirect(changelist_url)
 
+        object_classes = set([o.__class__ for o in objects])
+        tree_html = ""
+        for c in object_classes:
+            tree = c.get_anonymization_tree().replace(" [set_field]", "").replace(" [fk]", "")
+            tree_html += "%s:\n%s\n\n" % (c.__name__, tree)
+
+        tree_html = mark_safe(tree_html)
+
         return TemplateResponse(request, self.anonymise_template, {
             'title': _("Are you sure?"),
             'ids': ids_raw,
             'verbose_name': verbose_name,
             'objects': objects,
             'cancel_url': changelist_url,
+            'trees': tree_html
         })
