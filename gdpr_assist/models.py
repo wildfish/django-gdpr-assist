@@ -17,6 +17,7 @@ from .signals import pre_anonymise, post_anonymise
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe
 
 
 class PrivacyQuerySet(models.query.QuerySet):
@@ -191,46 +192,12 @@ class PrivacyMeta(object):
             self.model._meta.object_name,
         )
 
-
-@python_2_unicode_compatible
-class RetentionPolicyItem(models.Model):
-    description = models.CharField(default="", max_length=255)
-    start_date = models.DateTimeField(null=True, blank=False)
-    updated_at = models.DateTimeField(auto_now=True)
-    policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
-    # target_entity is a reverse FK from PrivacyModel
-
-    @property
-    def target_entities(self):
-        objs = [
-            getattr(self, x).all()
-            for x in self._meta.fields_map.keys() if x.startswith("target")
-        ]
-        res = []
-        for o in objs:
-            res += list(o)
-
-        return res
-
-    def should_be_anonymized(self):
-        if self.policy_length is None:
-            return False
-
-        return timezone.now() > self.start_date + self.policy_length
-
-    def __str__(self):
-        if self.description:
-            return self.description
-
-        return "Retention Policy %s starts %s days after %s" % (self.id, self.start_date, self.policy_length)
-
-
 class PrivacyModel(models.Model):
     """
     An abstract model base class with support for anonymising data
     """
     anonymised = models.BooleanField(default=False)
-    retention_policy = models.ForeignKey(to=RetentionPolicyItem, on_delete=models.SET_NULL,
+    retention_policy = models.ForeignKey(to="gdpr_assist.RetentionPolicyItem", on_delete=models.SET_NULL,
                                          related_name="target_%(app_label)s_%(class)s", null=True, blank=True)
 
     def anonymise(self, force=False, user=None):
@@ -362,7 +329,7 @@ class PrivacyModel(models.Model):
             return "%s is anonymised, but does not have matching logs." % self
 
     @classmethod
-    def get_anonymization_tree(cls, prefix="", doprint=False):
+    def get_anonymization_tree(cls, prefix="", doprint=False, objs=[]):
         """
         Print the result of the nesting defined above for a given model.
         Useful for sanity and loop checking. Example output:
@@ -423,7 +390,7 @@ class PrivacyModel(models.Model):
                 f = getattr(cls, set_field)
                 if hasattr(f, "objects"):
                     child_model = f.objects.model
-                else:
+                elif hasattr(f, "rel"):
                     child_model = f.rel.related_model
                 res += " = (%s [set_field]):\n" % child_model.__name__
                 res += child_model.get_anonymization_tree(prefix=BASE_PREFIX + prefix, doprint=False)
@@ -437,6 +404,72 @@ class PrivacyModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+@python_2_unicode_compatible
+class RetentionPolicyItem(PrivacyModel):
+    description = models.CharField(default="", max_length=255)
+    start_date = models.DateTimeField(null=True, blank=False)
+    updated_at = models.DateTimeField(auto_now=True)
+    policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
+    retention_policy = None  # it would inherit this from PrivacyModel, but it doesn't make sense here
+    # target_entity is a reverse FK from PrivacyModel
+
+    @property
+    def target_entities(self):
+        objs = [
+            getattr(self, x).all()
+            for x in self._meta.fields_map.keys() if x.startswith("target")
+        ]
+        res = []
+        for o in objs:
+            res += list(o)
+
+        return res
+
+    def should_be_anonymized(self):
+        if self.policy_length is None:
+            return False
+
+        return timezone.now() > self.start_date + self.policy_length
+
+    def __str__(self):
+        if self.description:
+            return self.description
+
+        return "Retention Policy %s starts %s days after %s" % (self.id, self.start_date, self.policy_length)
+
+    @classmethod
+    def get_anonymization_tree(cls, prefix="", doprint=False, objs=[]):
+        """
+        The anonymization tree for a retention policy should show the number
+        of objects about to be anonymized.
+        """
+        targets = []
+        res = ""
+        for o in objs:
+            targets += o.target_entities
+        classes = set([e.__class__ for e in targets])
+        for c in classes:
+            tree = c.get_anonymization_tree()  # possibly surface this info (what will be anonymized by class
+
+            # get a list of objects of this class
+            objs = [o for o in targets if o.__class__ == c]
+
+            # summarize the first 10
+            obj_summaries = ["<li>%s</li>" % o for o in objs[:10]]
+            if len(objs) > 10:
+                obj_summaries += ['<li style="list-style-type: none;">...</li>']
+
+            res += '<br/><b title="%s">%s</b> (%s)<ul>%s</ul>\n' % (
+                tree,
+                c.__name__,
+                len(objs),
+                "\n".join(obj_summaries)
+            )
+
+        return mark_safe(res)
+
 
 
 class EventLogManager(models.Manager):
