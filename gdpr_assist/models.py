@@ -203,6 +203,7 @@ class PrivacyModel(models.Model):
     def anonymise(self, force=False, user=None):
         # Only anonymise things once to avoid a circular anonymisation
         if self.anonymised and not force:
+            self._log_gdpr_already_anonymised(user)
             return
 
         pre_anonymise.send(sender=self.__class__, instance=self)
@@ -239,6 +240,10 @@ class PrivacyModel(models.Model):
 
     def _log_gdpr_recursive(self, user=None, start=True):
         EventLog.objects.log_recursive(self, user, start)
+
+    def _log_gdpr_already_anonymised(self, user=None):
+        EventLog.objects.log_already_anonymised(self, user)
+
 
     @classmethod
     def _cast_class(cls, model, privacy_meta):
@@ -290,20 +295,21 @@ class PrivacyModel(models.Model):
                                                                         'target_pk', 'acting_user')
 
         if top_level_log_lines.count() > 0:
-            actual_anon_log_line = top_level_log_lines.first()
+            actual_anon_log_line_start = top_level_log_lines.filter(event=EventLog.EVENT_RECURSIVE_START).last()
+            actual_anon_log_line_end = top_level_log_lines.filter(event=EventLog.EVENT_ANONYMISE).last()
 
-            lines = logs.filter(log_time__gte=actual_anon_log_line["log_time"],
-                                log_time__lte=top_level_log_lines.last()["log_time"]). \
+            lines = logs.filter(log_time__gte=actual_anon_log_line_start["log_time"],
+                                log_time__lte=actual_anon_log_line_end["log_time"]). \
                 values('log_time', 'event', 'app_label', 'model_name', 'target_pk', 'acting_user')
 
-            user = str(actual_anon_log_line["acting_user"]) if actual_anon_log_line[
+            user = str(actual_anon_log_line_start["acting_user"]) if actual_anon_log_line_start[
                                                                    "acting_user"] is not None else "[Non-descript user]"
 
             res = "%s #%s starting to anonymise [by %s on %s].\n" % (
-                actual_anon_log_line['model_name'],
-                actual_anon_log_line['target_pk'],
+                actual_anon_log_line_start['model_name'],
+                actual_anon_log_line_start['target_pk'],
                 user,
-                actual_anon_log_line["log_time"].strftime("%Y-%m-%d %H:%M:%S")
+                actual_anon_log_line_start["log_time"].strftime("%Y-%m-%d %H:%M:%S")
             )
             indent_level = 0
 
@@ -311,7 +317,6 @@ class PrivacyModel(models.Model):
                 return "\t" * x if x > 0 else ""
 
             for l in lines:
-
                 if l["event"] == EventLog.EVENT_RECURSIVE_START:
                     res += "%sStarting recursive for %s #%s.\n" % (
                     tabify(indent_level), l['model_name'], l['target_pk'])
@@ -320,6 +325,10 @@ class PrivacyModel(models.Model):
                 elif l["event"] == EventLog.EVENT_RECURSIVE_END:
                     indent_level -= 1
                     res += "%sEnding recursive for %s #%s.\n" % (tabify(indent_level), l['model_name'], l['target_pk'])
+
+                elif l["event"] == EventLog.EVENT_ALREADY_ANONYMISED:
+                    res += "%s%s #%s already anonymised.\n" % (tabify(indent_level), l['model_name'], l['target_pk'])
+
                 else:
                     res += "%s%s #%s flat fields anonymised.\n" % (
                     tabify(indent_level), l['model_name'], l['target_pk'])
@@ -413,7 +422,6 @@ class RetentionPolicyItem(PrivacyModel):
     updated_at = models.DateTimeField(auto_now=True)
     policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
     retention_policy = None  # it would inherit this from PrivacyModel, but it doesn't make sense here
-    # target_entity is a reverse FK from PrivacyModel
 
     @property
     def target_entities(self):
@@ -499,6 +507,8 @@ class EventLogManager(models.Manager):
         else:
             self.log(self.model.EVENT_RECURSIVE_END, instance, user)
 
+    def log_already_anonymised(self, instance, user=None):
+        self.log(self.model.EVENT_ALREADY_ANONYMISED, instance, user)
 
     def log_error(self, instance, error, user=None):
         """
@@ -533,11 +543,13 @@ class EventLog(models.Model):
     EVENT_ANONYMISE = 'anonymise'
     EVENT_RECURSIVE_START = 'anonymisation recursion start'
     EVENT_RECURSIVE_END = 'anonymisation recursion end'
+    EVENT_ALREADY_ANONYMISED = 'anonymisation abandoned, already done'
     EVENT_CHOICES = (
         (EVENT_DELETE, _("Delete")),
         (EVENT_ANONYMISE, _("Anonymise")),
         (EVENT_RECURSIVE_START, _("Anonymisation Recursion Start")),
         (EVENT_RECURSIVE_END, _("Anonymisation Recursion End")),
+        (EVENT_ALREADY_ANONYMISED, _('Snonymisation Sbandoned, Already Done'))
     )
 
     event = models.CharField(
