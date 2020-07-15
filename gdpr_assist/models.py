@@ -426,8 +426,8 @@ class RetentionPolicyItem(PrivacyModel):
     @property
     def target_entities(self):
         objs = [
-            getattr(self, x).all()
-            for x in self._meta.fields_map.keys() if x.startswith("target")
+            getattr(self, field_name).all()
+            for field_name in self._meta.fields_map.keys() if field_name.startswith("target")
         ]
         res = []
         for o in objs:
