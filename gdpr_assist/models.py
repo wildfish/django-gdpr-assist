@@ -545,7 +545,6 @@ class EventLogManager(models.Manager):
         )
 
 
-
 class EventLog(models.Model):
     EVENT_DELETE = 'delete'
     EVENT_ANONYMISE = 'anonymise'
