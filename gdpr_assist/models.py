@@ -305,11 +305,11 @@ class PrivacyModel(models.Model):
             user = str(actual_anon_log_line_start["acting_user"]) if actual_anon_log_line_start[
                                                                    "acting_user"] is not None else "[Non-descript user]"
 
-            res = "%s #%s starting to anonymise [by %s on %s].\n" % (
-                actual_anon_log_line_start['model_name'],
-                actual_anon_log_line_start['target_pk'],
-                user,
-                actual_anon_log_line_start["log_time"].strftime("%Y-%m-%d %H:%M:%S")
+            res = "{model_name} #{target_pk} starting to anonymise [by {user} on {log_time}].\n".format(
+                model_name=actual_anon_log_line_start['model_name'],
+                target_pk=actual_anon_log_line_start['target_pk'],
+                user=user,
+                log_time=actual_anon_log_line_start["log_time"].strftime("%Y-%m-%d %H:%M:%S"),
             )
             indent_level = 0
 
@@ -582,4 +582,3 @@ class EventLog(models.Model):
             self.app_label,
             self.acting_user,
         )
-
