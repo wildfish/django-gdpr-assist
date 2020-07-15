@@ -91,11 +91,12 @@ class ModelAdmin(admin.ModelAdmin):
 
         object_classes = set([o.__class__ for o in objects])
         tree_html = ""
-        for c in object_classes:
-            tree = c.get_anonymization_tree(objs=[o for o in objects if o.__class__ == c]).replace(" [set_field]", "").replace(" [fk]", "")
-            this_html = "%s:\n%s\n\n" % (c.__name__, tree)
-            if c.__name__ != "RetentionPolicyItem":
-                this_html = "<pre>%s</pre>" % this_html
+        for object_class in object_classes:
+            anonymised_objects = [object for object in objects if object.__class__ == object_class]
+            tree = object_class.get_anonymization_tree(objs=anonymised_objects).replace(" [set_field]", "").replace(" [fk]", "")
+            this_html = "{class_name}:\n{tree}\n\n".format(class_name=object_class.__name__, tree=tree)
+            if object_class.__name__ != "RetentionPolicyItem":
+                this_html = "<pre>{html}</pre>".format(html=this_html)
             tree_html += this_html
 
         tree_html = mark_safe(tree_html)
