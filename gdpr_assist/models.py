@@ -150,7 +150,7 @@ class PrivacyMeta(object):
                 if field.name not in [self.model._meta.pk.name, 'anonymised']
             ]
 
-        fields = self.fields if self.fields is not None else []
+        fields = self.fields or []
         all_fields = fields + self.fk_fields + self.set_fields
 
         return all_fields
@@ -292,7 +292,6 @@ class PrivacyModel(models.Model):
         if not self.anonymised:
             return "%s is not anonymised yet." % self
 
-        from gdpr_assist.models import EventLog
         logs = EventLog.objects.order_by('log_time')
 
         top_level_log_lines = EventLog.objects.for_instance(self).values('log_time', 'event', 'app_label', 'model_name',
@@ -306,8 +305,7 @@ class PrivacyModel(models.Model):
                                 log_time__lte=actual_anon_log_line_end["log_time"]). \
                 values('log_time', 'event', 'app_label', 'model_name', 'target_pk', 'acting_user')
 
-            user = str(actual_anon_log_line_start["acting_user"]) if actual_anon_log_line_start[
-                                                                   "acting_user"] is not None else "[Non-descript user]"
+            user = actual_anon_log_line_start["acting_user"] or "[Non-descript user]"
 
             res = "{model_name} #{target_pk} starting to anonymise [by {user} on {log_time}].\n".format(
                 model_name=actual_anon_log_line_start['model_name'],
