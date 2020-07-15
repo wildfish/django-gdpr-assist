@@ -1,23 +1,27 @@
 """
 Model-related functionality
 """
+from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import unicode_literals
+
+from collections import defaultdict
 from copy import copy
 import six
 
 from django.apps import apps
+from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.functional import cached_property
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_lazy as _
 
 from . import app_settings
 from . import handlers  # noqa
 from .anonymiser import anonymise_field, anonymise_related_objects
 from .signals import pre_anonymise, post_anonymise
-from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
-from django.core.exceptions import ValidationError
-from django.utils.safestring import mark_safe
 
 
 class PrivacyQuerySet(models.query.QuerySet):
