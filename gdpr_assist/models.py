@@ -201,8 +201,10 @@ class PrivacyModel(models.Model):
     An abstract model base class with support for anonymising data
     """
     anonymised = models.BooleanField(default=False)
-    retention_policy = models.ForeignKey(to="gdpr_assist.RetentionPolicyItem", on_delete=models.SET_NULL,
-                                         related_name="target_%(app_label)s_%(class)s", null=True, blank=True)
+    retention_policy = models.ForeignKey(
+        to="gdpr_assist.RetentionPolicyItem", on_delete=models.SET_NULL,
+        null=True, blank=True,
+    )
 
     def anonymise(self, force=False, user=None):
         # Only anonymise things once to avoid a circular anonymisation
@@ -425,17 +427,13 @@ class RetentionPolicyItem(PrivacyModel):
     policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
     retention_policy = None  # it would inherit this from PrivacyModel, but it doesn't make sense here
 
-    @property
-    def target_entities(self):
-        objs = [
-            getattr(self, field_name).all()
-            for field_name in self._meta.fields_map.keys() if field_name.startswith("target")
+    def list_related_objects(self):
+        return [
+            related_object
+            for related_object in getattr(self, field).all()
+            for field in self._meta.get_fields()
+            if field.is_relation and field.one_to_many
         ]
-        res = []
-        for o in objs:
-            res += list(o)
-
-        return res
 
     def should_be_anonymized(self):
         if self.policy_length is None:
@@ -450,36 +448,44 @@ class RetentionPolicyItem(PrivacyModel):
         return "Retention Policy %s starts %s days after %s" % (self.id, self.start_date, self.policy_length)
 
     @classmethod
-    def get_anonymization_tree(cls, prefix="", doprint=False, objs=[]):
+    def get_anonymization_tree(cls, prefix="", doprint=False, objs=None):
         """
         The anonymization tree for a retention policy should show the number
         of objects about to be anonymized.
         """
-        targets = []
-        res = ""
-        for o in objs:
-            targets += o.target_entities
-        classes = set([e.__class__ for e in targets])
-        for c in classes:
-            tree = c.get_anonymization_tree()  # possibly surface this info (what will be anonymized by class
+        if objs is None:
+            objs = []
 
-            # get a list of objects of this class
-            objs = [o for o in targets if o.__class__ == c]
+        # Flat list of related objects
+        related_objects_by_class = defaultdict(list)
+
+        for obj in objs:
+            for related_object in obj.list_related_objects():
+                related_objects_by_class[related_object.__class__].append(related_object)
+
+        tree_html = ""
+        for class_, related_objects in related_objects_by_class.items():
+            tree = class_.get_anonymization_tree()  # possibly surface this info (what will be anonymized by class
 
             # summarize the first 10
-            obj_summaries = ["<li>%s</li>" % o for o in objs[:10]]
-            if len(objs) > 10:
-                obj_summaries += ['<li style="list-style-type: none;">...</li>']
+            related_objects_summaries = [
+                "<li>{related_object}</li>".format(related_object=related_object)
+                for related_object in related_objects[:10]
+            ]
 
-            res += '<br/><b title="%s">%s</b> (%s)<ul>%s</ul>\n' % (
-                tree,
-                c.__name__,
-                len(objs),
-                "\n".join(obj_summaries)
+            if len(related_objects) > 10:
+                related_objects_summaries.append('<li style="list-style-type: none;">...</li>')
+
+            tree_html += (
+                '<br/><b title="{tree}">{class_name}</b> ({related_objects_count})<ul>{summaries}</ul>\n'.format(
+                    tree=tree,
+                    class_name=c.__name__,
+                    related_objects_count=len(objs),
+                    summaries="\n".join(related_objects_summaries),
+                )
             )
 
-        return mark_safe(res)
-
+        return mark_safe(tree_html)
 
 
 class EventLogManager(models.Manager):
