@@ -284,7 +284,7 @@ class PrivacyModel(models.Model):
 
         return model
 
-    def get_anon_log(self):
+    def get_anonymisation_log(self):
         """
         See if there are any related models which need to be anonymised.
 
