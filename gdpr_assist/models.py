@@ -5,9 +5,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import logging
+import six
 from collections import defaultdict
 from copy import copy
-import six
 
 from django.apps import apps
 from django.core.exceptions import ValidationError
@@ -22,6 +23,8 @@ from . import app_settings
 from . import handlers  # noqa
 from .anonymiser import anonymise_field, anonymise_related_objects
 from .signals import pre_anonymise, post_anonymise
+
+logger = logging.getLogger(__name__)
 
 
 class PrivacyQuerySet(models.query.QuerySet):
@@ -196,6 +199,7 @@ class PrivacyMeta(object):
             self.model._meta.object_name,
         )
 
+
 class PrivacyModel(models.Model):
     """
     An abstract model base class with support for anonymising data
@@ -231,7 +235,7 @@ class PrivacyModel(models.Model):
             self.save()
         except ValidationError as e:
             self._log_gdpr_error(e, user)
-            print(e)
+            logger.error(e.message)
 
         post_anonymise.send(sender=self.__class__, instance=self)
 
@@ -249,7 +253,6 @@ class PrivacyModel(models.Model):
 
     def _log_gdpr_already_anonymised(self, user=None):
         EventLog.objects.log_already_anonymised(self, user)
-
 
     @classmethod
     def _cast_class(cls, model, privacy_meta):
@@ -320,22 +323,36 @@ class PrivacyModel(models.Model):
             def tabify(x):
                 return "\t" * x if x > 0 else ""
 
-            for l in lines:
-                if l["event"] == EventLog.EVENT_RECURSIVE_START:
-                    res += "%sStarting recursive for %s #%s.\n" % (
-                    tabify(indent_level), l['model_name'], l['target_pk'])
+            for line in lines:
+                if line["event"] == EventLog.EVENT_RECURSIVE_START:
+                    res += "{tabs}Starting recursive for {model_name} #{target_pk}.\n".format(
+                        tabs=tabify(indent_level),
+                        model_name=line['model_name'],
+                        target_pk=line['target_pk'],
+                    )
                     indent_level += 1
 
-                elif l["event"] == EventLog.EVENT_RECURSIVE_END:
+                elif line["event"] == EventLog.EVENT_RECURSIVE_END:
                     indent_level -= 1
-                    res += "%sEnding recursive for %s #%s.\n" % (tabify(indent_level), l['model_name'], l['target_pk'])
+                    res += "{tabs}Ending recursive for {model_name} #{target_pk}.\n".format(
+                        tabs=tabify(indent_level),
+                        model_name=line['model_name'],
+                        target_pk=line['target_pk'],
+                    )
 
-                elif l["event"] == EventLog.EVENT_ALREADY_ANONYMISED:
-                    res += "%s%s #%s already anonymised.\n" % (tabify(indent_level), l['model_name'], l['target_pk'])
+                elif line["event"] == EventLog.EVENT_ALREADY_ANONYMISED:
+                    res += "{tabs}{model_name} #{target_pk} already anonymised.\n".format(
+                        tabs=tabify(indent_level),
+                        model_name=line['model_name'],
+                        target_pk=line['target_pk'],
+                    )
 
                 else:
-                    res += "%s%s #%s flat fields anonymised.\n" % (
-                    tabify(indent_level), l['model_name'], l['target_pk'])
+                    res += "{tabs}{model_name} #{target_pk} flat fields anonymised.\n".format(
+                        tabs=tabify(indent_level),
+                        model_name=line['model_name'],
+                        target_pk=line['target_pk'],
+                    )
 
             return res
         else:
@@ -369,31 +386,31 @@ class PrivacyModel(models.Model):
         BASE_PREFIX = "    "
         if len(prefix) > len(BASE_PREFIX) * ABANDON_AFTER_N_LEVELS:
             return "ERROR: shouldn't go %s levels deep, check for loops." % ABANDON_AFTER_N_LEVELS
+
         res = ''
         if doprint:
             res += cls.__name__ + ":\n"
 
         privacy_meta_model = cls._privacy_meta
 
-        flat_fields = privacy_meta_model.fields
-        if flat_fields:
-            for f in flat_fields:
-                res += "%s|-> %s\n" % (prefix, f)
+        flat_fields = privacy_meta_model.fields or []
+        for field in flat_fields:
+            res += "%s|-> %s\n" % (prefix, field)
 
-        for fk in privacy_meta_model.fk_fields:
+        for fk_field in privacy_meta_model.fk_fields:
 
             try:
-                f = getattr(cls, fk)
-                if hasattr(f, 'field'):
-                    f = f.field
-                elif hasattr(f, 'rel'):
-                    f = f.rel
-                child_model = f.related_model
-                res += "%s|-> %s = (%s [fk]):\n" % (prefix, fk, child_model.__name__)
+                field = getattr(cls, fk_field)
+                if hasattr(field, 'field'):
+                    field = field.field
+                elif hasattr(field, 'rel'):
+                    field = field.rel
+                child_model = field.related_model
+                res += "%s|-> %s = (%s [fk]):\n" % (prefix, fk_field, child_model.__name__)
 
-                res += child_model.get_anonymization_tree(prefix=BASE_PREFIX + prefix, doprint=False)
+                res += child_model.get_anonymisation_tree(prefix=BASE_PREFIX + prefix, doprint=False)
             except AttributeError as e:
-                print(e)
+                logger.exception("Field %s doesn't exist on %s", fk_field, cls)
                 res += 'ERROR: ' + str(e)
 
         for set_field in privacy_meta_model.set_fields:
@@ -406,13 +423,13 @@ class PrivacyModel(models.Model):
                 elif hasattr(f, "rel"):
                     child_model = f.rel.related_model
                 res += " = (%s [set_field]):\n" % child_model.__name__
-                res += child_model.get_anonymization_tree(prefix=BASE_PREFIX + prefix, doprint=False)
+                res += child_model.get_anonymisation_tree(prefix=BASE_PREFIX + prefix, doprint=False)
             except AttributeError as e:
-                print(e)
+                logger.exception("Field %s doesn't exist on %s", f, cls)
                 res += 'ERROR: ' + str(e)
 
         if doprint:
-            print(res)
+            logger.info(res)
         return res
 
     class Meta:
@@ -427,15 +444,27 @@ class RetentionPolicyItem(PrivacyModel):
     policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
     retention_policy = None  # it would inherit this from PrivacyModel, but it doesn't make sense here
 
+    class PrivacyMeta(PrivacyMeta):
+        fields = [
+            "related_objects",  # We use a regular field to have a method hook since it's not a real field on the model
+        ]
+
+        def anonymise_related_objects(self, instance, user):
+            # maybe make a recursive log call here?
+            instance._log_gdpr_recursive(user=user, start=True)
+            for related_object in instance.list_related_objects():
+                related_object.anonymise(user=user)
+            instance._log_gdpr_recursive(user=user, start=False)
+
     def list_related_objects(self):
         return [
             related_object
-            for related_object in getattr(self, field).all()
             for field in self._meta.get_fields()
             if field.is_relation and field.one_to_many
+            for related_object in getattr(self, field.get_accessor_name()).all()
         ]
 
-    def should_be_anonymized(self):
+    def should_be_anonymised(self):
         if self.policy_length is None:
             return False
 
@@ -448,10 +477,10 @@ class RetentionPolicyItem(PrivacyModel):
         return "Retention Policy %s starts %s days after %s" % (self.id, self.start_date, self.policy_length)
 
     @classmethod
-    def get_anonymization_tree(cls, prefix="", doprint=False, objs=None):
+    def get_anonymisation_tree(cls, prefix="", doprint=False, objs=None):
         """
-        The anonymization tree for a retention policy should show the number
-        of objects about to be anonymized.
+        The anonymisation tree for a retention policy should show the number
+        of objects about to be anonymised.
         """
         if objs is None:
             objs = []
@@ -465,7 +494,7 @@ class RetentionPolicyItem(PrivacyModel):
 
         tree_html = ""
         for class_, related_objects in related_objects_by_class.items():
-            tree = class_.get_anonymization_tree()  # possibly surface this info (what will be anonymized by class
+            tree = class_.get_anonymisation_tree()  # possibly surface this info (what will be anonymised by class
 
             # summarize the first 10
             related_objects_summaries = [
@@ -479,7 +508,7 @@ class RetentionPolicyItem(PrivacyModel):
             tree_html += (
                 '<br/><b title="{tree}">{class_name}</b> ({related_objects_count})<ul>{summaries}</ul>\n'.format(
                     tree=tree,
-                    class_name=c.__name__,
+                    class_name=class_.__name__,
                     related_objects_count=len(objs),
                     summaries="\n".join(related_objects_summaries),
                 )
@@ -532,7 +561,14 @@ class EventLogManager(models.Manager):
             logline.save()
         else:
             # TODO throw an error? maybe create this message with an error?
-            print("Cannot log an error for %s.%s pk=%s, since there is no existing log message" % (cls._meta.app_label, cls._meta.object_name, instance.pk))
+            logger.error(
+                "Cannot log an error for {app_label}.{object_name} pk={pk}, since "
+                "there is no existing log message".format(
+                    app_label=cls._meta.app_label,
+                    object_name=cls._meta.object_name,
+                    pk=instance.pk,
+                )
+            )
 
     def log(self, event, instance, user=None):
         cls = instance.__class__
