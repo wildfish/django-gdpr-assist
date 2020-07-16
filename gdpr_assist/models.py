@@ -581,11 +581,11 @@ class EventLog(models.Model):
         return obj
 
     def summary(self):
-        return "%s: %s performed on %s %s (app %s) [%s]" % (
-            self.log_time,
-            self.event,
-            self.model_name,
-            self.target_pk,
-            self.app_label,
-            self.acting_user,
+        return "{log_time}: {event} performed on {model_name} {target_pk} (app {app_label}) [{acting_user}]".format(
+            log_time=self.log_time,
+            event=self.event,
+            model_name=self.model_name,
+            target_pk=self.target_pk,
+            app_label=self.app_label,
+            acting_user=self.acting_user,
         )
