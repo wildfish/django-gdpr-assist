@@ -70,7 +70,7 @@ class ModelAdmin(admin.ModelAdmin):
         objects = manager.filter(pk__in=ids_raw.split(','))
         verbose_name = (
             self.model._meta.verbose_name.title()
-            if objects.count() == 1 else
+            if len(objects) == 1 else
             self.model._meta.verbose_name_plural.title()
         )
         changelist_url = reverse(
