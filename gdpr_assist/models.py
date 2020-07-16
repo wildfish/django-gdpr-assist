@@ -556,7 +556,7 @@ class EventLog(models.Model):
         (EVENT_ANONYMISE, _("Anonymise")),
         (EVENT_RECURSIVE_START, _("Anonymisation Recursion Start")),
         (EVENT_RECURSIVE_END, _("Anonymisation Recursion End")),
-        (EVENT_ALREADY_ANONYMISED, _('Snonymisation Sbandoned, Already Done'))
+        (EVENT_ALREADY_ANONYMISED, _('Anonymisation Skipped, Already Done'))
     )
 
     event = models.CharField(
