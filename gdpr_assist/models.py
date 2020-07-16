@@ -342,7 +342,7 @@ class PrivacyModel(models.Model):
             return "%s is anonymised, but does not have matching logs." % self
 
     @classmethod
-    def get_anonymization_tree(cls, prefix="", doprint=False, objs=[]):
+    def get_anonymisation_tree(cls, prefix="", doprint=False, objs=[]):
         """
         Print the result of the nesting defined above for a given model.
         Useful for sanity and loop checking. Example output:
