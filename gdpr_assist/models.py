@@ -439,9 +439,9 @@ class PrivacyModel(models.Model):
 @python_2_unicode_compatible
 class RetentionPolicyItem(PrivacyModel):
     description = models.CharField(default="", max_length=255)
-    start_date = models.DateTimeField(null=True, blank=False)
+    start_date = models.DateTimeField()
     updated_at = models.DateTimeField(auto_now=True)
-    policy_length = models.DurationField(null=True, blank=True)  # corresponds to a datetime.timedelta
+    policy_length = models.DurationField()  # corresponds to a datetime.timedelta
     retention_policy = None  # it would inherit this from PrivacyModel, but it doesn't make sense here
 
     class PrivacyMeta(PrivacyMeta):
