@@ -11,6 +11,7 @@ from collections import defaultdict
 from copy import copy
 
 from django.apps import apps
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -436,6 +437,7 @@ class RetentionPolicyItem(PrivacyModel):
     start_date = models.DateTimeField()
     updated_at = models.DateTimeField(auto_now=True)
     policy_length = models.DurationField()  # corresponds to a datetime.timedelta
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL)
 
     class PrivacyMeta(PrivacyMeta):
         fields = [
@@ -570,7 +572,7 @@ class EventLogManager(models.Manager):
             app_label=cls._meta.app_label,
             model_name=cls._meta.object_name,
             target_pk=instance.pk,
-            acting_user=str(user)
+            acting_user=user,
         )
 
 
@@ -595,7 +597,7 @@ class EventLog(models.Model):
     app_label = models.CharField(max_length=255)
     model_name = models.CharField(max_length=255)
     log_time = models.DateTimeField(auto_now_add=True)
-    acting_user = models.CharField(max_length=255, default="")
+    acting_user = models.ForeignKey(settings.AUTH_USER_MODEL)
     error_message = models.CharField(max_length=1000, default=None, null=True, blank=True)
     target_pk = models.TextField()
 
