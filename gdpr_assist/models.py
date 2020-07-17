@@ -437,7 +437,6 @@ class RetentionPolicyItem(PrivacyModel):
     start_date = models.DateTimeField()
     updated_at = models.DateTimeField(auto_now=True)
     policy_length = models.DurationField()  # corresponds to a datetime.timedelta
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL)
 
     class PrivacyMeta(PrivacyMeta):
         fields = [
@@ -597,7 +596,7 @@ class EventLog(models.Model):
     app_label = models.CharField(max_length=255)
     model_name = models.CharField(max_length=255)
     log_time = models.DateTimeField(auto_now_add=True)
-    acting_user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    acting_user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True)
     error_message = models.CharField(max_length=1000, default=None, null=True, blank=True)
     target_pk = models.TextField()
 
