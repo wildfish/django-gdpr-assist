@@ -180,7 +180,7 @@ class RetentionPolicyItemAdmin(ModelAdmin):
         related_objects = obj.list_related_objects()
 
         related_objects_lis = [
-            "<li><a href='{amdin_url}'>{related_object}</a></li>".format(
+            "<li><a href='{admin_url}'>{related_object}</a></li>".format(
                 admin_url=reverse(
                     "admin:{}_{}_change".format(
                         related_object._meta.app_label,

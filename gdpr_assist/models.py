@@ -205,10 +205,6 @@ class PrivacyModel(models.Model):
     An abstract model base class with support for anonymising data
     """
     anonymised = models.BooleanField(default=False)
-    retention_policy = models.ForeignKey(
-        to="gdpr_assist.RetentionPolicyItem", on_delete=models.SET_NULL,
-        null=True, blank=True,
-    )
 
     def anonymise(self, force=False, user=None):
         # Only anonymise things once to avoid a circular anonymisation
@@ -265,8 +261,6 @@ class PrivacyModel(models.Model):
             model   The model to turn into a PrivacyModel subclass.
         """
         # Make the model subclass PrivacyModel
-        # If done this way, the model will NOT have a link to retention policy
-        # To do that, make it an explicit subclass of PrivacyModel
         try:
             model.__bases__ = (PrivacyModel,) + model.__bases__
 
@@ -442,7 +436,6 @@ class RetentionPolicyItem(PrivacyModel):
     start_date = models.DateTimeField()
     updated_at = models.DateTimeField(auto_now=True)
     policy_length = models.DurationField()  # corresponds to a datetime.timedelta
-    retention_policy = None  # it would inherit this from PrivacyModel, but it doesn't make sense here
 
     class PrivacyMeta(PrivacyMeta):
         fields = [
