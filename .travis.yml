@@ -16,7 +16,6 @@ script:
 - tox
 env:
   matrix:
-  - TOXENV=py34-django1.8
   - TOXENV=py34-django1.11
   - TOXENV=py35-django1.11
   - TOXENV=py36-django1.11 DEPLOY=true
