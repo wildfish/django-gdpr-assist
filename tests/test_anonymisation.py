@@ -11,7 +11,7 @@ import uuid
 from django.db import models
 from django.test import TestCase
 
-from model_mommy import mommy
+from model_bakery import baker
 
 import gdpr_assist
 from gdpr_assist.models import PrivacyAnonymised
@@ -279,7 +279,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         self.assertEqual(obj.field, 0)
 
     def test_filefield__raise_exception(self):
-        obj = mommy.make(
+        obj = baker.make(
             self.get_model(models.FileField),
             _fill_optional=True,
             _create_files=True,
@@ -310,7 +310,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         )
 
     def test_imagefield__raise_exception(self):
-        obj = mommy.make(
+        obj = baker.make(
             self.get_model(models.ImageField),
             _fill_optional=True,
             _create_files=True,
@@ -398,7 +398,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         )
 
     def test_foreignkey__raise_exception(self):
-        obj = mommy.make(
+        obj = baker.make(
             self.get_model(models.ForeignKey),
             _fill_optional=True,
             _create_files=True,
@@ -413,7 +413,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         )
 
     def test_onetoonefield__raise_exception(self):
-        obj = mommy.make(
+        obj = baker.make(
             self.get_model(models.OneToOneField),
             _fill_optional=True,
             _create_files=True,
@@ -624,7 +624,7 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertIsNone(obj.field)
 
     def test_filefield__anonymise_to_none(self):
-        obj = mommy.make(
+        obj = baker.make(
             self.get_model(models.FileField),
             _fill_optional=True,
             _create_files=True,
@@ -650,7 +650,7 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertIsNone(obj.field)
 
     def test_imagefield__anonymise_to_none(self):
-        obj = mommy.make(
+        obj = baker.make(
             self.get_model(models.ImageField),
             _fill_optional=True,
             _create_files=True,
@@ -709,7 +709,7 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertIsNone(obj.field)
 
     def test_foreignkey__anonymise_to_none(self):
-        obj = mommy.make(
+        obj = baker.make(
             self.get_model(models.ForeignKey),
             _fill_optional=True,
             _create_files=True,
@@ -721,7 +721,7 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertIsNone(obj.field)
 
     def test_onetoonefield__anonymise_to_none(self):
-        obj = mommy.make(
+        obj = baker.make(
             self.get_model(models.OneToOneField),
             _fill_optional=True,
             _create_files=True,
@@ -751,7 +751,7 @@ class TestForbiddenAnonymisation(TestAnonymisationBase):
         )
 
     def test_manytomanyfield__raise_exception(self):
-        obj = mommy.make(
+        obj = baker.make(
             self.get_model(models.ManyToManyField),
             _fill_optional=True,
             _create_files=True,

@@ -4,7 +4,7 @@ from django.test import TransactionTestCase, modify_settings
 
 from gdpr_assist.models import PrivacyAnonymised
 from gdpr_assist.upgrading import check_migrate_gdpr_anonymised
-from model_mommy import mommy
+from model_bakery import baker
 
 
 class MigrationTestCase(TransactionTestCase):
@@ -171,8 +171,8 @@ class TestMigrateGdprAnonymisedOperator(MigrationTestCase):
             "anonymised_migration", "ModelWithPrivacyMeta"
         )
 
-        self.obj1 = mommy.make(ModelWithPrivacyMeta, anonymised=False)
-        self.obj2 = mommy.make(ModelWithPrivacyMeta, anonymised=True)
+        self.obj1 = baker.make(ModelWithPrivacyMeta, anonymised=False)
+        self.obj2 = baker.make(ModelWithPrivacyMeta, anonymised=True)
 
     def test_operator__anonymised_copied(self):
         anon1 = PrivacyAnonymised.objects.filter(object_id=self.obj1.pk).count()
@@ -200,9 +200,8 @@ class TestMigrateGdprAnonymisedReverseOperator(MigrationTestCase):
         content_type_cls = apps.get_model("contenttypes", "ContentType")
         ct = content_type_cls.objects.get_for_model(ModelWithPrivacyMeta)
 
-        self.obj1 = mommy.make(ModelWithPrivacyMeta)
-        self.obj2 = mommy.make(ModelWithPrivacyMeta)
-        privacy_model_cls.objects.create(content_type=ct, object_id=self.obj1.pk)
+        self.obj1 = baker.make(ModelWithPrivacyMeta)
+        self.obj2 = baker.make(ModelWithPrivacyMeta)
         privacy_model_cls.objects.create(content_type=ct, object_id=self.obj2.pk)
 
     def test_operator__anonymised_copied(self):

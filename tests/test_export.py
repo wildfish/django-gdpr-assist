@@ -3,7 +3,7 @@ Test export functionality
 """
 from django.test import TestCase
 
-from model_mommy import mommy
+from model_bakery import baker
 
 from .gdpr_assist_tests_app.models import (
     FirstSearchModel,
@@ -14,7 +14,7 @@ from .gdpr_assist_tests_app.models import (
 
 class TestExport(TestCase):
     def test_export_explicit_fields__fields_correct(self):
-        obj = mommy.make(
+        obj = baker.make(
             FirstSearchModel,
             chars='test',
             email='test@example.com',
@@ -27,7 +27,7 @@ class TestExport(TestCase):
         )
 
     def test_export_implicit_fields__fields_correct(self):
-        obj = mommy.make(
+        obj = baker.make(
             SecondSearchModel,
             chars='test',
             email='test@example.com',
@@ -43,7 +43,7 @@ class TestExport(TestCase):
         )
 
     def test_export_excluded_fields__fields_correct(self):
-        obj = mommy.make(
+        obj = baker.make(
             ThirdSearchModel,
             chars='test',
             email='test@example.com',

@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.test import Client, TestCase
 
-from model_mommy import mommy
+from model_bakery import baker
 
 import gdpr_assist
 
@@ -46,13 +46,13 @@ class AdminTestCase(TestCase):
 
 class TestModelAdmin(AdminTestCase):
     def test_changelist__anonymise_action_present(self):
-        mommy.make(ModelWithPrivacyMeta)
+        baker.make(ModelWithPrivacyMeta)
         response = self.client.get(model_root_url)
         self.assertContains(response, '<option value="anonymise">')
 
     def test_anonymise_action_submit__redirect_to_anonymise_view(self):
-        obj_1 = mommy.make(ModelWithPrivacyMeta)
-        obj_2 = mommy.make(ModelWithPrivacyMeta)
+        obj_1 = baker.make(ModelWithPrivacyMeta)
+        obj_2 = baker.make(ModelWithPrivacyMeta)
 
         response = self.client.post(
             model_root_url,
@@ -95,8 +95,8 @@ class TestModelAdmin(AdminTestCase):
         )
 
     def test_anonymise_view_submit__redirect_to_anonymise_view(self):
-        obj_1 = mommy.make(ModelWithPrivacyMeta)
-        obj_2 = mommy.make(ModelWithPrivacyMeta)
+        obj_1 = baker.make(ModelWithPrivacyMeta)
+        obj_2 = baker.make(ModelWithPrivacyMeta)
 
         response = self.client.post(
             model_root_url + 'anonymise/',
@@ -128,8 +128,8 @@ class TestModelAdmin(AdminTestCase):
         )
 
     def test_anonymise_action_submit__can_anonymise_disabled__404(self):
-        obj_1 = mommy.make(ModelWithPrivacyMetaCanNotAnonymise)
-        obj_2 = mommy.make(ModelWithPrivacyMetaCanNotAnonymise)
+        obj_1 = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
+        obj_2 = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
 
         response = self.client.post(
             '/admin/gdpr_assist_tests_app/modelwithprivacymetacannotanonymise/',
@@ -143,8 +143,8 @@ class TestModelAdmin(AdminTestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_anonymise_view_submit__can_anonymise_disabled__404(self):
-        obj_1 = mommy.make(ModelWithPrivacyMetaCanNotAnonymise)
-        obj_2 = mommy.make(ModelWithPrivacyMetaCanNotAnonymise)
+        obj_1 = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
+        obj_2 = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
 
         response = self.client.post(
             '/admin/gdpr_assist_tests_app/modelwithprivacymetacannotanonymise/anonymise/',
@@ -164,16 +164,16 @@ class TestModelAdmin(AdminTestCase):
 
 class TestAdminTool(AdminTestCase):
     def test_tool_is_available(self):
-        mommy.make(FirstSearchModel)
+        baker.make(FirstSearchModel)
         response = self.client.get(tool_root_url)
         self.assertContains(response, '<h1>Personal Data</h1>')
 
     def test_search__returns_correct_results(self):
-        obj_1 = mommy.make(
+        obj_1 = baker.make(
             FirstSearchModel,
             email='one@example.com',
         )
-        mommy.make(
+        baker.make(
             FirstSearchModel,
             email='two@example.com',
         )
@@ -192,11 +192,11 @@ class TestAdminTool(AdminTestCase):
         )
 
     def test_anonymise__records_anonymised(self):
-        obj_1 = mommy.make(
+        obj_1 = baker.make(
             FirstSearchModel,
             email='one@example.com',
         )
-        obj_2 = mommy.make(
+        obj_2 = baker.make(
             FirstSearchModel,
             email='two@example.com',
         )
@@ -230,12 +230,12 @@ class TestAdminTool(AdminTestCase):
             )
 
     def test_anonymise____can_anonymise_disabled__not_all_records_anonymised(self):
-        obj_1 = mommy.make(
+        obj_1 = baker.make(
             FirstSearchModel,
             email='an@example.com',
         )
         obj_1.anonymise()
-        obj_4 = mommy.make(
+        obj_4 = baker.make(
             ForthSearchModel,
             email='an@example.com',
         )
@@ -273,7 +273,7 @@ class TestAdminTool(AdminTestCase):
             )
 
     def test_warn_will_not_anonymise__present(self):
-        mommy.make(
+        baker.make(
             ForthSearchModel,
             email='an@example.com',
         )
@@ -288,7 +288,7 @@ class TestAdminTool(AdminTestCase):
         )
 
     def test_warn_will_not_anonymise__not_present(self):
-        mommy.make(
+        baker.make(
             FirstSearchModel,
             email='an@example.com',
         )
