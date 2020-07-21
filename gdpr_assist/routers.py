@@ -5,7 +5,7 @@ from . import app_settings
 
 
 class EventLogRouter:
-    privacy_model = 'privacyanonymised'
+    privacy_model = "privacyanonymised"
 
     def _route_model(self, model):
         """
@@ -13,7 +13,10 @@ class EventLogRouter:
 
         Except for the PrivacyAnonymised, which needs to be in main db.
         """
-        if model._meta.app_label == 'gdpr_assist' and model._meta.model_name != self.privacy_model:
+        if (
+            model._meta.app_label == "gdpr_assist"
+            and model._meta.model_name != self.privacy_model
+        ):
             return app_settings.GDPR_LOG_DATABASE_NAME
         return None
 
@@ -34,10 +37,10 @@ class EventLogRouter:
         Except for the PrivacyAnonymised, which needs to be in main db.
         """
         if db == app_settings.GDPR_LOG_DATABASE_NAME:
-            if app_label == 'gdpr_assist' and model_name != self.privacy_model:
+            if app_label == "gdpr_assist" and model_name != self.privacy_model:
                 return True
             else:
                 return False
-        elif app_label == 'gdpr_assist':
+        elif app_label == "gdpr_assist":
             return self.privacy_model == model_name
         return None

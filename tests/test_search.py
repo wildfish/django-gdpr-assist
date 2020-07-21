@@ -10,47 +10,47 @@ from model_bakery import baker
 from gdpr_assist.registry import registry
 
 from .gdpr_assist_tests_app.models import (
-    ModelWithPrivacyMeta,
     FirstSearchModel,
+    ModelWithPrivacyMeta,
     SecondSearchModel,
 )
 
 
 class TestPrivacyMetaSearch(TestCase):
     def test_search_no_fields_registered__returns_empty_queryset(self):
-        baker.make(ModelWithPrivacyMeta, email='test@example.com')
-        results = ModelWithPrivacyMeta._privacy_meta.search('test@example.com')
+        baker.make(ModelWithPrivacyMeta, email="test@example.com")
+        results = ModelWithPrivacyMeta._privacy_meta.search("test@example.com")
         self.assertEqual(results.count(), 0)
 
     def test_search__finds_match__ignores_miss(self):
-        expected = baker.make(FirstSearchModel, email='test@example.com')
-        baker.make(FirstSearchModel, email='miss@example.com')
+        expected = baker.make(FirstSearchModel, email="test@example.com")
+        baker.make(FirstSearchModel, email="miss@example.com")
 
-        results = FirstSearchModel._privacy_meta.search('test@example.com')
+        results = FirstSearchModel._privacy_meta.search("test@example.com")
         self.assertEqual(results.count(), 1)
         self.assertEqual(results[0].pk, expected.pk)
 
     def test_search__finds_multiple_matches__ignores_misses(self):
-        expected_1 = baker.make(FirstSearchModel, email='test@example.com')
-        expected_2 = baker.make(FirstSearchModel, email='test@example.com')
-        baker.make(FirstSearchModel, email='miss@example.com')
-        baker.make(FirstSearchModel, email='miss@example.com')
+        expected_1 = baker.make(FirstSearchModel, email="test@example.com")
+        expected_2 = baker.make(FirstSearchModel, email="test@example.com")
+        baker.make(FirstSearchModel, email="miss@example.com")
+        baker.make(FirstSearchModel, email="miss@example.com")
 
-        results = FirstSearchModel._privacy_meta.search('test@example.com')
+        results = FirstSearchModel._privacy_meta.search("test@example.com")
         self.assertEqual(results.count(), 2)
         self.assertListEqual(
-            sorted(results.values_list('pk', flat=True)),
+            sorted(results.values_list("pk", flat=True)),
             sorted([expected_1.pk, expected_2.pk]),
         )
 
 
 class TestRegistrySearch(TestCase):
     def test_search__finds_match_first_model__ignores_misses(self):
-        expected = baker.make(FirstSearchModel, email='test@example.com')
-        baker.make(FirstSearchModel, email='miss@example.com')
-        baker.make(SecondSearchModel, email='miss@example.com')
+        expected = baker.make(FirstSearchModel, email="test@example.com")
+        baker.make(FirstSearchModel, email="miss@example.com")
+        baker.make(SecondSearchModel, email="miss@example.com")
 
-        full_results = registry.search('test@example.com')
+        full_results = registry.search("test@example.com")
         self.assertEqual(len(full_results), 1)
 
         model, results = full_results[0]
@@ -59,11 +59,11 @@ class TestRegistrySearch(TestCase):
         self.assertEqual(results[0].pk, expected.pk)
 
     def test_search__finds_match_second_model__ignores_misses(self):
-        expected = baker.make(SecondSearchModel, email='test@example.com')
-        baker.make(FirstSearchModel, email='miss@example.com')
-        baker.make(SecondSearchModel, email='miss@example.com')
+        expected = baker.make(SecondSearchModel, email="test@example.com")
+        baker.make(FirstSearchModel, email="miss@example.com")
+        baker.make(SecondSearchModel, email="miss@example.com")
 
-        full_results = registry.search('test@example.com')
+        full_results = registry.search("test@example.com")
         self.assertEqual(len(full_results), 1)
 
         model, results = full_results[0]
@@ -72,14 +72,14 @@ class TestRegistrySearch(TestCase):
         self.assertEqual(results[0].pk, expected.pk)
 
     def test_search__finds_matches_multiple_models__ignores_misses(self):
-        expected_1 = baker.make(FirstSearchModel, email='test@example.com')
-        expected_2 = baker.make(FirstSearchModel, email='test@example.com')
-        expected_3 = baker.make(SecondSearchModel, email='test@example.com')
-        expected_4 = baker.make(SecondSearchModel, email='test@example.com')
-        baker.make(FirstSearchModel, email='miss@example.com')
-        baker.make(SecondSearchModel, email='miss@example.com')
+        expected_1 = baker.make(FirstSearchModel, email="test@example.com")
+        expected_2 = baker.make(FirstSearchModel, email="test@example.com")
+        expected_3 = baker.make(SecondSearchModel, email="test@example.com")
+        expected_4 = baker.make(SecondSearchModel, email="test@example.com")
+        baker.make(FirstSearchModel, email="miss@example.com")
+        baker.make(SecondSearchModel, email="miss@example.com")
 
-        full_results = registry.search('test@example.com')
+        full_results = registry.search("test@example.com")
         self.assertEqual(len(full_results), 2)
 
         # Sort full results into testable order
@@ -88,7 +88,10 @@ class TestRegistrySearch(TestCase):
 
         if model_0 is SecondSearchModel:
             model_0, results_0, model_1, results_1 = (
-                model_1, results_1, model_0, results_0,
+                model_1,
+                results_1,
+                model_0,
+                results_0,
             )
 
         self.assertEqual(model_0, FirstSearchModel)

@@ -8,10 +8,8 @@ from django.db import migrations
 class Migration(migrations.Migration):
     gdpr_assist_safe = True
 
-    dependencies = [
-        ("no_anonymised_migration", "0001_initial"),
-    ]
+    dependencies = [("no_anonymised_migration", "0001_initial")]
 
     operations = [
-        migrations.RemoveField(model_name="modelwithoutprivacymeta", name="anonymised"),
+        migrations.RemoveField(model_name="modelwithoutprivacymeta", name="anonymised")
     ]

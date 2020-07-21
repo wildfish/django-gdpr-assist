@@ -84,7 +84,7 @@ def field_model_factory(model_name, field_instance, field_name="field"):
     cls = type(
         str(model_name.format(field_instance.__class__.__name__)),
         (models.Model,),
-        {"__module__": TargetModel.__module__, field_name: field_instance,},
+        {"__module__": TargetModel.__module__, field_name: field_instance},
     )
 
     class PrivacyMeta:
@@ -123,15 +123,15 @@ not_nullable_models = {
         models.GenericIPAddressField(),
         models.URLField(),
         models.UUIDField(),
-        models.ForeignKey(TargetModel, on_delete=models.CASCADE, related_name="+",),
-        models.OneToOneField(TargetModel, on_delete=models.CASCADE, related_name="+",),
+        models.ForeignKey(TargetModel, on_delete=models.CASCADE, related_name="+"),
+        models.OneToOneField(TargetModel, on_delete=models.CASCADE, related_name="+"),
     ]
 }
 not_nullable_models.update(
     {
         "UUIDField-unique": field_model_factory(
-            "TestModelFor{}Unique", models.UUIDField(unique=True),
-        ),
+            "TestModelFor{}Unique", models.UUIDField(unique=True)
+        )
     }
 )
 
@@ -157,7 +157,7 @@ nullable_models = {
         models.DateTimeField(blank=True, null=True),
         models.DurationField(blank=True, null=True),
         models.TimeField(blank=True, null=True),
-        models.DecimalField(decimal_places=2, max_digits=7, blank=True, null=True,),
+        models.DecimalField(decimal_places=2, max_digits=7, blank=True, null=True),
         models.FloatField(blank=True, null=True),
         models.FileField(blank=True, null=True),
         models.FilePathField(blank=True, null=True),

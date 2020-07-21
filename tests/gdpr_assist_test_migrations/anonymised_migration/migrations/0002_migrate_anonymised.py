@@ -9,6 +9,4 @@ class Migration(migrations.Migration):
         ("anonymised_migration", "0001_initial"),
         ("gdpr_assist", "0002_privacyanonymised"),
     ]
-    operations = [
-        MigrateGdprAnonymised("ModelWithPrivacyMeta"),
-    ]
+    operations = [MigrateGdprAnonymised("ModelWithPrivacyMeta")]

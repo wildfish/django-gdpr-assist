@@ -100,15 +100,22 @@ Features:
   which shouldn't be anonymised. (#15, #17)
 * Add bulk anonymisation operations to improve efficiency of large anonymisations
 
+
+Changes:
+
+* This version removes Django 1.8 support
+
+
 Bugfixes:
 
 * Fix support for third party models by removing the ``anonymised`` field (#5, #13)
 * Fix duplicate migrations (#6, #12)
 * Fix documentation for post_anonymise (#8, #14)
 
-Other:
 
-* This version removes Django 1.8 support
+Internal:
+
+* Code style updated to use black and isort
 
 
 1.1.0, 2020-03-20

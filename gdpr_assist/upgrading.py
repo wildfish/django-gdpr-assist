@@ -17,9 +17,7 @@ class MigrateGdprAnonymised(Operation):
         self.model_name = model_name
 
     def deconstruct(self):
-        kwargs = {
-            "model_name": self.model_name,
-        }
+        kwargs = {"model_name": self.model_name}
         return (self.__class__.__name__, [], kwargs)
 
     def state_forwards(self, app_label, state):

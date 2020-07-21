@@ -11,9 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = []
 
-    run_before = [
-        ("gdpr_assist", "0001_initial"),
-    ]
+    run_before = [("gdpr_assist", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
@@ -32,5 +30,5 @@ class Migration(migrations.Migration):
                 ("chars", models.CharField(max_length=255)),
                 ("email", models.EmailField(max_length=254)),
             ],
-        ),
+        )
     ]

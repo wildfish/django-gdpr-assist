@@ -1,18 +1,18 @@
 """
 Test privacy event logging
 """
-import six
-
 from django.test import TestCase
 
+import six
 from model_bakery import baker
 
 from gdpr_assist.models import EventLog
 
 from .gdpr_assist_tests_app.models import (
-    ModelWithPrivacyMeta,
     ModelWithoutPrivacyMeta,
-    ModelWithPrivacyMetaCanNotAnonymise)
+    ModelWithPrivacyMeta,
+    ModelWithPrivacyMetaCanNotAnonymise,
+)
 
 
 class TestLogger(TestCase):
@@ -29,8 +29,8 @@ class TestLogger(TestCase):
 
         log = EventLog.objects.first()
         self.assertEqual(log.event, EventLog.EVENT_DELETE)
-        self.assertEqual(log.app_label, 'gdpr_assist_tests_app')
-        self.assertEqual(log.model_name, 'ModelWithPrivacyMeta')
+        self.assertEqual(log.app_label, "gdpr_assist_tests_app")
+        self.assertEqual(log.model_name, "ModelWithPrivacyMeta")
         self.assertEqual(log.target_pk, six.text_type(obj_pk))
 
     def test_anonymise_privacy_object__anonymisation_logged(self):
@@ -42,8 +42,8 @@ class TestLogger(TestCase):
 
         log = EventLog.objects.first()
         self.assertEqual(log.event, EventLog.EVENT_ANONYMISE)
-        self.assertEqual(log.app_label, 'gdpr_assist_tests_app')
-        self.assertEqual(log.model_name, 'ModelWithPrivacyMeta')
+        self.assertEqual(log.app_label, "gdpr_assist_tests_app")
+        self.assertEqual(log.model_name, "ModelWithPrivacyMeta")
         self.assertEqual(log.target_pk, six.text_type(obj.pk))
 
     def test_delete_normal_object__deletion_not_logged(self):
@@ -77,7 +77,9 @@ class TestLogger(TestCase):
         found = log.get_target()
         self.assertIsNone(found)
 
-    def test_anonymise_privacy_object__disabled_anonymise__anonymisation__not__logged(self):
+    def test_anonymise_privacy_object__disabled_anonymise__anonymisation__not__logged(
+        self
+    ):
         obj = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
         self.assertEqual(EventLog.objects.count(), 0)
 

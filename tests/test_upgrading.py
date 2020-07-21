@@ -2,9 +2,10 @@ from django.db import DEFAULT_DB_ALIAS, connections
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase, modify_settings
 
+from model_bakery import baker
+
 from gdpr_assist.models import PrivacyAnonymised
 from gdpr_assist.upgrading import check_migrate_gdpr_anonymised
-from model_bakery import baker
 
 
 class MigrationTestCase(TransactionTestCase):
@@ -80,7 +81,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
 
     @modify_settings(
         INSTALLED_APPS={
-            "append": "tests.gdpr_assist_test_migrations.anonymised_migration",
+            "append": "tests.gdpr_assist_test_migrations.anonymised_migration"
         }
     )
     def test_anonymised_migration_uses_operator__check_passes(self):
@@ -105,7 +106,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
 
     @modify_settings(
         INSTALLED_APPS={
-            "append": "tests.gdpr_assist_test_migrations.no_anonymised_migration",
+            "append": "tests.gdpr_assist_test_migrations.no_anonymised_migration"
         }
     )
     def test_no_anonymised_migration_uses_flag__check_passes(self):
@@ -129,7 +130,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
 
     @modify_settings(
         INSTALLED_APPS={
-            "append": "tests.gdpr_assist_test_migrations.missing_anonymised_migration",
+            "append": "tests.gdpr_assist_test_migrations.missing_anonymised_migration"
         }
     )
     def test_missing_anonymised_migration__check_fails(self):

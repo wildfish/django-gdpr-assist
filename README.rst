@@ -15,6 +15,7 @@ https://github.com/wildfish/django-gdpr-assist
 .. image:: https://readthedocs.org/projects/django-gdpr-assist/badge/?version=latest
     :target: https://django-gdpr-assist.readthedocs.io/en/latest/?badge=latest
 
+
 Features
 ========
 

@@ -7,10 +7,8 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ("missing_anonymised_migration", "0001_initial"),
-    ]
+    dependencies = [("missing_anonymised_migration", "0001_initial")]
 
     operations = [
-        migrations.RemoveField(model_name="modelwithprivacymeta", name="anonymised",),
+        migrations.RemoveField(model_name="modelwithprivacymeta", name="anonymised")
     ]
