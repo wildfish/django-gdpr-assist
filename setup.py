@@ -1,7 +1,8 @@
 import os
 import re
 import sys
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 
 VERSION = '1.1.0'
@@ -127,7 +128,6 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Framework :: Django',
-        'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.11',
         'Framework :: Django :: 2.0',
         'Framework :: Django :: 2.1',
@@ -138,7 +138,7 @@ setup(
     extras_require={
         'dev': [
             # Testing
-            'tox', 'pillow', 'model-mommy',
+            'tox', 'pillow', 'model_bakery',
 
             # Docs
             'sphinx', 'sphinx-autobuild', 'sphinx_rtd_theme',

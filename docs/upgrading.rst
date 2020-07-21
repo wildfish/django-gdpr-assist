@@ -100,23 +100,28 @@ Features:
   which shouldn't be anonymised. (#15, #17)
 * Add bulk anonymisation operations to improve efficiency of large anonymisations
 
-Bugfixes
+Bugfixes:
 
 * Fix support for third party models by removing the ``anonymised`` field (#5, #13)
 * Fix duplicate migrations (#6, #12)
 * Fix documentation for post_anonymise (#8, #14)
 
+Other:
+
+* This version removes Django 1.8 support
+
 
 1.1.0, 2020-03-20
 -----------------
 
-Python 2.7:
-
-* This version removes python 2.7 support.
-
 Bugfix:
 
 * Allow managers with delete to have custom additional parameters.
+
+
+Other:
+
+* This version removes python 2.7 support.
 
 
 1.0.1, 2018-10-23
