@@ -4,6 +4,7 @@ gdpr-assist app definition
 from django.apps import AppConfig, apps
 from django.db import models
 
+from . import upgrading  # noqa
 from .deletion import ANONYMISE
 from .registry import registry
 

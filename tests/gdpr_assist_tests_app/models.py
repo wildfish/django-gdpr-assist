@@ -12,17 +12,19 @@ class ModelWithPrivacyMeta(models.Model):
     """
     Test PrivacyMeta definition on the model
     """
+
     chars = models.CharField(max_length=255)
     email = models.EmailField()
 
     class PrivacyMeta:
-        fields = ['chars', 'email']
+        fields = ["chars", "email"]
 
 
 class ModelWithoutPrivacyMeta(models.Model):
     """
     Test no PrivacyMeta definition
     """
+
     chars = models.CharField(max_length=255)
     email = models.EmailField()
 
@@ -31,30 +33,20 @@ class ModelWithPrivacyMetaCanNotAnonymise(models.Model):
     """
     Test PrivacyMeta definition on the model
     """
+
     chars = models.CharField(max_length=255)
     email = models.EmailField()
 
     class PrivacyMeta:
-        fields = ['chars', 'email']
+        fields = ["chars", "email"]
         can_anonymise = False
-        
-        
-class ModelWithPrivacyMetaAlreadyMigrated(models.Model):
-    """
-    Test PrivacyMeta definition on the model, it already has a field anonymised.
-    """
-    chars = models.CharField(max_length=255)
-    email = models.EmailField()
-    anonymised = models.BooleanField(default=True)
 
-    class PrivacyMeta:
-        fields = ['chars', 'email']
-        
-        
+
 class TargetModel(models.Model):
     """
     Target model for tests, no private data
     """
+
     chars = models.CharField(max_length=255, blank=True)
 
 
@@ -62,16 +54,18 @@ class PrivateTargetModel(models.Model):
     """
     Target model for tests with private data
     """
+
     chars = models.CharField(max_length=255, blank=True)
 
     class PrivacyMeta:
-        fields = ['chars']
+        fields = ["chars"]
 
 
 class PrivateUnregisteredTargetModel(models.Model):
     """
     Target model which isn't registered with gdpr-assist
     """
+
     chars = models.CharField(max_length=255, blank=True)
 
 
@@ -79,20 +73,18 @@ class PrivateTargetCanNotAnonymiseModel(models.Model):
     """
     Target model which is register but anonymisation is disabled.
     """
+
     chars = models.CharField(max_length=255, blank=True)
 
     class PrivacyMeta:
-        fields = ['chars']
+        fields = ["chars"]
 
 
-def field_model_factory(model_name, field_instance, field_name='field'):
+def field_model_factory(model_name, field_instance, field_name="field"):
     cls = type(
         str(model_name.format(field_instance.__class__.__name__)),
         (models.Model,),
-        {
-            '__module__': TargetModel.__module__,
-            field_name: field_instance,
-        },
+        {"__module__": TargetModel.__module__, field_name: field_instance,},
     )
 
     class PrivacyMeta:
@@ -105,7 +97,7 @@ def field_model_factory(model_name, field_instance, field_name='field'):
 # Test all fields that gdpr-assist can blank without nulling
 
 not_nullable_models = {
-    field.__class__: field_model_factory('TestModelFor{}', field)
+    field.__class__: field_model_factory("TestModelFor{}", field)
     for field in [
         models.BigIntegerField(),
         models.IntegerField(),
@@ -131,24 +123,17 @@ not_nullable_models = {
         models.GenericIPAddressField(),
         models.URLField(),
         models.UUIDField(),
-        models.ForeignKey(
-            TargetModel,
-            on_delete=models.CASCADE,
-            related_name='+',
-        ),
-        models.OneToOneField(
-            TargetModel,
-            on_delete=models.CASCADE,
-            related_name='+',
-        ),
+        models.ForeignKey(TargetModel, on_delete=models.CASCADE, related_name="+",),
+        models.OneToOneField(TargetModel, on_delete=models.CASCADE, related_name="+",),
     ]
 }
-not_nullable_models.update({
-    'UUIDField-unique': field_model_factory(
-        'TestModelFor{}Unique',
-        models.UUIDField(unique=True),
-    ),
-})
+not_nullable_models.update(
+    {
+        "UUIDField-unique": field_model_factory(
+            "TestModelFor{}Unique", models.UUIDField(unique=True),
+        ),
+    }
+)
 
 
 # Test all fields that can be nulled
@@ -156,7 +141,7 @@ not_nullable_models.update({
 # Excludes BooleanField - can never be null
 
 nullable_models = {
-    field.__class__: field_model_factory('TestModelForNullable{}', field)
+    field.__class__: field_model_factory("TestModelForNullable{}", field)
     for field in [
         models.BigIntegerField(blank=True, null=True),
         models.IntegerField(blank=True, null=True),
@@ -172,12 +157,7 @@ nullable_models = {
         models.DateTimeField(blank=True, null=True),
         models.DurationField(blank=True, null=True),
         models.TimeField(blank=True, null=True),
-        models.DecimalField(
-            decimal_places=2,
-            max_digits=7,
-            blank=True,
-            null=True,
-        ),
+        models.DecimalField(decimal_places=2, max_digits=7, blank=True, null=True,),
         models.FloatField(blank=True, null=True),
         models.FileField(blank=True, null=True),
         models.FilePathField(blank=True, null=True),
@@ -190,14 +170,14 @@ nullable_models = {
             TargetModel,
             blank=True,
             null=True,
-            related_name='+',
+            related_name="+",
             on_delete=models.CASCADE,
         ),
         models.OneToOneField(
             TargetModel,
             blank=True,
             null=True,
-            related_name='+',
+            related_name="+",
             on_delete=models.CASCADE,
         ),
     ]
@@ -210,16 +190,16 @@ class UnknownCustomField(models.CharField):
 
 forbidden_models = {
     models.AutoField: field_model_factory(
-        model_name='TestModelForbiddenForAutoField',
+        model_name="TestModelForbiddenForAutoField",
         field_instance=models.AutoField(primary_key=True),
-        field_name='id',
+        field_name="id",
     ),
     models.ManyToManyField: field_model_factory(
-        model_name='TestModelForbiddenForManyToManyField',
-        field_instance=models.ManyToManyField(TargetModel, related_name='+'),
+        model_name="TestModelForbiddenForManyToManyField",
+        field_instance=models.ManyToManyField(TargetModel, related_name="+"),
     ),
     UnknownCustomField: field_model_factory(
-        model_name='TestModelForbiddenForUnknownCustomField',
+        model_name="TestModelForbiddenForUnknownCustomField",
         field_instance=UnknownCustomField(max_length=255),
     ),
 }
@@ -234,65 +214,66 @@ class TestModelForKnownCustomField(models.Model):
 
     class PrivacyMeta:
         def anonymise_field(self, instance):
-            instance.field = 'Anonymised'
+            instance.field = "Anonymised"
 
 
 # Test relations
 
+
 class OneToOneFieldModel(models.Model):
     chars = models.CharField(max_length=255, blank=True)
     target = models.OneToOneField(
-        'PrivateTargetModel',
+        "PrivateTargetModel",
         null=True,
         blank=True,
         on_delete=gdpr_assist.ANONYMISE(models.SET_NULL),
-        related_name='onetoonefield',
+        related_name="onetoonefield",
     )
 
     class PrivacyMeta:
-        fields = ['chars']
+        fields = ["chars"]
 
 
 class ForeignKeyModel(models.Model):
     chars = models.CharField(max_length=255, blank=True)
     target = models.ForeignKey(
-        'PrivateTargetModel',
+        "PrivateTargetModel",
         null=True,
         blank=True,
         on_delete=gdpr_assist.ANONYMISE(models.SET_NULL),
-        related_name='foreignkey',
+        related_name="foreignkey",
     )
 
     class PrivacyMeta:
-        fields = ['chars']
+        fields = ["chars"]
 
 
 class ForeignKeyToUnregisteredModel(models.Model):
     chars = models.CharField(max_length=255, blank=True)
     target = models.ForeignKey(
-        'PrivateUnregisteredTargetModel',
+        "PrivateUnregisteredTargetModel",
         null=True,
         blank=True,
         on_delete=gdpr_assist.ANONYMISE(models.SET_NULL),
-        related_name='foreignkey',
+        related_name="foreignkey",
     )
 
     class PrivacyMeta:
-        fields = ['chars']
+        fields = ["chars"]
 
 
 class ForeignKeyToCanNotAnonymisedModel(models.Model):
     chars = models.CharField(max_length=255, blank=True)
     target = models.ForeignKey(
-        'PrivateTargetCanNotAnonymiseModel',
+        "PrivateTargetCanNotAnonymiseModel",
         null=True,
         blank=True,
         on_delete=gdpr_assist.ANONYMISE(models.SET_NULL),
-        related_name='foreignkey',
+        related_name="foreignkey",
     )
 
     class PrivacyMeta:
-        fields = ['chars']
+        fields = ["chars"]
         can_anonymise = False
 
 
@@ -300,50 +281,54 @@ class FirstSearchModel(models.Model):
     """
     Test PrivacyMeta search and export
     """
+
     chars = models.CharField(max_length=255)
     email = models.EmailField()
 
     class PrivacyMeta:
-        fields = ['chars', 'email']
-        search_fields = ['email']
-        export_fields = ['email']
+        fields = ["chars", "email"]
+        search_fields = ["email"]
+        export_fields = ["email"]
 
 
 class SecondSearchModel(models.Model):
     """
     Test PrivacyMeta search and export
     """
+
     chars = models.CharField(max_length=255)
     email = models.EmailField()
 
     class PrivacyMeta:
-        fields = ['chars', 'email']
-        search_fields = ['email']
-        export_filename = 'second_search.csv'
+        fields = ["chars", "email"]
+        search_fields = ["email"]
+        export_filename = "second_search.csv"
 
 
 class ThirdSearchModel(models.Model):
     """
     Test PrivacyMeta search and export
     """
+
     chars = models.CharField(max_length=255)
     email = models.EmailField()
 
     class PrivacyMeta:
-        fields = ['chars', 'email']
-        search_fields = ['email']
-        export_exclude = ['email']
+        fields = ["chars", "email"]
+        search_fields = ["email"]
+        export_exclude = ["email"]
 
 
 class ForthSearchModel(models.Model):
     """
     Test PrivacyMeta search and export
     """
+
     chars = models.CharField(max_length=255)
     email = models.EmailField()
 
     class PrivacyMeta:
-        fields = ['chars', 'email']
-        search_fields = ['email']
-        export_exclude = ['email']
+        fields = ["chars", "email"]
+        search_fields = ["email"]
+        export_exclude = ["email"]
         can_anonymise = False
