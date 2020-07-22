@@ -6,5 +6,5 @@ htmlcov
 docs/_*
 build
 dist
-example/db.sqlite3
+example/*.sqlite3
 mock*

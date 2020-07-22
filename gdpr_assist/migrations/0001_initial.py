@@ -9,28 +9,46 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='PersonalData',
+            name="PersonalData",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                )
             ],
-            options={
-                'verbose_name_plural': 'Personal data',
-                'managed': False,
-            },
+            options={"verbose_name_plural": "Personal data", "managed": False},
         ),
         migrations.CreateModel(
-            name='EventLog',
+            name="EventLog",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('event', models.CharField(choices=[('delete', 'Delete'), ('anonymise', 'Anonymise')], max_length=9)),
-                ('app_label', models.CharField(max_length=255)),
-                ('model_name', models.CharField(max_length=255)),
-                ('target_pk', models.TextField()),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "event",
+                    models.CharField(
+                        choices=[("delete", "Delete"), ("anonymise", "Anonymise")],
+                        max_length=9,
+                    ),
+                ),
+                ("app_label", models.CharField(max_length=255)),
+                ("model_name", models.CharField(max_length=255)),
+                ("target_pk", models.TextField()),
             ],
         ),
     ]

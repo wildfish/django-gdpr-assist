@@ -7,7 +7,7 @@ from ...models import EventLog
 
 
 class Command(BaseCommand):
-    help = 'Re-runs a GDPR operations log'
+    help = "Re-runs a GDPR operations log"
 
     def handle(self, *args, **options):
         for log in EventLog.objects.all():
@@ -24,4 +24,4 @@ class Command(BaseCommand):
                 target.anonymise(force=True)
 
             else:  # pragma: no cover
-                raise ValueError('Unexpected event type')
+                raise ValueError("Unexpected event type")

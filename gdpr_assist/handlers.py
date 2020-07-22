@@ -1,7 +1,7 @@
 """
 Signal handlers
 """
-from django.db.models.signals import class_prepared, pre_delete, post_delete
+from django.db.models.signals import class_prepared, post_delete, pre_delete
 from django.dispatch import receiver
 
 from . import app_settings

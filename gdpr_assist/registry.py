@@ -23,31 +23,24 @@ class Registry(object):
         from .models import PrivacyMeta, PrivacyModel
 
         if model in self.models:
-            raise ValueError('Model {}.{} already registered'.format(
-                model._meta.app_label,
-                model._meta.object_name,
-            ))
+            raise ValueError(
+                "Model {}.{} already registered".format(
+                    model._meta.app_label, model._meta.object_name
+                )
+            )
 
         # Ensure the PrivacyMeta is a subclass of models.PrivacyMeta
         if privacy_meta is None:
             privacy_meta = PrivacyMeta
 
         if not issubclass(privacy_meta, PrivacyMeta):
-            privacy_meta = type(
-                'PrivacyMeta',
-                (privacy_meta, PrivacyMeta, object),
-                {},
-            )
+            privacy_meta = type("PrivacyMeta", (privacy_meta, PrivacyMeta, object), {})
 
         # Instantiate the new class
         privacy_meta = privacy_meta(model)
 
         # Move the processed PrivacyMeta onto the attribute _privacy_meta
-        setattr(
-            model,
-            app_settings.GDPR_PRIVACY_INSTANCE_NAME,
-            privacy_meta,
-        )
+        setattr(model, app_settings.GDPR_PRIVACY_INSTANCE_NAME, privacy_meta)
         if hasattr(model, app_settings.GDPR_PRIVACY_CLASS_NAME):
             delattr(model, app_settings.GDPR_PRIVACY_CLASS_NAME)
 

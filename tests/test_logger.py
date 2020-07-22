@@ -1,18 +1,18 @@
 """
 Test privacy event logging
 """
-import six
-
 from django.test import TestCase
 
-from model_mommy import mommy
+import six
+from model_bakery import baker
 
 from gdpr_assist.models import EventLog
 
 from .gdpr_assist_tests_app.models import (
-    ModelWithPrivacyMeta,
     ModelWithoutPrivacyMeta,
-    ModelWithPrivacyMetaCanNotAnonymise)
+    ModelWithPrivacyMeta,
+    ModelWithPrivacyMetaCanNotAnonymise,
+)
 
 
 class TestLogger(TestCase):
@@ -20,7 +20,7 @@ class TestLogger(TestCase):
         EventLog.objects.all().delete()
 
     def test_delete_privacy_object__deletion_logged(self):
-        obj = mommy.make(ModelWithPrivacyMeta)
+        obj = baker.make(ModelWithPrivacyMeta)
         self.assertEqual(EventLog.objects.count(), 0)
         obj_pk = obj.pk
 
@@ -29,12 +29,12 @@ class TestLogger(TestCase):
 
         log = EventLog.objects.first()
         self.assertEqual(log.event, EventLog.EVENT_DELETE)
-        self.assertEqual(log.app_label, 'gdpr_assist_tests_app')
-        self.assertEqual(log.model_name, 'ModelWithPrivacyMeta')
+        self.assertEqual(log.app_label, "gdpr_assist_tests_app")
+        self.assertEqual(log.model_name, "ModelWithPrivacyMeta")
         self.assertEqual(log.target_pk, six.text_type(obj_pk))
 
     def test_anonymise_privacy_object__anonymisation_logged(self):
-        obj = mommy.make(ModelWithPrivacyMeta)
+        obj = baker.make(ModelWithPrivacyMeta)
         self.assertEqual(EventLog.objects.count(), 0)
 
         obj.anonymise()
@@ -42,19 +42,19 @@ class TestLogger(TestCase):
 
         log = EventLog.objects.first()
         self.assertEqual(log.event, EventLog.EVENT_ANONYMISE)
-        self.assertEqual(log.app_label, 'gdpr_assist_tests_app')
-        self.assertEqual(log.model_name, 'ModelWithPrivacyMeta')
+        self.assertEqual(log.app_label, "gdpr_assist_tests_app")
+        self.assertEqual(log.model_name, "ModelWithPrivacyMeta")
         self.assertEqual(log.target_pk, six.text_type(obj.pk))
 
     def test_delete_normal_object__deletion_not_logged(self):
-        obj = mommy.make(ModelWithoutPrivacyMeta)
+        obj = baker.make(ModelWithoutPrivacyMeta)
         self.assertEqual(EventLog.objects.count(), 0)
 
         obj.delete()
         self.assertEqual(EventLog.objects.count(), 0)
 
     def test_logged_object_get_target__finds_correct_object(self):
-        obj = mommy.make(ModelWithPrivacyMeta)
+        obj = baker.make(ModelWithPrivacyMeta)
         self.assertEqual(EventLog.objects.count(), 0)
 
         obj.anonymise()
@@ -67,7 +67,7 @@ class TestLogger(TestCase):
         self.assertEqual(obj.email, found.email)
 
     def test_logged_object_deleted_get_target__returns_none(self):
-        obj = mommy.make(ModelWithPrivacyMeta)
+        obj = baker.make(ModelWithPrivacyMeta)
         self.assertEqual(EventLog.objects.count(), 0)
 
         obj.delete()
@@ -77,8 +77,10 @@ class TestLogger(TestCase):
         found = log.get_target()
         self.assertIsNone(found)
 
-    def test_anonymise_privacy_object__disabled_anonymise__anonymisation__not__logged(self):
-        obj = mommy.make(ModelWithPrivacyMetaCanNotAnonymise)
+    def test_anonymise_privacy_object__disabled_anonymise__anonymisation__not__logged(
+        self
+    ):
+        obj = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
         self.assertEqual(EventLog.objects.count(), 0)
 
         obj.anonymise()

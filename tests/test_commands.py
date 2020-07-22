@@ -31,8 +31,7 @@ class Capturing(list):
     def __exit__(self, *args):
         # Ensure output is unicode
         self.extend(
-            six.text_type(line)
-            for line in self._stringio.getvalue().splitlines()
+            six.text_type(line) for line in self._stringio.getvalue().splitlines()
         )
         sys.stdout = self._stdout
         sys.stderr = self._stderr
@@ -41,26 +40,21 @@ class Capturing(list):
 class CommandTestCase(TestCase):
     def run_command(self, command, *args, **kwargs):
         # Silent
-        kwargs['verbosity'] = 1
+        kwargs["verbosity"] = 1
 
         with Capturing() as output:
-            call_command(
-                command,
-                *args,
-                **kwargs
-            )
+            call_command(command, *args, **kwargs)
 
         if DISPLAY_CALL_COMMAND:
-            print('>> {} {} {}'.format(
-                command,
-                ' '.join(args),
-                ' '.join([
-                    '{}={}'.format(key, val)
-                    for key, val in kwargs.items()
-                ]),
-            ))
-            print('\n'.join(output))
-            print('<<')
+            print(
+                ">> {} {} {}".format(
+                    command,
+                    " ".join(args),
+                    " ".join(["{}={}".format(key, val) for key, val in kwargs.items()]),
+                )
+            )
+            print("\n".join(output))
+            print("<<")
 
         return output
 
@@ -68,35 +62,30 @@ class CommandTestCase(TestCase):
 class TestAnonymiseCommand(CommandTestCase):
     def test_anonymise_command__anonymises_data(self):
         obj_1 = ModelWithPrivacyMeta.objects.create(
-            chars='test',
-            email='test@example.com',
+            chars="test", email="test@example.com"
         )
         self.assertFalse(obj_1.is_anonymised())
-        self.run_command('anonymise_db', interactive=False)
+        self.run_command("anonymise_db", interactive=False)
 
         obj_1.refresh_from_db()
         self.assertTrue(obj_1.is_anonymised())
         self.assertEqual(obj_1.chars, six.text_type(obj_1.pk))
-        self.assertEqual(obj_1.email, '{}@anon.example.com'.format(obj_1.pk))
+        self.assertEqual(obj_1.email, "{}@anon.example.com".format(obj_1.pk))
 
     def test_anonymise_disabled__raises_error(self):
 
         with self.assertRaises(ValueError) as cm:
             with self.settings(GDPR_CAN_ANONYMISE_DATABASE=False):
-                self.run_command('anonymise_db', interactive=False)
+                self.run_command("anonymise_db", interactive=False)
 
-        self.assertEqual(
-            'Database anonymisation is not enabled',
-            str(cm.exception),
-        )
+        self.assertEqual("Database anonymisation is not enabled", str(cm.exception))
 
     def test_anonymise_command__does_notanonymises_data(self):
         obj_1 = ModelWithPrivacyMetaCanNotAnonymise.objects.create(
-            chars='test',
-            email='test@example.com',
+            chars="test", email="test@example.com"
         )
         self.assertFalse(obj_1.is_anonymised())
-        self.run_command('anonymise_db', interactive=False)
+        self.run_command("anonymise_db", interactive=False)
 
         obj_1.refresh_from_db()
         self.assertFalse(obj_1.is_anonymised())
@@ -105,30 +94,28 @@ class TestAnonymiseCommand(CommandTestCase):
 class TestRerunCommand(CommandTestCase):
     def test_gdpr_delete__deletes_object(self):
         obj_1 = ModelWithPrivacyMeta.objects.create(
-            chars='test',
-            email='test@example.com',
+            chars="test", email="test@example.com"
         )
 
         # Log deletion without deleting to simulate deletion and db restore
         obj_1._log_gdpr_delete()
 
-        self.run_command('gdpr_rerun')
+        self.run_command("gdpr_rerun")
 
         self.assertEqual(ModelWithPrivacyMeta.objects.count(), 0)
 
     def test_gdpr_anonymise__anonymises_object(self):
         obj_1 = ModelWithPrivacyMeta.objects.create(
-            chars='test',
-            email='test@example.com',
+            chars="test", email="test@example.com"
         )
 
         # Log anonymise without anonymising to simulate deletion and db restore
         obj_1._log_gdpr_anonymise()
 
-        self.run_command('gdpr_rerun')
+        self.run_command("gdpr_rerun")
 
         self.assertEqual(ModelWithPrivacyMeta.objects.count(), 1)
         obj_1.refresh_from_db()
         self.assertTrue(obj_1.is_anonymised())
         self.assertEqual(obj_1.chars, six.text_type(obj_1.pk))
-        self.assertEqual(obj_1.email, '{}@anon.example.com'.format(obj_1.pk))
+        self.assertEqual(obj_1.email, "{}@anon.example.com".format(obj_1.pk))

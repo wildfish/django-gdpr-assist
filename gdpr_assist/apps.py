@@ -4,6 +4,7 @@ gdpr-assist app definition
 from django.apps import AppConfig, apps
 from django.db import models
 
+from . import upgrading  # noqa
 from .deletion import ANONYMISE
 from .registry import registry
 
@@ -12,18 +13,18 @@ def is_on_delete_anonymise(field):
     if not isinstance(field, (models.OneToOneField, models.ForeignKey)):
         return False
 
-    if hasattr(field, 'remote_field'):
+    if hasattr(field, "remote_field"):
         remote_field = field.remote_field
-    elif hasattr(field, 'rel'):
+    elif hasattr(field, "rel"):
         remote_field = field.rel
     else:  # pragma: no cover
-        raise ValueError('Unexpected remote field attribute')
+        raise ValueError("Unexpected remote field attribute")
     return isinstance(remote_field.on_delete, ANONYMISE)
 
 
 class GdprAppConfig(AppConfig):
-    name = 'gdpr_assist'
-    verbose_name = 'GDPR'
+    name = "gdpr_assist"
+    verbose_name = "GDPR"
 
     def ready(self):
         """
@@ -40,14 +41,15 @@ class GdprAppConfig(AppConfig):
         """
         for model in registry.models.keys():
             relation_fields = [
-                field for field in model._meta.get_fields()
+                field
+                for field in model._meta.get_fields()
                 if is_on_delete_anonymise(field)
             ]
 
             for field in relation_fields:
                 if (
-                    field.related_model not in registry and
-                    field.related_model not in registry.watching_on_delete
+                    field.related_model not in registry
+                    and field.related_model not in registry.watching_on_delete
                 ):
                     registry._watch_on_delete(field.related_model)
 
@@ -65,11 +67,9 @@ class GdprAppConfig(AppConfig):
                 if is_on_delete_anonymise(field):
                     raise ValueError(
                         (
-                            'Relationship {}.{}.{} set to anonymise on delete,'
-                            ' but model is not registered with gdpr-assist'
+                            "Relationship {}.{}.{} set to anonymise on delete,"
+                            " but model is not registered with gdpr-assist"
                         ).format(
-                            model._meta.app_label,
-                            model._meta.object_name,
-                            field.name,
+                            model._meta.app_label, model._meta.object_name, field.name
                         )
                     )
