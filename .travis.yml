@@ -1,7 +1,6 @@
+os: linux
+dist: xenial
 language: python
-python: '3.6'
-sudo: required
-dist: trusty
 install:
 - pip install --upgrade pip wheel setuptools
 - pip install virtualenv tox
@@ -14,29 +13,42 @@ before_script:
   EXISTS gdpr_assist_tests'; fi"
 script:
 - tox
-env:
-  matrix:
-  - TOXENV=py34-django1.11
-  - TOXENV=py35-django1.11
-  - TOXENV=py36-django1.11 DEPLOY=true
-  - TOXENV=py36-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
-  - TOXENV=py36-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
-  - TOXENV=py34-django2.0
-  - TOXENV=py35-django2.0
-  - TOXENV=py36-django2.0
-  - TOXENV=py35-django2.1
-  - TOXENV=py36-django2.1
+
 matrix:
   include:
+
   - python: '3.5'
-    env: TOXENV=py35-django1.11
-  exclude:
+    env: TOXENV=py35-django2.2
+
   - python: '3.6'
-    env: TOXENV=py35-django1.11
+    env: TOXENV=py36-django2.2
   - python: '3.6'
-    env: TOXENV=py35-django2.0
+    env: TOXENV=py36-django3.0
   - python: '3.6'
-    env: TOXENV=py35-django2.1
+    env: TOXENV=py36-django3.1
+
+  - python: '3.7'
+    env: TOXENV=py37-django2.2
+  - python: '3.7'
+    env: TOXENV=py37-django3.0
+  - python: '3.7'
+    env: TOXENV=py37-django3.1
+
+  - python: '3.8'
+    env: TOXENV=py38-django2.2 DEPLOY=true
+  - python: '3.8'
+    env: TOXENV=py38-django2.2 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  - python: '3.8'
+    env: TOXENV=py38-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  - python: '3.8'
+    env: TOXENV=py38-django3.0
+  - python: '3.8'
+    env: TOXENV=py38-django3.1
+  - python: '3.8'
+    env: TOXENV=py38-django3.1 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  - python: '3.8'
+    env: TOXENV=py38-django3.1 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+
 deploy:
   provider: pypi
   user: wildfish-deployer
@@ -44,7 +56,6 @@ deploy:
     secure: WA/hOu0PfmH1+qGXTYZXF+NaQDURWbni7ggjWmiuZ/RC/jajsvaTyxTjHyMI8OYfjZebvrPjbNcSRkmYZr2ntplNaNPQBI3yS5HQjjaKtghy2b0wzsxETuvfa78o5WtpIAr4zdXbESW08jBiKEMgYLrBLigAhaVA68sRoZQU6Zk+8R54Qs3HTUqT81nBA8+7+MfqPE2g9EDnzX+b/8LPpOLMINn3KF9jerYbuuXvt2WfjHGZjDExKh1XrZCB5ZCi7vPO7AI2PnBn3afBztCVebsyXaPt3XwX4yt8Sf2D/pzgZ5a1cDgKFlsme1CcrrWCDY25qccFE8SOd5/1WWpF7kkfGysX6A5YBFh6qaKh6OjBEGZkFvXATX3GUzeI4kymERVnDt23/5DdNJEVjVdZOotzF6GwTnn7YMwoGF1oDIkekkmfUEa/QBxgyaZranJADTw+YK0cWxWbCcNutVXgd8zZQZLxg2+zF/KG6kcVuVT2uQBRaI/wiWF7hhueN4kgVtAukGzJdFGLNz6mOFv8sk1kifBanLhY4rdiGiv4YtexpIV4cli+5l948N+ql4NLbcKOUm2W+7jfnYMgo3O/bx6B9Bk8hVMR8Vfdb7j5c3a23i4N/4B6m8qFWEQBZmUXDamAoLXJwvw/Nu9Cu5+sbrwVs1pKuabD+/sExZ0Nroo=
   on:
     tags: true
-    distributions: sdist bdist_wheel
     repo: wildfish/django-gdpr-assist
     condition: "$DEPLOY = true"
 notifications:

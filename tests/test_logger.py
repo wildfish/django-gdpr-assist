@@ -3,7 +3,6 @@ Test privacy event logging
 """
 from django.test import TestCase
 
-import six
 from model_bakery import baker
 
 from gdpr_assist.models import EventLog
@@ -33,7 +32,7 @@ class TestLogger(TestCase):
         self.assertEqual(log.event, EventLog.EVENT_DELETE)
         self.assertEqual(log.app_label, "gdpr_assist_tests_app")
         self.assertEqual(log.model_name, "ModelWithPrivacyMeta")
-        self.assertEqual(log.target_pk, six.text_type(obj_pk))
+        self.assertEqual(log.target_pk, str(obj_pk))
 
     def test_anonymise_privacy_object__anonymisation_logged(self):
         obj = baker.make(ModelWithPrivacyMeta)
@@ -46,7 +45,7 @@ class TestLogger(TestCase):
         self.assertEqual(log.event, EventLog.EVENT_ANONYMISE)
         self.assertEqual(log.app_label, "gdpr_assist_tests_app")
         self.assertEqual(log.model_name, "ModelWithPrivacyMeta")
-        self.assertEqual(log.target_pk, six.text_type(obj.pk))
+        self.assertEqual(log.target_pk, str(obj.pk))
 
     def test_delete_normal_object__deletion_not_logged(self):
         obj = baker.make(ModelWithoutPrivacyMeta)

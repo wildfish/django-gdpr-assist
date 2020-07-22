@@ -11,8 +11,6 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
-import six
-
 from . import handlers  # noqa
 from . import app_settings
 from .anonymiser import anonymise_field, anonymise_related_objects
@@ -185,7 +183,7 @@ class PrivacyMeta(object):
 
     def export(self, instance):
         return {
-            field_name: six.text_type(getattr(instance, field_name))
+            field_name: str(getattr(instance, field_name))
             for field_name in self._export_fields
         }
 

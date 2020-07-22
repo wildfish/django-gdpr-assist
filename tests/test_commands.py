@@ -7,8 +7,6 @@ from io import StringIO
 from django.core.management import call_command
 from django.test import TestCase
 
-import six
-
 from .gdpr_assist_tests_app.models import (
     ModelWithPrivacyMeta,
     ModelWithPrivacyMetaCanNotAnonymise,
@@ -30,9 +28,7 @@ class Capturing(list):
 
     def __exit__(self, *args):
         # Ensure output is unicode
-        self.extend(
-            six.text_type(line) for line in self._stringio.getvalue().splitlines()
-        )
+        self.extend(str(line) for line in self._stringio.getvalue().splitlines())
         sys.stdout = self._stdout
         sys.stderr = self._stderr
 
@@ -71,7 +67,7 @@ class TestAnonymiseCommand(CommandTestCase):
 
         obj_1.refresh_from_db()
         self.assertTrue(obj_1.is_anonymised())
-        self.assertEqual(obj_1.chars, six.text_type(obj_1.pk))
+        self.assertEqual(obj_1.chars, str(obj_1.pk))
         self.assertEqual(obj_1.email, "{}@anon.example.com".format(obj_1.pk))
 
     def test_anonymise_disabled__raises_error(self):
@@ -119,5 +115,5 @@ class TestRerunCommand(CommandTestCase):
         self.assertEqual(ModelWithPrivacyMeta.objects.count(), 1)
         obj_1.refresh_from_db()
         self.assertTrue(obj_1.is_anonymised())
-        self.assertEqual(obj_1.chars, six.text_type(obj_1.pk))
+        self.assertEqual(obj_1.chars, str(obj_1.pk))
         self.assertEqual(obj_1.email, "{}@anon.example.com".format(obj_1.pk))

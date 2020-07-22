@@ -91,6 +91,19 @@ which database objects have been anonymised.
 Changelog
 =========
 
+1.3.0, 2020-07-
+-----------------
+
+Features:
+
+* Add support for Django 3.0 and 3.1
+
+
+Changes:
+
+* Remove support for Django 2.1 and earlier
+
+
 1.2.0, 2020-07-15
 -----------------
 

@@ -1,20 +1,21 @@
 """
 Anonymisation support for Django ModelAdmin classes
 """
+import django
 from django.conf.urls import url
 from django.contrib import admin, messages
 from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
-
-try:
-    from django.urls import reverse
-except ImportError:
-    # Django <2.0
-    from django.core.urlresolvers import reverse
-
 from .. import app_settings
+
+
+if django.VERSION < (3, 1):
+    from django.contrib.admin import ACTION_CHECKBOX_NAME
+else:
+    from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 
 
 class ModelAdmin(admin.ModelAdmin):
@@ -34,7 +35,7 @@ class ModelAdmin(admin.ModelAdmin):
         return actions
 
     def anonymise_action(self, modeladmin, request, queryset):
-        selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
+        selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
         return HttpResponseRedirect(
             "{url}?ids={ids}".format(
                 url=reverse(
