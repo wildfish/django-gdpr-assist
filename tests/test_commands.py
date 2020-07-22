@@ -38,6 +38,8 @@ class Capturing(list):
 
 
 class CommandTestCase(TestCase):
+    databases = "__all__"
+
     def run_command(self, command, *args, **kwargs):
         # Silent
         kwargs["verbosity"] = 1

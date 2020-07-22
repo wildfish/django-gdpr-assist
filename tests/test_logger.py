@@ -16,6 +16,8 @@ from .gdpr_assist_tests_app.models import (
 
 
 class TestLogger(TestCase):
+    databases = "__all__"
+
     def setUp(self):
         EventLog.objects.all().delete()
 
@@ -78,7 +80,7 @@ class TestLogger(TestCase):
         self.assertIsNone(found)
 
     def test_anonymise_privacy_object__disabled_anonymise__anonymisation__not__logged(
-        self
+        self,
     ):
         obj = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
         self.assertEqual(EventLog.objects.count(), 0)
