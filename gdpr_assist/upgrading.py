@@ -93,7 +93,7 @@ def check_migrate_gdpr_anonymised(app_configs, **kwargs):
     # Step through migration plan looking for relevant migrations
     is_upgrading = False
     migrated_models = defaultdict(dict)
-    plan = executor.migration_plan(executor.loader.graph.leaf_nodes())
+    plan = executor.migration_plan(executor.loader.graph.leaf_nodes(), clean_start=True)
     for migration, is_backwards in plan:
         # Don't worry about reverse migrations
         if is_backwards:
