@@ -14,7 +14,7 @@ before_script:
 script:
 - tox
 
-matrix:
+jobs:
   include:
 
   - python: '3.5'
@@ -38,6 +38,8 @@ matrix:
     env: TOXENV=py38-django2.2 DEPLOY=true
   - python: '3.8'
     env: TOXENV=py38-django2.2 DATABASE_ENGINE=mysql DATABASE_USER=travis
+    services:
+      - mysql
   - python: '3.8'
     env: TOXENV=py38-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
   - python: '3.8'
