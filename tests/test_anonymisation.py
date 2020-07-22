@@ -34,6 +34,8 @@ from .gdpr_assist_tests_app.models import (
 
 
 class TestAnonymisationBase(TestCase):
+    databases = "__all__"
+
     def get_model(self, key):
         return self.models[key]
 
@@ -749,6 +751,8 @@ class TestForbiddenAnonymisation(TestAnonymisationBase):
 
 
 class TestRelation(TestCase):
+    databases = "__all__"
+
     def test_onetoonefield_anonymise__anonymise_not_propagated(self):
         target = PrivateTargetModel.objects.create(chars="Test")
         obj = OneToOneFieldModel.objects.create(chars="Test", target=target)
@@ -854,6 +858,8 @@ class TestOtherAnonymisation(TestAnonymisationBase):
 
 
 class TestQuerySet(TestCase):
+    databases = "__all__"
+
     def test_queryset_anonymise__anonymise_all(self):
         objs = []
         for i in range(5):

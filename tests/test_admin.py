@@ -28,6 +28,8 @@ tool_root_url = "/admin/gdpr_assist/personaldata/"
 
 
 class AdminTestCase(TestCase):
+    databases = "__all__"
+
     def setUp(self):
         self.client = Client()
         user = User.objects.create_superuser(

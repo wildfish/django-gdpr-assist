@@ -96,6 +96,7 @@ Changelog
 
 Features:
 
+* Add support for Django 2.2
 * Add ``can_anonymise`` flag to ``PrivacyMeta`` to support searching and exporting data
   which shouldn't be anonymised. (#15, #17)
 * Add bulk anonymisation operations to improve efficiency of large anonymisations
@@ -103,7 +104,7 @@ Features:
 
 Changes:
 
-* This version removes Django 1.8 support
+* Remove support for Django 1.8
 
 
 Bugfixes:
