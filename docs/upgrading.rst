@@ -70,9 +70,16 @@ If the ``anonymised`` field was not added by gdpr-assist, and you do not want to
 ``MigrateGdprAnonymised``, you can tell the check to ignore the failing migration by
 adding ``gdpr_assist_safe = True`` to the migration class; for example::
 
-        class Migration(migrations.Migration):
-            gdpr_assist_safe = True
-            dependencies = [...
+    class Migration(migrations.Migration):
+        gdpr_assist_safe = True
+        dependencies = [...
+
+Alternatively if you are happy that all your migrations are safe, you can add the check
+to ``SILENCED_SYSTEM_CHECKS`` in your project settings to disable the migration check::
+
+    SILENCED_SYSTEM_CHECKS = [
+        "gdpr_assist.E001",
+    ]
 
 
 Changes to your code

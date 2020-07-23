@@ -66,3 +66,22 @@ The internal name of the log database. You'll need to use this in the
 Set this to ``True`` to enable the ``anonymise_db`` management command. You
 will want this to be ``False`` on your production deployment.
 
+
+```SILENCED_SYSTEM_CHECKS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, gdpr-assist performs migration checks to ensure that you've followed
+the upgrade instructions correctly to avoid accidental data loss.
+
+See :doc:`upgrading` for more details of the specific checks.
+
+They may cause a slight performance hit to management command which run checks, so while
+we recommend you leave them on while upgrading, once the upgrade has been completed and
+succesfully deployed the checks can safely be disabled afterwards by adding them to
+Django's `SILENCED_SYSTEMS_CHECKS`__ setting::
+
+    SILENCED_SYSTEM_CHECKS = [
+        "gdpr_assist.E001",
+    ]
+
+__ https://docs.djangoproject.com/en/3.0/ref/settings/#silenced-system-checks
