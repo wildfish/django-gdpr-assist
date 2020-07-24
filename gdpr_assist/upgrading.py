@@ -3,6 +3,7 @@ Tools to assist with upgrades
 """
 from collections import defaultdict
 
+from django.conf import settings
 from django.core.checks import Error, Tags, register
 from django.core.exceptions import ImproperlyConfigured
 from django.db import DEFAULT_DB_ALIAS, connections, migrations, router
@@ -76,7 +77,13 @@ def check_migrate_gdpr_anonymised(app_configs, **kwargs):
     Check that the developers using gdpr-assist have read the instructions for upgrading
     from version 1.1.0
     """
+    # Check is optional
+    # Normally SILENCED_SYSTEM_CHECKS would let the check run, and errors couldn't be
+    # silenced. We'll abuse the setting in the interest of keeping configuration simple.
+    if "gdpr_assist.E001" in settings.SILENCED_SYSTEM_CHECKS:
+        return []
 
+    # Import here instead of top level as django.apps won't be available at import time
     from django.db.migrations.executor import MigrationExecutor
 
     errors = []
@@ -91,21 +98,11 @@ def check_migrate_gdpr_anonymised(app_configs, **kwargs):
         return
 
     # Step through migration plan looking for relevant migrations
-    is_upgrading = False
     migrated_models = defaultdict(dict)
-    plan = executor.migration_plan(executor.loader.graph.leaf_nodes())
+    plan = executor.migration_plan(executor.loader.graph.leaf_nodes(), clean_start=True)
     for migration, is_backwards in plan:
         # Don't worry about reverse migrations
         if is_backwards:
-            continue
-
-        # Start examining migrations once we've seen the v1.2.0 migration
-        if not is_upgrading:
-            if (
-                migration.app_label == "gdpr_assist"
-                and migration.name == "0002_privacyanonymised"
-            ):
-                is_upgrading = True
             continue
 
         # Look at operations
