@@ -1,7 +1,11 @@
 language: python
-python: '3.8'
+python:
+  - "2.7"
+  - "3.6"
+  - "3.7"
+  - "3.8"
 sudo: required
-dist: trusty
+dist: bionic
 install:
 - pip install --upgrade pip wheel setuptools
 - pip install virtualenv tox
