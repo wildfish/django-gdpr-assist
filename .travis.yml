@@ -28,8 +28,8 @@ env:
   - TOXENV=py38-django2.1
   - TOXENV=py37-django2.2
   - TOXENV=py38-django2.2
-  - TOXENV=py37-django3.0.8
-  - TOXENV=py38-django3.0.8
+  # - TOXENV=py37-django3.0
+  # - TOXENV=py38-django3.0
 # matrix:
 #   include:
 #   - python: '3.7'
