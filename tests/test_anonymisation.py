@@ -409,7 +409,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         with self.assertRaises(gdpr_assist.AnonymiseError) as cm:
             obj.anonymise()
         self.assertEqual(
-            'Cannot anonymise field - can only null relationship field',
+            'Cannot anonymise field - can only null relationship field. Put into fk_fields to do this.',
             str(cm.exception),
         )
 
@@ -425,7 +425,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         with self.assertRaises(gdpr_assist.AnonymiseError) as cm:
             obj.anonymise()
         self.assertEqual(
-            'Cannot anonymise field - can only null relationship field',
+            'Cannot anonymise field - can only null relationship field. Put into fk_fields to do this.',
             str(cm.exception),
         )
 
