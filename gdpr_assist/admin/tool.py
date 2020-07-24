@@ -12,17 +12,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
-
-import six
-
-
-try:
-    from django.urls import reverse
-except ImportError:
-    # Django <2.0
-    from django.core.urlresolvers import reverse
 
 from .. import app_settings
 from ..registry import registry
@@ -159,9 +151,7 @@ class PersonalDataAdmin(admin.ModelAdmin):
                     if not csv_writer:
                         csv_writer = csv.DictWriter(
                             csv_buffer,
-                            fieldnames=[
-                                six.text_type(key) for key in obj_export.keys()
-                            ],
+                            fieldnames=[str(key) for key in obj_export.keys()],
                         )
                         csv_writer.writeheader()
 

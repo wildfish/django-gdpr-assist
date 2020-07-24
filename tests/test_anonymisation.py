@@ -9,7 +9,6 @@ from decimal import Decimal
 from django.db import models
 from django.test import TestCase
 
-import six
 from freezegun import freeze_time
 from model_bakery import baker
 
@@ -377,8 +376,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         self.assertNotEqual(
             obj.field, uuid.UUID("{00000000-0000-0000-0000-000000000000}")
         )
-        six.assertRegex(
-            self,
+        self.assertRegex(
             str(obj.field),
             r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
         )

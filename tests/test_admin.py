@@ -36,12 +36,7 @@ class AdminTestCase(TestCase):
             username="test", email="test@example.com", password="test"
         )
 
-        if django.VERSION <= (1, 9):
-            # Django 1.8 support - no client.force_login
-            self.client.login(username="test", password="test")
-        else:
-            # Django 1.9+
-            self.client.force_login(user)
+        self.client.force_login(user)
 
 
 class TestModelAdmin(AdminTestCase):
@@ -64,14 +59,7 @@ class TestModelAdmin(AdminTestCase):
             root_url=model_root_url, pk1=obj_1.pk, pk2=obj_2.pk
         )
 
-        if django.VERSION <= (1, 9):
-            # Django 1.8 support - redirects include host
-            self.assertEqual(len(response.redirect_chain), 1)
-            self.assertTrue(response.redirect_chain[0][0].endswith(test_url))
-            self.assertEqual(response.redirect_chain[0][1], 302)
-        else:
-            # Django 1.9+
-            self.assertEqual(response.redirect_chain, [(test_url, 302)])
+        self.assertEqual(response.redirect_chain, [(test_url, 302)])
         self.assertContains(
             response,
             "<p>Are you sure you want to anonymise the following Model With Privacy Metas:</p>",
@@ -97,14 +85,7 @@ class TestModelAdmin(AdminTestCase):
         self.assertTrue(obj_1.is_anonymised())
         self.assertTrue(obj_2.is_anonymised())
 
-        if django.VERSION <= (1, 9):
-            # Django 1.8 support - redirects include host
-            self.assertEqual(len(response.redirect_chain), 1)
-            self.assertTrue(response.redirect_chain[0][0].endswith(model_root_url))
-            self.assertEqual(response.redirect_chain[0][1], 302)
-        else:
-            # Django 1.9+
-            self.assertEqual(response.redirect_chain, [(model_root_url, 302)])
+        self.assertEqual(response.redirect_chain, [(model_root_url, 302)])
 
         self.assertContains(
             response, '<li class="success">2 Model With Privacy Metas anonymised</li>'
@@ -181,14 +162,7 @@ class TestAdminTool(AdminTestCase):
         self.assertTrue(obj_1.is_anonymised())
         self.assertFalse(obj_2.is_anonymised())
 
-        if django.VERSION <= (1, 9):
-            # Django 1.8 support - redirects include host
-            self.assertEqual(len(response.redirect_chain), 1)
-            self.assertTrue(response.redirect_chain[0][0].endswith(tool_root_url))
-            self.assertEqual(response.redirect_chain[0][1], 302)
-        else:
-            # Django 1.9+
-            self.assertEqual(response.redirect_chain, [(tool_root_url, 302)])
+        self.assertEqual(response.redirect_chain, [(tool_root_url, 302)])
 
     def test_anonymise____can_anonymise_disabled__not_all_records_anonymised(self):
         obj_1 = baker.make(FirstSearchModel, email="an@example.com")
@@ -215,14 +189,7 @@ class TestAdminTool(AdminTestCase):
         self.assertTrue(obj_1.is_anonymised())
         self.assertFalse(obj_4.is_anonymised())
 
-        if django.VERSION <= (1, 9):
-            # Django 1.8 support - redirects include host
-            self.assertEqual(len(response.redirect_chain), 1)
-            self.assertTrue(response.redirect_chain[0][0].endswith(tool_root_url))
-            self.assertEqual(response.redirect_chain[0][1], 302)
-        else:
-            # Django 1.9+
-            self.assertEqual(response.redirect_chain, [(tool_root_url, 302)])
+        self.assertEqual(response.redirect_chain, [(tool_root_url, 302)])
 
     def test_warn_will_not_anonymise__present(self):
         baker.make(ForthSearchModel, email="an@example.com")
