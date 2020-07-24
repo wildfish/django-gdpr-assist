@@ -768,7 +768,7 @@ class TestForbiddenAnonymisation(TestAnonymisationBase):
         with self.assertRaises(gdpr_assist.AnonymiseError) as cm:
             obj.anonymise()
         self.assertEqual(
-            'Cannot anonymise field - cannot anonymise ManyToManyField',
+            'Cannot anonymise field - cannot anonymise ManyToManyField. Put into set_fields to do this.',
             str(cm.exception),
         )
 
