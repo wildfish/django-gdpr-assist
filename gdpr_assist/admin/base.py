@@ -11,7 +11,6 @@ from datetime import timedelta
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib import messages
-from django.core.urlresolvers import reverse
 from django.forms import ChoiceField, Select, DateField
 from django.forms import ModelForm
 from django.forms.widgets import SelectDateWidget
