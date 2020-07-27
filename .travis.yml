@@ -5,6 +5,9 @@ python:
   - "3.8"
 sudo: required
 dist: bionic
+services:
+  - postgres
+  - mysql
 install:
   - pip install --upgrade pip wheel setuptools
   - pip install virtualenv tox
