@@ -199,7 +199,9 @@ class TestModelForKnownCustomField(models.Model):
     field = KnownCustomField(max_length=255)
 
     class PrivacyMeta:
-        def anonymise_field(self, instance):
+        fields = ['field']
+
+        def anonymise_field(self, instance, user):
             instance.field = 'Anonymised'
 
 
