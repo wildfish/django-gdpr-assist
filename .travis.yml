@@ -60,6 +60,15 @@ matrix:
       env: TOXENV=py37-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
       services: postgres
 
+    - python: 3.7
+      env: TOXENV=py37-django3.0
+    - python: 3.7
+      env: TOXENV=py37-django3.0 DATABASE_ENGINE=mysql DATABASE_USER=travis
+      services: mysql
+    - python: 3.7
+      env: TOXENV=py37-django3.0 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+      services: postgres
+
     - python: 3.8
       env: TOXENV=py38-django1.11
     - python: 3.8
@@ -94,4 +103,13 @@ matrix:
       services: mysql
     - python: 3.8
       env: TOXENV=py38-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+      services: postgres
+
+    - python: 3.8
+      env: TOXENV=py38-django3.0
+    - python: 3.8
+      env: TOXENV=py38-django3.0 DATABASE_ENGINE=mysql DATABASE_USER=travis
+      services: mysql
+    - python: 3.8
+      env: TOXENV=py38-django3.0 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
       services: postgres
