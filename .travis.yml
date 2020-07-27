@@ -17,11 +17,11 @@ script:
 env:
   matrix:
   - TOXENV=py27-django1.11
-  - TOXENV=py36-django1.11 DEPLOY=true
+  - TOXENV=py37-django1.11 DEPLOY=true
   - TOXENV=py27-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
   - TOXENV=py27-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
-  - TOXENV=py36-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
-  - TOXENV=py36-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  - TOXENV=py37-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  - TOXENV=py37-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
   - TOXENV=py37-django2.0
   - TOXENV=py38-django2.0
   - TOXENV=py37-django2.1
@@ -30,15 +30,23 @@ env:
   - TOXENV=py38-django2.2
   # - TOXENV=py37-django3.0
   # - TOXENV=py38-django3.0
-# matrix:
-#   include:
-#   - python: '3.7'
-#     env: TOXENV=py37-django1.11
-#   exclude:
-#   - python: '3.6'
-#     env: TOXENV=py35-django1.11
-#   - python: '3.6'
-#     env: TOXENV=py35-django2.0
-#   - python: '3.6'
-#     env: TOXENV=py35-django2.1
-#   - python: '3.7
+matrix:
+  include:
+    - python: '2.7'
+      env: TOXENV=py27-django1.11
+    - python: '3.6'
+      env: TOXENV=py36-django1.11
+    - python: '3.7'
+      env: TOXENV=py37-django1.11
+    - python: '3.7'
+      env: TOXENV=py37-django2.0
+    - python: '3.7'
+      env: TOXENV=py37-django2.1
+    - python: '3.7'
+      env: TOXENV=py37-django2.2
+    - python: '3.8'
+      env: TOXENV=py38-django2.0
+    - python: '3.8'
+      env: TOXENV=py38-django2.1
+    - python: '3.8'
+      env: TOXENV=py38-django2.2
