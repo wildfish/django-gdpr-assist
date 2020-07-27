@@ -1,13 +1,6 @@
 language: python
-python:
-  - "2.7"
-  - "3.7"
-  - "3.8"
 sudo: required
 dist: bionic
-services:
-  - postgres
-  - mysql
 install:
   - pip install --upgrade pip wheel setuptools
   - pip install virtualenv tox
@@ -20,32 +13,36 @@ before_script:
     EXISTS gdpr_assist_tests'; fi"
 script:
   - tox
-env:
-  matrix:
-    - TOXENV=py27-django1.11
-    - TOXENV=py27-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
-    - TOXENV=py27-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
-    - TOXENV=py37-django1.11
-    - TOXENV=py37-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
-    - TOXENV=py37-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
-    - TOXENV=py37-django2.0
-    - TOXENV=py37-django2.0 DATABASE_ENGINE=mysql DATABASE_USER=travis
-    - TOXENV=py37-django2.0 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
-    - TOXENV=py38-django2.0
-    - TOXENV=py38-django2.0 DATABASE_ENGINE=mysql DATABASE_USER=travis
-    - TOXENV=py38-django2.0 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
-    - TOXENV=py37-django2.1
-    - TOXENV=py37-django2.1 DATABASE_ENGINE=mysql DATABASE_USER=travis
-    - TOXENV=py37-django2.1 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
-    - TOXENV=py38-django2.1
-    - TOXENV=py38-django2.1 DATABASE_ENGINE=mysql DATABASE_USER=travis
-    - TOXENV=py38-django2.1 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
-    - TOXENV=py37-django2.2
-    - TOXENV=py37-django2.2 DATABASE_ENGINE=mysql DATABASE_USER=travis
-    - TOXENV=py37-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
-    - TOXENV=py38-django2.2
-    - TOXENV=py38-django2.2 DATABASE_ENGINE=mysql DATABASE_USER=travis
-    - TOXENV=py38-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+matrix:
+  include:
+    - python: 2.7
+      env: TOXENV=py27-django1.11
+    - python: 2.7
+      env: TOXENV=py27-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
+      services: mysql
+  # - TOXENV=py27-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  # - TOXENV=py27-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  # - TOXENV=py37-django1.11
+  # - TOXENV=py37-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  # - TOXENV=py37-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  # - TOXENV=py37-django2.0
+  # - TOXENV=py37-django2.0 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  # - TOXENV=py37-django2.0 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  # - TOXENV=py38-django2.0
+  # - TOXENV=py38-django2.0 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  # - TOXENV=py38-django2.0 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  # - TOXENV=py37-django2.1
+  # - TOXENV=py37-django2.1 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  # - TOXENV=py37-django2.1 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  # - TOXENV=py38-django2.1
+  # - TOXENV=py38-django2.1 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  # - TOXENV=py38-django2.1 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  # - TOXENV=py37-django2.2
+  # - TOXENV=py37-django2.2 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  # - TOXENV=py37-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+  # - TOXENV=py38-django2.2
+  # - TOXENV=py38-django2.2 DATABASE_ENGINE=mysql DATABASE_USER=travis
+  # - TOXENV=py38-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
 
-    # - TOXENV=py37-django3.0
-    # - TOXENV=py38-django3.0
+  # # - TOXENV=py37-django3.0
+  # # - TOXENV=py38-django3.0
