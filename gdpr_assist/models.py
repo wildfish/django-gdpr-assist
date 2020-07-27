@@ -380,7 +380,11 @@ class PrivacyModel(models.Model):
         ABANDON_AFTER_N_LEVELS = 10
         BASE_PREFIX = "    "
         if len(prefix) > len(BASE_PREFIX) * ABANDON_AFTER_N_LEVELS:
-            return "ERROR: shouldn't go %s levels deep, check for loops." % ABANDON_AFTER_N_LEVELS
+            raise RecursionError(
+                "Shouldn't go {levels} levels deep, check for loops.".format(
+                    levels=ABANDON_AFTER_N_LEVELS,
+                )
+            )
 
         res = ''
         if doprint:
@@ -396,32 +400,42 @@ class PrivacyModel(models.Model):
 
             try:
                 field = getattr(cls, fk_field)
-                if hasattr(field, 'field'):
-                    field = field.field
-                elif hasattr(field, 'rel'):
-                    field = field.rel
-                child_model = field.related_model
-                res += "%s|-> %s = (%s [fk]):\n" % (prefix, fk_field, child_model.__name__)
+            except AttributeError:
+                logger.exception(
+                    "Make sure {field} is a field on the model {model_name}".format(
+                        field=fk_field,
+                        model_name=cls.__class__.__name__,
+                    )
+                )
+                raise
+            if hasattr(field, 'field'):
+                field = field.field
+            elif hasattr(field, 'rel'):
+                field = field.rel
+            child_model = field.related_model
+            res += "%s|-> %s = (%s [fk]):\n" % (prefix, fk_field, child_model.__name__)
 
-                res += child_model.get_anonymisation_tree(prefix=BASE_PREFIX + prefix, doprint=False)
-            except AttributeError as e:
-                logger.exception("Field %s doesn't exist on %s", fk_field, cls)
-                res += 'ERROR: ' + str(e)
+            res += child_model.get_anonymisation_tree(prefix=BASE_PREFIX + prefix, doprint=False)
 
         for set_field in privacy_meta_model.set_fields:
             res += "%s|-> %s" % (prefix, set_field)
 
             try:
                 f = getattr(cls, set_field)
-                if hasattr(f, "objects"):
-                    child_model = f.objects.model
-                elif hasattr(f, "rel"):
-                    child_model = f.rel.related_model
-                res += " = (%s [set_field]):\n" % child_model.__name__
-                res += child_model.get_anonymisation_tree(prefix=BASE_PREFIX + prefix, doprint=False)
-            except AttributeError as e:
-                logger.exception("Field %s doesn't exist on %s", f, cls)
-                res += 'ERROR: ' + str(e)
+            except AttributeError:
+                logger.exception(
+                    "Make sure {field} is a field on the model {model_name}".format(
+                        field=set_field,
+                        model_name=cls.__class__.__name__,
+                    )
+                )
+                raise
+            if hasattr(f, "objects"):
+                child_model = f.objects.model
+            elif hasattr(f, "rel"):
+                child_model = f.rel.related_model
+            res += " = (%s [set_field]):\n" % child_model.__name__
+            res += child_model.get_anonymisation_tree(prefix=BASE_PREFIX + prefix, doprint=False)
 
         if doprint:
             logger.info(res)
