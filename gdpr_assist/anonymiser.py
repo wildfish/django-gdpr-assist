@@ -260,11 +260,11 @@ def anonymise_related_objects(obj, anonymised=None, user=None):
     relation_fields = [
         field for field in type(obj)._meta.get_fields()
         if (
-                (field.one_to_many or field.one_to_one) and
-                field.auto_created and
-                not field.concrete and
-                field.related_model in registry and
-                isinstance(field.on_delete, ANONYMISE)
+            (field.one_to_many or field.one_to_one) and
+            field.auto_created and
+            not field.concrete and
+            field.related_model in registry and
+            isinstance(field.on_delete, ANONYMISE)
         )
     ]
 
