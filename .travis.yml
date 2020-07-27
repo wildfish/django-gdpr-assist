@@ -19,21 +19,30 @@ script:
   - tox
 env:
   matrix:
+    - TOXENV=py27-django1.11
     - TOXENV=py27-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
     - TOXENV=py27-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+    - TOXENV=py37-django1.11
     - TOXENV=py37-django1.11 DATABASE_ENGINE=mysql DATABASE_USER=travis
     - TOXENV=py37-django1.11 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+    - TOXENV=py37-django2.0
     - TOXENV=py37-django2.0 DATABASE_ENGINE=mysql DATABASE_USER=travis
     - TOXENV=py37-django2.0 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+    - TOXENV=py38-django2.0
     - TOXENV=py38-django2.0 DATABASE_ENGINE=mysql DATABASE_USER=travis
     - TOXENV=py38-django2.0 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+    - TOXENV=py37-django2.1
     - TOXENV=py37-django2.1 DATABASE_ENGINE=mysql DATABASE_USER=travis
     - TOXENV=py37-django2.1 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+    - TOXENV=py38-django2.1
     - TOXENV=py38-django2.1 DATABASE_ENGINE=mysql DATABASE_USER=travis
     - TOXENV=py38-django2.1 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+    - TOXENV=py37-django2.2
     - TOXENV=py37-django2.2 DATABASE_ENGINE=mysql DATABASE_USER=travis
     - TOXENV=py37-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+    - TOXENV=py38-django2.2
     - TOXENV=py38-django2.2 DATABASE_ENGINE=mysql DATABASE_USER=travis
     - TOXENV=py38-django2.2 DATABASE_ENGINE=pgsql DATABASE_USER=postgres
+
     # - TOXENV=py37-django3.0
     # - TOXENV=py38-django3.0
