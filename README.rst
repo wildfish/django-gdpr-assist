@@ -42,7 +42,7 @@ Quickstart
 ==========
 
 Install with ``pip install django-gdpr-assist``, add ``gdpr_assist`` to
-Django's ``INSTALLED_APPS`` and add a ``gdpr_log`` definition to ``DATABASES``.
+Django's ``INSTALLED_APPS``.
 
 Then start adding privacy metadata to your models::
 

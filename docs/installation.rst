@@ -16,20 +16,6 @@ Add to your project's ``settings.py``::
         ...
     )
 
-    # Add a new database to log GDPR actions
-    DATABASES = {
-        ...
-        'gdpr_log': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'gdpr-log.sqlite3'),
-        },
-    }
-    DATABASE_ROUTERS = ['gdpr_assist.routers.EventLogRouter']
-
-You'll then need to migrate the new database::
-
-    ./manage.py migrate --database=gdpr_log
-
 
 Django settings
 ===============
@@ -51,13 +37,6 @@ models.
 
 This allows you to override the default name of the instantiated privacy meta
 class on models.
-
-
-``GDPR_LOG_DATABASE_NAME = 'gdpr_log'``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The internal name of the log database. You'll need to use this in the
-``DATABASES`` settings, and when migrating.
 
 
 ``GDPR_CAN_ANONYMISE_DATABASE = False``
