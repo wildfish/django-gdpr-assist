@@ -11,12 +11,14 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.test import Client, TestCase
 
-from model_mommy import mommy
-
 import gdpr_assist
 
+from .gdpr_assist_tests_app.factories import (
+    ModelWithPrivacyMetaFactory,
+    FirstSearchModelFactory,
+    SecondSearchModelFactory,
+)
 from .gdpr_assist_tests_app.models import (
-    ModelWithPrivacyMeta,
     FirstSearchModel,
     SecondSearchModel,
 )
@@ -45,13 +47,13 @@ class AdminTestCase(TestCase):
 
 class TestModelAdmin(AdminTestCase):
     def test_changelist__anonymise_action_present(self):
-        mommy.make(ModelWithPrivacyMeta)
+        ModelWithPrivacyMetaFactory.create()
         response = self.client.get(model_root_url)
         self.assertContains(response, '<option value="anonymise">')
 
     def test_anonymise_action_submit__redirect_to_anonymise_view(self):
-        obj_1 = mommy.make(ModelWithPrivacyMeta)
-        obj_2 = mommy.make(ModelWithPrivacyMeta)
+        obj_1 = ModelWithPrivacyMetaFactory.create()
+        obj_2 = ModelWithPrivacyMetaFactory.create()
 
         response = self.client.post(
             model_root_url,
@@ -94,8 +96,8 @@ class TestModelAdmin(AdminTestCase):
         )
 
     def test_anonymise_view_submit__redirect_to_anonymise_view(self):
-        obj_1 = mommy.make(ModelWithPrivacyMeta, anonymised=False)
-        obj_2 = mommy.make(ModelWithPrivacyMeta, anonymised=False)
+        obj_1 = ModelWithPrivacyMetaFactory.create(anonymised=False)
+        obj_2 = ModelWithPrivacyMetaFactory.create(anonymised=False)
 
         response = self.client.post(
             model_root_url + 'anonymise/',
@@ -129,17 +131,15 @@ class TestModelAdmin(AdminTestCase):
 
 class TestAdminTool(AdminTestCase):
     def test_tool_is_available(self):
-        mommy.make(FirstSearchModel)
+        FirstSearchModelFactory.create()
         response = self.client.get(tool_root_url)
         self.assertContains(response, '<h1>Personal Data</h1>')
 
     def test_search__returns_correct_results(self):
-        obj_1 = mommy.make(
-            FirstSearchModel,
+        obj_1 = FirstSearchModelFactory.create(
             email='one@example.com',
         )
-        mommy.make(
-            FirstSearchModel,
+        FirstSearchModelFactory.create(
             email='two@example.com',
         )
 
@@ -157,13 +157,11 @@ class TestAdminTool(AdminTestCase):
         )
 
     def test_anonymise__records_anonymised(self):
-        obj_1 = mommy.make(
-            FirstSearchModel,
+        obj_1 = FirstSearchModelFactory.create(
             email='one@example.com',
             anonymised=False,
         )
-        obj_2 = mommy.make(
-            FirstSearchModel,
+        obj_2 = FirstSearchModelFactory.create(
             email='two@example.com',
             anonymised=False,
         )
@@ -223,22 +221,22 @@ class TestAdminTool(AdminTestCase):
         # * One matching in FirstSearchModel so we collect multiple models
         # * One not matching in FirstSearchModel so we exclude ignored records
         # * Two in SecondSearchModel so we collect multiple records
-        obj_1 = FirstSearchModel.objects.create(
+        obj_1 = FirstSearchModelFactory.create(
             chars='test1',
             email='one@example.com',
             anonymised=False,
         )
-        obj_2 = FirstSearchModel.objects.create(
+        obj_2 = FirstSearchModelFactory.create(
             chars='test2',
             email='two@example.com',
             anonymised=False,
         )
-        obj_3 = SecondSearchModel.objects.create(
+        obj_3 = SecondSearchModelFactory.create(
             chars='test3',
             email='one@example.com',
             anonymised=False,
         )
-        obj_4 = SecondSearchModel.objects.create(
+        obj_4 = SecondSearchModelFactory.create(
             chars='test4',
             email='one@example.com',
             anonymised=False,

@@ -393,8 +393,19 @@ class PrivacyModel(models.Model):
         privacy_meta_model = cls._privacy_meta
 
         flat_fields = privacy_meta_model.fields or []
-        for field in flat_fields:
-            res += "%s|-> %s\n" % (prefix, field)
+        for flat_field in flat_fields:
+            try:
+                field = getattr(cls, flat_field)
+            except AttributeError:
+                logger.exception(
+                    "Make sure {field} is a field on the model {model_name}".format(
+                        field=flat_field,
+                        model_name=cls.__class__.__name__,
+                    )
+                )
+                raise
+            res += "%s|-> %s\n" % (prefix, field.field_name)
+
 
         for fk_field in privacy_meta_model.fk_fields:
 

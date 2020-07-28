@@ -156,7 +156,7 @@ setup(
     extras_require={
         'dev': [
             # Testing
-            'tox', 'pillow', 'model-mommy',
+            'tox', 'pillow', 'factory_boy',
 
             # Docs
             'sphinx', 'sphinx-autobuild', 'sphinx_rtd_theme',
