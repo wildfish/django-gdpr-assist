@@ -68,7 +68,7 @@ registered models for a ``OneToOneField`` or ``ForeignKey`` which have
 so that ``handlers.handle_pre_delete`` knows to watch them.
 
 When a registered object is deleted, its details are logged to
-``models.EventLog``, stored in a separate database.
+``models.EventLog``.
 
 Anonymisation starts with ``models.PrivacyModel.anonymise``, which then calls
 the field-specific anonymise functions in the ``PrivacyMeta`` instance; fields

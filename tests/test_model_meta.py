@@ -20,6 +20,9 @@ from gdpr_assist.models import (
     PrivacyQuerySet,
 )
 
+from .gdpr_assist_tests_app.factories import (
+    ModelWithPrivacyMetaFactory,
+)
 from .gdpr_assist_tests_app.models import (
     ModelWithPrivacyMeta,
     ModelWithoutPrivacyMeta,
@@ -82,10 +85,7 @@ class TestModelDefinitionWithPrivacyMeta(TestCase):
         self.assertTrue(issubclass(ModelWithPrivacyMeta, PrivacyModel))
 
     def test_model_has_anonymised_field(self):
-        obj = ModelWithPrivacyMeta.objects.create(
-            chars='test',
-            email='test@example.com',
-        )
+        obj = ModelWithPrivacyMetaFactory.create()
         obj.refresh_from_db()
         self.assertFalse(obj.anonymised)
 
@@ -108,10 +108,24 @@ class TestModelDefinitionWithoutPrivacyMeta(TestCase):
 
     def tearDown(self):
         registry.models.pop(ModelWithoutPrivacyMeta, None)
+        # Remove `PrivacyModel` inheritance
         ModelWithoutPrivacyMeta.__bases__ = tuple(
             b for b in ModelWithoutPrivacyMeta.__bases__
             if b is not PrivacyModel
         )
+
+        # Remove `anonymised` from the list of fields on the model
+        fields_without_anonymised = tuple(
+            field for field in ModelWithoutPrivacyMeta._meta.fields
+            if field.name != "anonymised"
+        )
+        ModelWithoutPrivacyMeta._meta.fields = fields_without_anonymised
+        local_fields_without_anonymised = list(
+            local_field for local_field in ModelWithoutPrivacyMeta._meta.local_fields
+            if local_field.name != "anonymised"
+        )
+        ModelWithoutPrivacyMeta._meta.local_fields = local_fields_without_anonymised
+        ModelWithoutPrivacyMeta._meta._get_fields_cache = {}
 
     def register(self):
         gdpr_assist.register(ModelWithoutPrivacyMeta, self.PrivacyMeta)

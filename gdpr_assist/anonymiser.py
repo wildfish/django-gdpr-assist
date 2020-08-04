@@ -10,7 +10,7 @@ from django.utils.timezone import now
 from .deletion import ANONYMISE
 from .exceptions import AnonymiseError
 from .registry import registry
-
+from .app_settings import GDPR_PRIVACY_INSTANCE_NAME
 
 anonymisers = {}
 
@@ -22,6 +22,7 @@ def register(*field_classes):
             anonymisers[cls] = fn
 
         return fn
+
     return outer
 
 
@@ -32,7 +33,7 @@ def register(*field_classes):
     models.PositiveSmallIntegerField,
     models.SmallIntegerField,
 )
-def anonymise_int(instance, field_name, field, value):
+def anonymise_int(instance, field_name, field, value, user):
     if field.null:
         return None
     return 0
@@ -43,7 +44,7 @@ def anonymise_int(instance, field_name, field, value):
     models.SlugField,
     models.TextField,
 )
-def anonymise_char(instance, field_name, field, value):
+def anonymise_char(instance, field_name, field, value, user):
     if field.blank and not field._unique:
         return ''
     return str(instance.pk)
@@ -52,7 +53,7 @@ def anonymise_char(instance, field_name, field, value):
 @register(
     models.BinaryField,
 )
-def anonymise_binary(instance, field_name, field, value):
+def anonymise_binary(instance, field_name, field, value, user):
     if field.null:
         return None
     return b''
@@ -62,7 +63,7 @@ def anonymise_binary(instance, field_name, field, value):
     models.BooleanField,
     models.NullBooleanField,
 )
-def anonymise_boolean(instance, field_name, field, value):
+def anonymise_boolean(instance, field_name, field, value, user):
     if field.null:
         return None
     return False
@@ -71,7 +72,7 @@ def anonymise_boolean(instance, field_name, field, value):
 @register(
     models.DateField,
 )
-def anonymise_date(instance, field_name, field, value):
+def anonymise_date(instance, field_name, field, value, user):
     if field.null:
         return None
     return datetime.date.today()
@@ -80,7 +81,7 @@ def anonymise_date(instance, field_name, field, value):
 @register(
     models.DateTimeField,
 )
-def anonymise_datetime(instance, field_name, field, value):
+def anonymise_datetime(instance, field_name, field, value, user):
     if field.null:
         return None
     return now()
@@ -89,7 +90,7 @@ def anonymise_datetime(instance, field_name, field, value):
 @register(
     models.TimeField,
 )
-def anonymise_time(instance, field_name, field, value):
+def anonymise_time(instance, field_name, field, value, user):
     if field.null:
         return None
     return datetime.time()
@@ -98,7 +99,7 @@ def anonymise_time(instance, field_name, field, value):
 @register(
     models.DurationField,
 )
-def anonymise_duration(instance, field_name, field, value):
+def anonymise_duration(instance, field_name, field, value, user):
     if field.null:
         return None
     return datetime.timedelta(0)
@@ -108,7 +109,7 @@ def anonymise_duration(instance, field_name, field, value):
     models.DecimalField,
     models.FloatField,
 )
-def anonymise_decimal(instance, field_name, field, value):
+def anonymise_decimal(instance, field_name, field, value, user):
     if field.null:
         return None
     return 0
@@ -119,7 +120,7 @@ def anonymise_decimal(instance, field_name, field, value):
     models.FilePathField,
     models.ImageField,
 )
-def anonymise_file(instance, field_name, field, value):
+def anonymise_file(instance, field_name, field, value, user):
     if field.null:
         return None
 
@@ -133,7 +134,7 @@ def anonymise_file(instance, field_name, field, value):
 @register(
     models.EmailField,
 )
-def anonymise_email(instance, field_name, field, value):
+def anonymise_email(instance, field_name, field, value, user):
     if field.null:
         return None
 
@@ -143,7 +144,7 @@ def anonymise_email(instance, field_name, field, value):
 @register(
     models.GenericIPAddressField,
 )
-def anonymise_ip(instance, field_name, field, value):
+def anonymise_ip(instance, field_name, field, value, user):
     if field.null:
         return None
 
@@ -153,7 +154,7 @@ def anonymise_ip(instance, field_name, field, value):
 @register(
     models.URLField,
 )
-def anonymise_url(instance, field_name, field, value):
+def anonymise_url(instance, field_name, field, value, user):
     if field.blank:
         return ''
     return 'http://{}.anon.example.com'.format(instance.pk)
@@ -162,7 +163,7 @@ def anonymise_url(instance, field_name, field, value):
 @register(
     models.UUIDField,
 )
-def anonymise_uuid(instance, field_name, field, value):
+def anonymise_uuid(instance, field_name, field, value, user):
     if field.null:
         return None
 
@@ -176,12 +177,12 @@ def anonymise_uuid(instance, field_name, field, value):
     models.ForeignKey,
     models.OneToOneField,
 )
-def anonymise_relationship(instance, field_name, field, value):
+def anonymise_relationship(instance, field_name, field, value, user):
     if field.null:
         return None
 
     raise AnonymiseError(
-        'Cannot anonymise {} - can only null relationship field'.format(
+        'Cannot anonymise {} - can only null relationship field. Put into fk_fields to do this.'.format(
             field_name,
         )
     )
@@ -190,15 +191,15 @@ def anonymise_relationship(instance, field_name, field, value):
 @register(
     models.ManyToManyField,
 )
-def anonymise_manytomany(instance, field_name, field, value):
+def anonymise_manytomany(instance, field_name, field, value, user):
     raise AnonymiseError(
-        'Cannot anonymise {} - cannot anonymise ManyToManyField'.format(
+        'Cannot anonymise {} - cannot anonymise ManyToManyField. Put into set_fields to do this.'.format(
             field_name,
         )
     )
 
 
-def anonymise_field(instance, field_name):
+def anonymise_field(instance, field_name, user):
     """
     Default field anonymiser
     """
@@ -208,21 +209,45 @@ def anonymise_field(instance, field_name):
     if cls._meta.pk.name == field_name:
         raise AnonymiseError('Cannot anonymise primary key')
 
-    # Find field
-    field = cls._meta.get_field(field_name)
-    value = getattr(instance, field_name)
+    privacy_meta = getattr(instance, GDPR_PRIVACY_INSTANCE_NAME)
 
-    # Find anonymiser
-    if field.__class__ not in anonymisers:
-        raise AnonymiseError('Unknown field type for anonymiser')
-    anonymiser = anonymisers[field.__class__]
+    if field_name in privacy_meta.fk_fields:
+        field = getattr(instance, field_name)
 
-    # Anonymise
-    anonymised = anonymiser(instance, field_name, field, value)
-    setattr(instance, field_name, anonymised)
+        if field is not None:
+            instance._log_gdpr_recursive(user=user, start=True)
+            field.anonymise(user=user)
+            instance._log_gdpr_recursive(user=user, start=False)
+
+    elif field_name in privacy_meta.set_fields:
+        related_objects = getattr(instance, field_name).all()
+        num_items = len(related_objects)
+
+        if num_items > 0:
+            instance._log_gdpr_recursive(user=user, start=True)
+
+        for related_object in related_objects:
+            related_object.anonymise(user=user)
+
+        if num_items > 0:
+            instance._log_gdpr_recursive(user=user, start=False)
+
+    else:
+        # Find field
+        field = cls._meta.get_field(field_name)
+        # Find anonymiser
+        if field.__class__ not in anonymisers:
+            raise AnonymiseError('Unknown field type for anonymiser')
+        anonymiser = anonymisers[field.__class__]
+        value = getattr(instance, field_name)
+
+        # Anonymise
+        if value is not None:
+            anonymised = anonymiser(instance, field_name, field, value, user)
+            setattr(instance, field_name, anonymised)
 
 
-def anonymise_related_objects(obj, anonymised=None):
+def anonymise_related_objects(obj, anonymised=None, user=None):
     """
     See if there are any related models which need to be anonymised.
 

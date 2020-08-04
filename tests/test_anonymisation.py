@@ -11,32 +11,34 @@ import uuid
 from django.db import models
 from django.test import TestCase
 
-from model_mommy import mommy
-
 import gdpr_assist
 
+from .gdpr_assist_tests_app.factories import (
+    ForeignKeyModelFactory,
+    ForeignKeyToUnregisteredModelFactory,
+    OneToOneFieldModelFactory,
+    PrivateTargetModelFactory,
+    PrivateUnregisteredTargetModelFactory,
+    TestModelForKnownCustomFieldFactory,
+    forbidden_factories,
+    not_nullable_factories,
+    nullable_factories,
+)
 from .gdpr_assist_tests_app.models import (
-    not_nullable_models,
-    nullable_models,
-    forbidden_models,
-    UnknownCustomField,
-    TestModelForKnownCustomField,
-    PrivateTargetModel,
-    PrivateUnregisteredTargetModel,
-    OneToOneFieldModel,
     ForeignKeyModel,
     ForeignKeyToUnregisteredModel,
+    OneToOneFieldModel,
+    PrivateTargetModel,
+    PrivateUnregisteredTargetModel,
+    TestModelForKnownCustomField,
+    UnknownCustomField,
 )
 from .base import MigrationTestCase
 
 
 class TestAnonymisationBase(TestCase):
-    def get_model(self, key):
-        return self.models[key]
-
-    def create(self, key, value):
-        obj = self.get_model(key).objects.create(field=value)
-        return obj
+    def get_factory(self, key):
+        return self.factories[key]
 
     def clean_file_field(self, field):
         if os.path.isfile(field.path):
@@ -84,11 +86,13 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
     """
     Test all field types when they do not have null=True
     """
-    models = not_nullable_models
+    factories = not_nullable_factories
 
     def test_big_integer__anonymise_to_zero(self):
         value = 1
-        obj = self.create(models.BigIntegerField, value)
+        obj = self.get_factory(models.BigIntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -99,7 +103,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_integer__anonymise_to_zero(self):
         value = 1
-        obj = self.create(models.IntegerField, value)
+        obj = self.get_factory(models.IntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -110,7 +116,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_positive_integer__anonymise_to_zero(self):
         value = 1
-        obj = self.create(models.PositiveIntegerField, value)
+        obj = self.get_factory(models.PositiveIntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -121,7 +129,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_positive_small_integer__anonymise_to_zero(self):
         value = 1
-        obj = self.create(models.PositiveSmallIntegerField, value)
+        obj = self.get_factory(models.PositiveSmallIntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -132,7 +142,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_small_integer__anonymise_to_zero(self):
         value = 1
-        obj = self.create(models.SmallIntegerField, value)
+        obj = self.get_factory(models.SmallIntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -143,7 +155,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_charfield__anonymise_to_pk(self):
         value = 'test'
-        obj = self.create(models.CharField, value)
+        obj = self.get_factory(models.CharField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -154,7 +168,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_slugfield__anonymise_to_pk(self):
         value = 'test'
-        obj = self.create(models.SlugField, value)
+        obj = self.get_factory(models.SlugField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -165,7 +181,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_textfield__anonymise_to_pk(self):
         value = 'test'
-        obj = self.create(models.TextField, value)
+        obj = self.get_factory(models.TextField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -176,7 +194,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_binaryfield__anonymise_to_false(self):
         value = b'value'
-        obj = self.create(models.BinaryField, value)
+        obj = self.get_factory(models.BinaryField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -187,7 +207,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_booleanfield__anonymise_to_false(self):
         value = True
-        obj = self.create(models.BooleanField, value)
+        obj = self.get_factory(models.BooleanField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -199,7 +221,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
     def test_nullbooleanfield__anonymise_to_none(self):
         # Trick question, NullBooleanField is always nullable
         value = True
-        obj = self.create(models.NullBooleanField, value)
+        obj = self.get_factory(models.NullBooleanField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -211,7 +235,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
     @freeze_time('2001-01-01 12:00:00')
     def test_datefield__anonymise_to_now(self):
         value = datetime.date.today() + datetime.timedelta(days=1)
-        obj = self.create(models.DateField, value)
+        obj = self.get_factory(models.DateField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -223,7 +249,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
     @freeze_time('2001-01-01 12:00:00')
     def test_datetimefield__anonymise_to_now(self):
         value = datetime.datetime.now() + datetime.timedelta(days=1)
-        obj = self.create(models.DateTimeField, value)
+        obj = self.get_factory(models.DateTimeField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -234,7 +262,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_timefield__anonymise_to_zero(self):
         value = datetime.time(12, 0)
-        obj = self.create(models.TimeField, value)
+        obj = self.get_factory(models.TimeField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -245,7 +275,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_durationfield__anonymise_to_zero(self):
         value = datetime.timedelta(days=1)
-        obj = self.create(models.DurationField, value)
+        obj = self.get_factory(models.DurationField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -256,7 +288,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_decimalfield__anonymise_to_zero(self):
         value = Decimal(1.1)
-        obj = self.create(models.DecimalField, value)
+        obj = self.get_factory(models.DecimalField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -267,7 +301,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_floatfield__anonymise_to_zero(self):
         value = 1.1
-        obj = self.create(models.FloatField, value)
+        obj = self.get_factory(models.FloatField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -277,10 +313,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         self.assertEqual(obj.field, 0)
 
     def test_filefield__raise_exception(self):
-        obj = mommy.make(
-            self.get_model(models.FileField),
-            _fill_optional=True,
-            _create_files=True,
+        obj = self.get_factory(models.FileField).create(
             anonymised=False,
         )
         self.assertFalse(obj.anonymised)
@@ -296,7 +329,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_filepathfield__raise_exception(self):
         value = '/tmp'
-        obj = self.create(models.FilePathField, value)
+        obj = self.get_factory(models.FilePathField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -309,10 +344,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         )
 
     def test_imagefield__raise_exception(self):
-        obj = mommy.make(
-            self.get_model(models.ImageField),
-            _fill_optional=True,
-            _create_files=True,
+        obj = self.get_factory(models.ImageField).create(
             anonymised=False,
         )
         self.assertFalse(obj.anonymised)
@@ -328,7 +360,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_emailfield__anonymise_to_anon(self):
         value = 'test@example.com'
-        obj = self.create(models.EmailField, value)
+        obj = self.get_factory(models.EmailField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -339,7 +373,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_genericipaddressfield__anonymise_to_zero(self):
         value = '127.0.0.1'
-        obj = self.create(models.GenericIPAddressField, value)
+        obj = self.get_factory(models.GenericIPAddressField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -350,7 +386,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_urlfield__anonymise_to_anon(self):
         value = 'http://example.com'
-        obj = self.create(models.URLField, value)
+        obj = self.get_factory(models.URLField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -364,7 +402,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_uuidfield__anonymise_to_zero(self):
         value = uuid.uuid4()
-        obj = self.create(models.UUIDField, value)
+        obj = self.get_factory(models.UUIDField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -379,7 +419,9 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
 
     def test_uuidfield_unique__anonymise_to_random(self):
         value = uuid.uuid4()
-        obj = self.create('UUIDField-unique', value)
+        obj = self.get_factory('UUIDFieldUnique').create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -398,10 +440,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         )
 
     def test_foreignkey__raise_exception(self):
-        obj = mommy.make(
-            self.get_model(models.ForeignKey),
-            _fill_optional=True,
-            _create_files=True,
+        obj = self.get_factory(models.ForeignKey).create(
             anonymised=False,
         )
         self.assertFalse(obj.anonymised)
@@ -409,15 +448,12 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         with self.assertRaises(gdpr_assist.AnonymiseError) as cm:
             obj.anonymise()
         self.assertEqual(
-            'Cannot anonymise field - can only null relationship field',
+            'Cannot anonymise field - can only null relationship field. Put into fk_fields to do this.',
             str(cm.exception),
         )
 
     def test_onetoonefield__raise_exception(self):
-        obj = mommy.make(
-            self.get_model(models.OneToOneField),
-            _fill_optional=True,
-            _create_files=True,
+        obj = self.get_factory(models.OneToOneField).create(
             anonymised=False,
         )
         self.assertFalse(obj.anonymised)
@@ -425,12 +461,12 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         with self.assertRaises(gdpr_assist.AnonymiseError) as cm:
             obj.anonymise()
         self.assertEqual(
-            'Cannot anonymise field - can only null relationship field',
+            'Cannot anonymise field - can only null relationship field. Put into fk_fields to do this.',
             str(cm.exception),
         )
 
     def test_knowncustomfield__custom_handler_called(self):
-        obj = TestModelForKnownCustomField.objects.create(field='Test')
+        obj = TestModelForKnownCustomFieldFactory.create(field='Test')
         self.assertFalse(obj.anonymised)
         self.assertEqual(obj.field, 'Test')
 
@@ -444,11 +480,13 @@ class TestNullableAnonymisation(TestAnonymisationBase):
     Test all field types when they do have null=True
     """
 
-    models = nullable_models
+    factories = nullable_factories
 
     def test_big_integer__anonymise_to_none(self):
         value = 1
-        obj = self.create(models.BigIntegerField, value)
+        obj = self.get_factory(models.BigIntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -459,7 +497,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_integer__anonymise_to_none(self):
         value = 1
-        obj = self.create(models.IntegerField, value)
+        obj = self.get_factory(models.IntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -470,7 +510,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_positive_integer__anonymise_to_none(self):
         value = 1
-        obj = self.create(models.PositiveIntegerField, value)
+        obj = self.get_factory(models.PositiveIntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -481,7 +523,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_positive_small_integer__anonymise_to_none(self):
         value = 1
-        obj = self.create(models.PositiveSmallIntegerField, value)
+        obj = self.get_factory(models.PositiveSmallIntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -492,7 +536,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_small_integer__anonymise_to_none(self):
         value = 1
-        obj = self.create(models.SmallIntegerField, value)
+        obj = self.get_factory(models.SmallIntegerField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -503,7 +549,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_charfield__anonymise_to_none(self):
         value = 'test'
-        obj = self.create(models.CharField, value)
+        obj = self.get_factory(models.CharField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -514,7 +562,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_slugfield__anonymise_to_none(self):
         value = 'test'
-        obj = self.create(models.SlugField, value)
+        obj = self.get_factory(models.SlugField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -525,7 +575,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_textfield__anonymise_to_none(self):
         value = 'test'
-        obj = self.create(models.TextField, value)
+        obj = self.get_factory(models.TextField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -536,7 +588,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_binaryfield__anonymise_to_none(self):
         value = b'value'
-        obj = self.create(models.BinaryField, value)
+        obj = self.get_factory(models.BinaryField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -548,7 +602,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
     def test_nullbooleanfield__anonymise_to_none(self):
         # Trick question, NullBooleanField is always nullable
         value = True
-        obj = self.create(models.NullBooleanField, value)
+        obj = self.get_factory(models.NullBooleanField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -560,7 +616,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
     @freeze_time('2001-01-01 12:00:00')
     def test_datefield__anonymise_to_none(self):
         value = datetime.date.today()
-        obj = self.create(models.DateField, value)
+        obj = self.get_factory(models.DateField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -572,7 +630,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
     @freeze_time('2001-01-01 12:00:00')
     def test_datetimefield__anonymise_to_none(self):
         value = datetime.datetime.now()
-        obj = self.create(models.DateTimeField, value)
+        obj = self.get_factory(models.DateTimeField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -583,7 +643,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_timefield__anonymise_to_none(self):
         value = datetime.time(12, 0)
-        obj = self.create(models.TimeField, value)
+        obj = self.get_factory(models.TimeField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -594,7 +656,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_durationfield__anonymise_to_none(self):
         value = datetime.timedelta(days=1)
-        obj = self.create(models.DurationField, value)
+        obj = self.get_factory(models.DurationField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -605,7 +669,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_decimalfield__anonymise_to_none(self):
         value = Decimal(1.1)
-        obj = self.create(models.DecimalField, value)
+        obj = self.get_factory(models.DecimalField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -616,7 +682,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_floatfield__anonymise_to_none(self):
         value = 1.1
-        obj = self.create(models.FloatField, value)
+        obj = self.get_factory(models.FloatField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -626,10 +694,7 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertIsNone(obj.field)
 
     def test_filefield__anonymise_to_none(self):
-        obj = mommy.make(
-            self.get_model(models.FileField),
-            _fill_optional=True,
-            _create_files=True,
+        obj = self.get_factory(models.FileField).create(
             anonymised=False,
         )
         self.assertFalse(obj.anonymised)
@@ -643,7 +708,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_filepathfield__anonymise_to_none(self):
         value = '/tmp'
-        obj = self.create(models.FilePathField, value)
+        obj = self.get_factory(models.FilePathField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -653,10 +720,7 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertIsNone(obj.field)
 
     def test_imagefield__anonymise_to_none(self):
-        obj = mommy.make(
-            self.get_model(models.ImageField),
-            _fill_optional=True,
-            _create_files=True,
+        obj = self.get_factory(models.ImageField).create(
             anonymised=False,
         )
         self.assertFalse(obj.anonymised)
@@ -670,7 +734,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_emailfield__anonymise_to_none(self):
         value = 'test@example.com'
-        obj = self.create(models.EmailField, value)
+        obj = self.get_factory(models.EmailField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -681,7 +747,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_genericipaddressfield__anonymise_to_none(self):
         value = '127.0.0.1'
-        obj = self.create(models.GenericIPAddressField, value)
+        obj = self.get_factory(models.GenericIPAddressField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -692,7 +760,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_urlfield__anonymise_to_none(self):
         value = 'http://example.com'
-        obj = self.create(models.URLField, value)
+        obj = self.get_factory(models.URLField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -703,7 +773,9 @@ class TestNullableAnonymisation(TestAnonymisationBase):
 
     def test_uuidfield__anonymise_to_none(self):
         value = uuid.uuid4()
-        obj = self.create(models.UUIDField, value)
+        obj = self.get_factory(models.UUIDField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -713,10 +785,7 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertIsNone(obj.field)
 
     def test_foreignkey__anonymise_to_none(self):
-        obj = mommy.make(
-            self.get_model(models.ForeignKey),
-            _fill_optional=True,
-            _create_files=True,
+        obj = self.get_factory(models.ForeignKey).create(
             anonymised=False,
         )
         self.assertFalse(obj.anonymised)
@@ -726,10 +795,7 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertIsNone(obj.field)
 
     def test_onetoonefield__anonymise_to_none(self):
-        obj = mommy.make(
-            self.get_model(models.OneToOneField),
-            _fill_optional=True,
-            _create_files=True,
+        obj = self.get_factory(models.OneToOneField).create(
             anonymised=False,
         )
         self.assertFalse(obj.anonymised)
@@ -743,10 +809,10 @@ class TestForbiddenAnonymisation(TestAnonymisationBase):
     """
     Test field types which are forbidden
     """
-    models = forbidden_models
+    factories = forbidden_factories
 
     def test_autofield__raise_exception(self):
-        obj = self.get_model(models.AutoField).objects.create()
+        obj = self.get_factory(models.AutoField).create()
         self.assertFalse(obj.anonymised)
 
         with self.assertRaises(gdpr_assist.AnonymiseError) as cm:
@@ -757,10 +823,7 @@ class TestForbiddenAnonymisation(TestAnonymisationBase):
         )
 
     def test_manytomanyfield__raise_exception(self):
-        obj = mommy.make(
-            self.get_model(models.ManyToManyField),
-            _fill_optional=True,
-            _create_files=True,
+        obj = self.get_factory(models.ManyToManyField).create(
             anonymised=False,
         )
         self.assertFalse(obj.anonymised)
@@ -768,12 +831,14 @@ class TestForbiddenAnonymisation(TestAnonymisationBase):
         with self.assertRaises(gdpr_assist.AnonymiseError) as cm:
             obj.anonymise()
         self.assertEqual(
-            'Cannot anonymise field - cannot anonymise ManyToManyField',
+            'Cannot anonymise field - cannot anonymise ManyToManyField. Put into set_fields to do this.',
             str(cm.exception),
         )
 
     def test_customfield__raise_exception(self):
-        obj = self.create(UnknownCustomField, 'Test')
+        obj = self.get_factory(UnknownCustomField).create(
+            field='Test',
+        )
         self.assertFalse(obj.anonymised)
 
         with self.assertRaises(gdpr_assist.AnonymiseError) as cm:
@@ -786,8 +851,8 @@ class TestForbiddenAnonymisation(TestAnonymisationBase):
 
 class TestRelation(TestCase):
     def test_onetoonefield_anonymise__anonymise_not_propagated(self):
-        target = PrivateTargetModel.objects.create(chars='Test')
-        obj = OneToOneFieldModel.objects.create(chars='Test', target=target)
+        target = PrivateTargetModelFactory.create(chars='Test')
+        obj = OneToOneFieldModelFactory.create(chars='Test', target=target)
 
         target.anonymise()
         self.assertTrue(target.anonymised)
@@ -798,8 +863,8 @@ class TestRelation(TestCase):
         self.assertEqual(obj.chars, 'Test')
 
     def test_foreignkey_anonymise__anonymise_not_propagated(self):
-        target = PrivateTargetModel.objects.create(chars='Test')
-        obj = ForeignKeyModel.objects.create(chars='Test', target=target)
+        target = PrivateTargetModelFactory.create(chars='Test')
+        obj = ForeignKeyModelFactory.create(chars='Test', target=target)
 
         target.anonymise()
         self.assertTrue(target.anonymised)
@@ -810,8 +875,8 @@ class TestRelation(TestCase):
         self.assertEqual(obj.chars, 'Test')
 
     def test_onetoonefield_delete__anonymise_propagated(self):
-        target = PrivateTargetModel.objects.create(chars='Test')
-        obj = OneToOneFieldModel.objects.create(chars='Test', target=target)
+        target = PrivateTargetModelFactory.create(chars='Test')
+        obj = OneToOneFieldModelFactory.create(chars='Test', target=target)
 
         target.delete()
         obj.refresh_from_db()
@@ -819,8 +884,8 @@ class TestRelation(TestCase):
         self.assertEqual(obj.chars, '')
 
     def test_foreignkey_delete__anonymise_propagated(self):
-        target = PrivateTargetModel.objects.create(chars='Test')
-        obj = ForeignKeyModel.objects.create(chars='Test', target=target)
+        target = PrivateTargetModelFactory.create(chars='Test')
+        obj = ForeignKeyModelFactory.create(chars='Test', target=target)
 
         target.delete()
         obj.refresh_from_db()
@@ -828,8 +893,8 @@ class TestRelation(TestCase):
         self.assertEqual(obj.chars, '')
 
     def test_foreignkey_unregistered_target_delete__anonymise_propagated(self):
-        target = PrivateUnregisteredTargetModel.objects.create(chars='Test')
-        obj = ForeignKeyToUnregisteredModel.objects.create(
+        target = PrivateUnregisteredTargetModelFactory.create(chars='Test')
+        obj = ForeignKeyToUnregisteredModelFactory.create(
             chars='Test',
             target=target,
         )
@@ -844,11 +909,13 @@ class TestOtherAnonymisation(TestAnonymisationBase):
     """
     Tests which don't fall under other categories
     """
-    models = nullable_models
+    factories = nullable_factories
 
     def test_anonymise_twice_no_force__not_anonymised_twice(self):
         value = 'test'
-        obj = self.create(models.CharField, value)
+        obj = self.get_factory(models.CharField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -865,7 +932,9 @@ class TestOtherAnonymisation(TestAnonymisationBase):
 
     def test_anonymise_twice_with_force__anonymised_twice(self):
         value = 'test'
-        obj = self.create(models.CharField, value)
+        obj = self.get_factory(models.CharField).create(
+            field=value,
+        )
         self.assertFalse(obj.anonymised)
         orig = obj.field
         self.assertEqual(orig, value)
@@ -882,11 +951,10 @@ class TestOtherAnonymisation(TestAnonymisationBase):
 
 class TestQuerySet(TestCase):
     def test_queryset_anonymise__anonymise_all(self):
-        objs = []
-        for i in range(5):
-            objs.append(
-                PrivateTargetModel.objects.create(chars='Test {}'.format(i))
-            )
+        objs = [
+            PrivateTargetModelFactory.create(chars='Test {}'.format(i))
+            for i in range(5)
+        ]
 
         qs = PrivateTargetModel.objects.filter(
             pk__in=[obj.pk for obj in objs],
@@ -898,20 +966,18 @@ class TestQuerySet(TestCase):
             self.assertEqual(objs[i].chars, '')
 
     def test_queryset_anonymise__anonymise_not_propagated(self):
-        targets = []
-        for i in range(5):
-            targets.append(
-                PrivateTargetModel.objects.create(chars='Test {}'.format(i))
-            )
+        targets = [
+            PrivateTargetModelFactory.create(chars='Test {}'.format(i))
+            for i in range(5)
+        ]
 
-        objs = []
-        for i in range(5):
-            objs.append(
-                OneToOneFieldModel.objects.create(
-                    chars='Test {}'.format(i),
-                    target=targets[i],
-                )
+        objs = [
+            OneToOneFieldModelFactory.create(
+                chars='Test {}'.format(i),
+                target=targets[i],
             )
+            for i in range(5)
+        ]
 
         qs = PrivateTargetModel.objects.filter(
             pk__in=[target.pk for target in targets],
@@ -926,20 +992,18 @@ class TestQuerySet(TestCase):
             self.assertEqual(objs[i].chars, 'Test {}'.format(i))
 
     def test_queryset_delete__anonymise_propagated(self):
-        targets = []
-        for i in range(5):
-            targets.append(
-                PrivateTargetModel.objects.create(chars='Test {}'.format(i))
-            )
+        targets = [
+            PrivateTargetModelFactory.create(chars='Test {}'.format(i))
+            for i in range(5)
+        ]
 
-        objs = []
-        for i in range(5):
-            objs.append(
-                OneToOneFieldModel.objects.create(
-                    chars='Test {}'.format(i),
-                    target=targets[i],
-                )
+        objs = [
+            OneToOneFieldModelFactory.create(
+                chars='Test {}'.format(i),
+                target=targets[i],
             )
+            for i in range(5)
+        ]
 
         qs = PrivateTargetModel.objects.filter(
             pk__in=[target.pk for target in targets],

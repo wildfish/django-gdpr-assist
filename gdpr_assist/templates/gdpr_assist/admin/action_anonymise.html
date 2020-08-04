@@ -13,6 +13,12 @@
             {% endfor %}
         </ul>
 
+        The following is a representation of the fields that will be cleared by anonymising:
+
+        <br/><br/>
+
+        {{ trees }}
+
         <input type="hidden" name="ids" value="{{ ids|escape }}">
 
         <input type="submit" name="_save" class="default" style="float: none" value="Anonymise">

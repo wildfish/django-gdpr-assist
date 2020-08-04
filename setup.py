@@ -64,10 +64,8 @@ def runtests(args):
             'NAME': ':memory:',
         }
         DATABASE = MEMORY_DATABASE.copy()
-        GDPR_DATABASE = MEMORY_DATABASE.copy()
 
         DATABASE['TEST'] = MEMORY_DATABASE.copy()
-        GDPR_DATABASE['TEST'] = MEMORY_DATABASE.copy()
 
         engine = os.environ.get('DATABASE_ENGINE')
         if engine:
@@ -92,11 +90,28 @@ def runtests(args):
                     DATABASE[key] = os.environ['DATABASE_' + key]
         SETTINGS['DATABASES'] = {
             'default': DATABASE,
-            'gdpr_log': GDPR_DATABASE,
         }
-        SETTINGS['DATABASE_ROUTERS'] = ['gdpr_assist.routers.EventLogRouter']
+        SETTINGS['LOGGING'] = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                },
+            },
+            'root': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+            },
+            'loggers': {
+                'django': {
+                    'handlers': ['console'],
+                    'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+                    'propagate': False,
+                },
+            },
+        }
 
-        # Configure
         settings.configure(**SETTINGS)
 
     execute_from_command_line(args[:1] + ['test'] + (args[2:] or ['tests']))
@@ -125,14 +140,15 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Framework :: Django',
-        'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.11',
         'Framework :: Django :: 2.0',
         'Framework :: Django :: 2.1',
+        'Framework :: Django :: 2.2',
+        'Framework :: Django :: 3.0',
     ],
     install_requires=[
         'django-yaa-settings',
@@ -140,7 +156,7 @@ setup(
     extras_require={
         'dev': [
             # Testing
-            'tox', 'pillow', 'model-mommy',
+            'tox', 'pillow', 'factory_boy',
 
             # Docs
             'sphinx', 'sphinx-autobuild', 'sphinx_rtd_theme',

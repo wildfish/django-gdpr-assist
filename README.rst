@@ -6,11 +6,11 @@ Tools to help manage your users' data in the age of GDPR
 
 https://github.com/wildfish/django-gdpr-assist
 
-.. image:: https://travis-ci.org/wildfish/django-gdpr-assist.svg?branch=master
-    :target: https://travis-ci.org/wildfish/django-gdpr-assist
+.. image:: https://travis-ci.org/minervaproject/django-gdpr-assist.svg?branch=develop
+    :target: https://travis-ci.org/minervaproject/django-gdpr-assist
 
-.. image:: https://coveralls.io/repos/wildfish/django-gdpr-assist/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/wildfish/django-gdpr-assist?branch=master
+.. image:: https://coveralls.io/repos/github/minervaproject/django-gdpr-assist/badge.svg?branch=develop
+    :target: https://coveralls.io/github/minervaproject/django-gdpr-assist?branch=develop
 
 .. image:: https://readthedocs.org/projects/django-gdpr-assist/badge/?version=latest
     :target: https://django-gdpr-assist.readthedocs.io/en/latest/?badge=latest
@@ -42,7 +42,7 @@ Quickstart
 ==========
 
 Install with ``pip install django-gdpr-assist``, add ``gdpr_assist`` to
-Django's ``INSTALLED_APPS`` and add a ``gdpr_log`` definition to ``DATABASES``.
+Django's ``INSTALLED_APPS``.
 
 Then start adding privacy metadata to your models::
 

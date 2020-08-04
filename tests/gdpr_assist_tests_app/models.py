@@ -52,7 +52,7 @@ class PrivateUnregisteredTargetModel(models.Model):
 
 
 def field_model_factory(model_name, field_instance, field_name='field'):
-    cls = type(
+    Model = type(
         str(model_name.format(field_instance.__class__.__name__)),
         (models.Model,),
         {
@@ -64,8 +64,9 @@ def field_model_factory(model_name, field_instance, field_name='field'):
     class PrivacyMeta:
         fields = [field_name]
 
-    gdpr_assist.register(cls, PrivacyMeta)
-    return cls
+    gdpr_assist.register(Model, PrivacyMeta)
+
+    return Model
 
 
 # Test all fields that gdpr-assist can blank without nulling
@@ -110,7 +111,7 @@ not_nullable_models = {
     ]
 }
 not_nullable_models.update({
-    'UUIDField-unique': field_model_factory(
+    'UUIDFieldUnique': field_model_factory(
         'TestModelFor{}Unique',
         models.UUIDField(unique=True),
     ),
@@ -199,7 +200,9 @@ class TestModelForKnownCustomField(models.Model):
     field = KnownCustomField(max_length=255)
 
     class PrivacyMeta:
-        def anonymise_field(self, instance):
+        fields = ['field']
+
+        def anonymise_field(self, instance, user):
             instance.field = 'Anonymised'
 
 
@@ -284,3 +287,28 @@ class ThirdSearchModel(models.Model):
         fields = ['chars', 'email']
         search_fields = ['email']
         export_exclude = ['email']
+
+
+class ForeignKeyFieldModel(models.Model):
+    """
+    Test PrivacyMeta containing fk_fields
+    """
+    model_with_privacy_meta = models.ForeignKey(ModelWithPrivacyMeta, on_delete=models.CASCADE)
+
+    class PrivacyMeta:
+        fk_fields = ["model_with_privacy_meta"]
+
+
+class InvalidFieldModel(models.Model):
+    class PrivacyMeta:
+        fields = ["inexisting_field"]
+
+
+class InvalidFkFieldModel(models.Model):
+    class PrivacyMeta:
+        fk_fields = ["inexisting_field"]
+
+
+class InvalidSetFieldModel(models.Model):
+    class PrivacyMeta:
+        set_fields = ["inexisting_field"]

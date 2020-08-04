@@ -7,6 +7,7 @@ import sys
 from django.core.management import call_command
 from django.test import TestCase
 
+from .gdpr_assist_tests_app.factories import ModelWithPrivacyMetaFactory
 from .gdpr_assist_tests_app.models import ModelWithPrivacyMeta
 
 
@@ -66,11 +67,7 @@ class CommandTestCase(TestCase):
 
 class TestAnonymiseCommand(CommandTestCase):
     def test_anonymise_command__anonymises_data(self):
-        obj_1 = ModelWithPrivacyMeta.objects.create(
-            chars='test',
-            email='test@example.com',
-            anonymised=False,
-        )
+        obj_1 = ModelWithPrivacyMetaFactory.create()
         self.assertFalse(obj_1.anonymised)
         self.run_command('anonymise_db', interactive=False)
 
@@ -93,10 +90,7 @@ class TestAnonymiseCommand(CommandTestCase):
 
 class TestRerunCommand(CommandTestCase):
     def test_gdpr_delete__deletes_object(self):
-        obj_1 = ModelWithPrivacyMeta.objects.create(
-            chars='test',
-            email='test@example.com',
-        )
+        obj_1 = ModelWithPrivacyMetaFactory.create()
 
         # Log deletion without deleting to simulate deletion and db restore
         obj_1._log_gdpr_delete()
@@ -106,11 +100,7 @@ class TestRerunCommand(CommandTestCase):
         self.assertEqual(ModelWithPrivacyMeta.objects.count(), 0)
 
     def test_gdpr_anonymise__anonymises_object(self):
-        obj_1 = ModelWithPrivacyMeta.objects.create(
-            chars='test',
-            email='test@example.com',
-            anonymised=False,
-        )
+        obj_1 = ModelWithPrivacyMetaFactory.create()
 
         # Log anonymise without anonymising to simulate deletion and db restore
         obj_1._log_gdpr_anonymise()
