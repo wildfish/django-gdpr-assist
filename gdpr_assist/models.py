@@ -409,7 +409,25 @@ class PrivacyModel(models.Model):
                     )
                 )
                 raise
-            res += "%s|-> %s\n" % (prefix, field.field_name)
+
+            try:
+                res += "%s|-> %s\n" % (prefix, field.field_name)
+            except:
+                message = "Field name {field_name} is a field, but doesn't seem to be a flat field, " \
+                          "which means it is likely in 'fields', when it should " \
+                          "be in 'set_fields' or 'fk_fields'".format(
+                        field_name=flat_field
+                )
+                field = getattr(privacy_meta_model, "anonymise_%s" % flat_field)
+                if callable(field):
+                    if field.__name__ != "<lambda>":
+                        logger.warn(message)  # if the method has been overriden, this isn't a real problem
+                    else:
+                        logger.error(message)
+                        raise AttributeError(message)
+                else:
+                    raise
+
 
         for fk_field in privacy_meta_model.fk_fields:
             try:
