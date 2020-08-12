@@ -358,6 +358,23 @@ class PrivacyModel(models.Model):
         else:
             return "%s is anonymised, but does not have matching logs." % self
 
+    @property
+    def anonymisation_status(self):
+        """
+        Is this model "pre" anonymisation, "in-progress", or "post" anonymisation?
+
+        Returns:
+
+        """
+        if self.anonymised:  # this gets set early, before the log is generated
+
+            # The EVENT_ANONYMISE is set at the very end (after recursive anonymisation),
+            # If it exists, that means we are done,
+            if EventLog.objects.for_instance(self).filter(event=EventLog.EVENT_ANONYMISE).count() == 0:
+                return "in-progress"
+            return "post"
+        return "pre"
+
     @classmethod
     def get_anonymisation_tree(cls, prefix="", doprint=False, objs=[]):
         """
