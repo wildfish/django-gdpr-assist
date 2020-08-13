@@ -20,6 +20,9 @@ in an ``anonymised`` field which gdpr-assist added to your models, but this caus
 problems when wanting to anonymise third party models. This flag has now been moved to a
 new model in the gdpr-assist app, linked to your objects using a generic foreign key.
 
+If you migrate without following these instructions, you will lose information about
+which database objects have been anonymised.
+
 
 Migrating your data
 ...................
@@ -34,13 +37,13 @@ to remove the ``anonymised`` field. There is a migration operator to help you:
 2. Add the operator using the following migration template::
 
 
-        from django.db.migrations import Migration, RunPython
+        from django.db.migrations import Migration
         from gdpr_assist.upgrading import MigrateGdprAnonymised
 
         class Migration(migrations.Migration):
             dependencies = [
-                ('myapp', '0012_migration'),  # Update this to your app's last migration
-                ('gdpr_assist', '0002_privacyanonymised'),
+                ('myapp', '0012_migration'),  # Added by makemigrations
+                ('gdpr_assist', '0002_privacyanonymised'),  # Keep this dependency
             ]
             operations = [
                 MigrateGdprAnonymised('MyModelOne'),  # Update this to your model
@@ -50,6 +53,13 @@ to remove the ``anonymised`` field. There is a migration operator to help you:
 3. Create migrations to remove the fields::
 
         ./manage.py makemigrations myapp
+
+4. Repeat for any other apps with anonymisable models
+
+5. Run all migrations
+
+        ./manage.py migrate
+        ./manage.py migrate --database=gdpr_log
 
 
 System check gdpr_assist.E001
@@ -88,9 +98,6 @@ Changes to your code
 In most cases no further action will be required, but if you are using the
 ``anonymised`` field in your own code, you will need to call ``is_anonymised()`` or
 query the model ``gdpr_assist.models.PrivacyAnonymised`` instead.
-
-If you migrate without following these instructions, you will lose information about
-which database objects have been anonymised.
 
 
 .. _changelog:
