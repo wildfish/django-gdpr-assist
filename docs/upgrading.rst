@@ -105,7 +105,7 @@ query the model ``gdpr_assist.models.PrivacyAnonymised`` instead.
 Changelog
 =========
 
-1.3.0, 2020-08-13
+1.3.0, 2020-08-14
 -----------------
 
 Features:

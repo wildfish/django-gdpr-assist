@@ -5,7 +5,7 @@ from .deletion import ANONYMISE  # noqa
 from .exceptions import AnonymiseError  # noqa
 
 
-__version__ = "1.1.0"
+__version__ = "1.3.0"
 
 default_app_config = "gdpr_assist.apps.GdprAppConfig"
 
