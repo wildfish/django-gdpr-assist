@@ -661,7 +661,7 @@ class EventLog(models.Model):
     log_time = models.DateTimeField(auto_now_add=True)
     acting_user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     error_message = models.CharField(max_length=1000, default=None, null=True, blank=True)
-    target_pk = models.TextField()
+    target_pk = models.TextField(null=True)
 
     objects = EventLogManager()
 
