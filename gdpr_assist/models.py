@@ -522,6 +522,9 @@ class RetentionPolicyItem(PrivacyModel):
         ]
 
     def should_be_anonymised(self):
+        if self.anonymised:
+            return False
+
         if self.policy_length is None:
             return False
 
