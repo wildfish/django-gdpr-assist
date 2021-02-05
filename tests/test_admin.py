@@ -14,7 +14,7 @@ from model_bakery import baker
 
 import gdpr_assist
 
-from .gdpr_assist_tests_app.models import (
+from .tests_app.models import (
     FirstSearchModel,
     ForthSearchModel,
     ModelWithPrivacyMeta,
@@ -23,7 +23,7 @@ from .gdpr_assist_tests_app.models import (
 )
 
 
-model_root_url = "/admin/gdpr_assist_tests_app/modelwithprivacymeta/"
+model_root_url = "/admin/tests_app/modelwithprivacymeta/"
 tool_root_url = "/admin/gdpr_assist/personaldata/"
 
 
@@ -96,7 +96,7 @@ class TestModelAdmin(AdminTestCase):
         obj_2 = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
 
         response = self.client.post(
-            "/admin/gdpr_assist_tests_app/modelwithprivacymetacannotanonymise/",
+            "/admin/tests_app/modelwithprivacymetacannotanonymise/",
             {"action": "anonymise", "_selected_action": [obj_1.pk, obj_2.pk]},
             follow=True,
         )
@@ -108,7 +108,7 @@ class TestModelAdmin(AdminTestCase):
         obj_2 = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
 
         response = self.client.post(
-            "/admin/gdpr_assist_tests_app/modelwithprivacymetacannotanonymise/anonymise/",
+            "/admin/tests_app/modelwithprivacymetacannotanonymise/anonymise/",
             {"ids": ",".join([str(obj_1.pk), str(obj_2.pk)])},
             follow=True,
         )
@@ -133,7 +133,7 @@ class TestAdminTool(AdminTestCase):
 
         response = self.client.post(tool_root_url, {"term": "one@example.com"})
         self.assertContains(
-            response, "<h2>Gdpr_Assist_Tests_App: First Search Model</h2>"
+            response, "<h2>Tests_App: First Search Model</h2>"
         )
         self.assertContains(
             response,
@@ -269,12 +269,12 @@ class TestAdminTool(AdminTestCase):
         zip_file = zipfile.ZipFile(zip_data)
         self.assertEqual(
             sorted(zip_file.namelist()),
-            ["gdpr_assist_tests_app-FirstSearchModel.csv", "second_search.csv"],
+            ["second_search.csv", "tests_app-FirstSearchModel.csv"],
         )
 
         mode = "r"
 
-        with zip_file.open("gdpr_assist_tests_app-FirstSearchModel.csv", mode) as f:
+        with zip_file.open("tests_app-FirstSearchModel.csv", mode) as f:
             reader = csv.DictReader(TextIOWrapper(f))
             self.assertEqual(reader.fieldnames, ["email"])
             rows = list(reader)

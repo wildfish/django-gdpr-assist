@@ -111,7 +111,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
 
     @modify_settings(
         INSTALLED_APPS={
-            "append": "tests.gdpr_assist_test_migrations.anonymised_migration"
+            "append": "tests.test_migrations.anonymised_migration"
         }
     )
     def test_anonymised_migration_uses_operator__check_passes(self):
@@ -135,7 +135,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
 
     @modify_settings(
         INSTALLED_APPS={
-            "append": "tests.gdpr_assist_test_migrations.no_anonymised_migration"
+            "append": "tests.test_migrations.no_anonymised_migration"
         }
     )
     def test_no_anonymised_migration_uses_flag__check_passes(self):
@@ -158,7 +158,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
 
     @modify_settings(
         INSTALLED_APPS={
-            "append": "tests.gdpr_assist_test_migrations.missing_anonymised_migration"
+            "append": "tests.test_migrations.missing_anonymised_migration"
         }
     )
     def test_missing_anonymised_migration__check_fails(self):
@@ -186,7 +186,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
 
 
 @modify_settings(
-    INSTALLED_APPS={"append": "tests.gdpr_assist_test_migrations.anonymised_migration"}
+    INSTALLED_APPS={"append": "tests.test_migrations.anonymised_migration"}
 )
 class TestMGASeparateMigratesAnonymisedCheck(MigrationTestCase):
     """
@@ -218,7 +218,7 @@ class TestMGASeparateMigratesAnonymisedCheck(MigrationTestCase):
 
 @modify_settings(
     INSTALLED_APPS={
-        "append": "tests.gdpr_assist_test_migrations.missing_anonymised_migration"
+        "append": "tests.test_migrations.missing_anonymised_migration"
     }
 )
 class TestMGASeparateMigratesMissingAnonymisedCheck(MigrationTestCase):
@@ -252,7 +252,7 @@ class TestMGASeparateMigratesMissingAnonymisedCheck(MigrationTestCase):
 
 
 @modify_settings(
-    INSTALLED_APPS={"append": "tests.gdpr_assist_test_migrations.anonymised_migration"}
+    INSTALLED_APPS={"append": "tests.test_migrations.anonymised_migration"}
 )
 class TestMigrateGdprAnonymisedOperator(MigrationTestCase):
     migrate_from = [("anonymised_migration", "0001_initial")]
@@ -277,7 +277,7 @@ class TestMigrateGdprAnonymisedOperator(MigrationTestCase):
 
 
 @modify_settings(
-    INSTALLED_APPS={"append": "tests.gdpr_assist_test_migrations.anonymised_migration"}
+    INSTALLED_APPS={"append": "tests.test_migrations.anonymised_migration"}
 )
 class TestMigrateGdprAnonymisedReverseOperator(MigrationTestCase):
     migrate_from = [("anonymised_migration", "0002_migrate_anonymised")]

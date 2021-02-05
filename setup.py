@@ -34,7 +34,7 @@ def runtests(args):
                 "django.contrib.messages",
                 "gdpr_assist",
                 "tests",
-                "tests.gdpr_assist_tests_app",
+                "tests.tests_app",
             ],
             MIDDLEWARE=[
                 "django.middleware.common.CommonMiddleware",
@@ -56,7 +56,7 @@ def runtests(args):
                 }
             ],
             GDPR_CAN_ANONYMISE_DATABASE=True,
-            ROOT_URLCONF="tests.gdpr_assist_tests_app.urls",
+            ROOT_URLCONF="tests.tests_app.urls",
         )
 
         # Build database settings

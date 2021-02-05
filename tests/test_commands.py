@@ -7,7 +7,7 @@ from io import StringIO
 from django.core.management import call_command
 from django.test import TestCase
 
-from .gdpr_assist_tests_app.models import (
+from .tests_app.models import (
     ModelWithPrivacyMeta,
     ModelWithPrivacyMetaCanNotAnonymise,
 )

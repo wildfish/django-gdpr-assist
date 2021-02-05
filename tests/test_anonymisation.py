@@ -16,7 +16,7 @@ import gdpr_assist
 from gdpr_assist.models import PrivacyAnonymised
 
 from .base import MigrationTestCase
-from .gdpr_assist_tests_app.models import (
+from .tests_app.models import (
     ForeignKeyModel,
     ForeignKeyToCanNotAnonymisedModel,
     ForeignKeyToUnregisteredModel,

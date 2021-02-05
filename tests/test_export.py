@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from model_bakery import baker
 
-from .gdpr_assist_tests_app.models import (
+from .tests_app.models import (
     FirstSearchModel,
     SecondSearchModel,
     ThirdSearchModel,
