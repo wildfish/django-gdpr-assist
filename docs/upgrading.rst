@@ -59,6 +59,7 @@ to remove the ``anonymised`` field. There is a migration operator to help you:
 5. Run all migrations
 
         ./manage.py migrate
+
         ./manage.py migrate --database=gdpr_log
 
 
