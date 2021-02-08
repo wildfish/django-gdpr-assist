@@ -26,6 +26,17 @@ def register(*field_classes):
     return outer
 
 
+def anonymise_max_length_pk(instance, field):
+    """
+    Handle scenarios where the field has a max_length which makes it smaller than
+    the pk (i.e UUID).
+    """
+    if hasattr(field, "max_length") and len(str(instance.pk)) > field.max_length:
+        return str(instance.pk)[:field.max_length]
+    else:
+        return str(instance.pk)
+
+
 @register(
     models.BigIntegerField,
     models.IntegerField,
@@ -43,7 +54,8 @@ def anonymise_int(instance, field_name, field, value):
 def anonymise_char(instance, field_name, field, value):
     if field.blank and not field._unique:
         return ""
-    return str(instance.pk)
+
+    return anonymise_max_length_pk(instance, field)
 
 
 @register(models.BinaryField)
