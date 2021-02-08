@@ -64,6 +64,9 @@ class MigrateGdprAnonymised(Operation):
             "object_id", flat=True
         )
 
+        # the GFK may not be of the same type, so ensure the values is prepped correctly for model_cls.
+        object_ids = [model_cls._meta.pk.get_prep_value(o) for o in object_ids]
+
         # Set the anonymised field
         model_cls.objects.filter(pk__in=object_ids).update(anonymised=True)
 

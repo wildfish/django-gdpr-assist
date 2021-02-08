@@ -126,6 +126,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
                 ("gdpr_assist", "0002_privacyanonymised"),
                 ("anonymised_migration", "0002_migrate_anonymised"),
                 ("anonymised_migration", "0003_auto_20201020_0102"),
+                ('gdpr_assist', '0003_auto_20210205_1657'),
             ],
         )
 
@@ -148,6 +149,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
             [
                 ("no_anonymised_migration", "0001_initial"),
                 ("gdpr_assist", "0002_privacyanonymised"),
+                ('gdpr_assist', '0003_auto_20210205_1657'),
                 ("no_anonymised_migration", "0002_auto_20201020_0102"),
             ],
         )
@@ -171,6 +173,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
             [
                 ("missing_anonymised_migration", "0001_initial"),
                 ("gdpr_assist", "0002_privacyanonymised"),
+                ('gdpr_assist', '0003_auto_20210205_1657'),
                 ("missing_anonymised_migration", "0002_auto_20201020_0102"),
             ],
         )
@@ -206,8 +209,9 @@ class TestMGASeparateMigratesAnonymisedCheck(MigrationTestCase):
         self.assertEqual(
             self.plan_to_names(plan),
             [
-                ("anonymised_migration", "0002_migrate_anonymised"),
-                ("anonymised_migration", "0003_auto_20201020_0102"),
+                ('anonymised_migration', '0002_migrate_anonymised'),
+                ('anonymised_migration', '0003_auto_20201020_0102'),
+                ('gdpr_assist', '0003_auto_20210205_1657')
             ],
         )
 
@@ -238,7 +242,10 @@ class TestMGASeparateMigratesMissingAnonymisedCheck(MigrationTestCase):
         # Sanity check - confirm plan is what we expected from Django
         self.assertEqual(
             self.plan_to_names(plan),
-            [("missing_anonymised_migration", "0002_auto_20201020_0102")],
+            [
+                ('gdpr_assist', '0003_auto_20210205_1657'),
+                ("missing_anonymised_migration", "0002_auto_20201020_0102")
+            ]
         )
 
         # Run check
