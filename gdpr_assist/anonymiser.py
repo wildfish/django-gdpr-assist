@@ -31,7 +31,7 @@ def anonymise_max_length_pk(instance, field):
     Handle scenarios where the field has a max_length which makes it smaller than
     the pk (i.e UUID).
     """
-    if hasattr(field, "max_length") and len(str(instance.pk)) > field.max_length:
+    if hasattr(field, "max_length") and field.max_length and len(str(instance.pk)) > field.max_length:
         return str(instance.pk)[:field.max_length]
     else:
         return str(instance.pk)
