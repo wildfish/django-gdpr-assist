@@ -85,7 +85,7 @@ Example::
     from gdpr_assist.signals import pre_anonymise
 
     @receiver(pre_anonymise, sender=MyModel)
-    def anonymise_related(sender, instance):
+    def anonymise_related(sender, instance, **kwargs):
         instance.my_related_obj.anonymise()
 
 
@@ -100,7 +100,7 @@ Example::
     from gdpr_assist.signals import post_anonymise
 
     @receiver(post_anonymise, sender=MyModel)
-    def anonymise_related(sender, instance):
+    def anonymise_related(sender, instance, **kwargs):
         instance.my_related_obj.anonymise()
 
 
