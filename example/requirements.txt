@@ -12,20 +12,20 @@ decorator==4.4.2
     # via
     #   ipython
     #   traitlets
-django-autofixture==0.12.1
+django==2.2.24
     # via -r requirements.in
-django==1.11.29
+django-autofixture==0.12.1
     # via -r requirements.in
 flake8==3.8.3
     # via -r requirements.in
 ipdb==0.13.3
     # via -r requirements.in
-ipython-genutils==0.2.0
-    # via traitlets
 ipython==6.5.0
     # via
     #   -r requirements.in
     #   ipdb
+ipython-genutils==0.2.0
+    # via traitlets
 jedi==0.16.0
     # via ipython
 mccabe==0.6.1
@@ -57,6 +57,8 @@ six==1.15.0
     #   pip-tools
     #   prompt-toolkit
     #   traitlets
+sqlparse==0.4.1
+    # via django
 traitlets==4.3.3
     # via ipython
 wcwidth==0.2.5
