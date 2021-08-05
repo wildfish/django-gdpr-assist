@@ -44,6 +44,16 @@ class ModelWithPrivacyMetaCanNotAnonymise(models.Model):
         can_anonymise = False
 
 
+class InheritedModelWithPrivacyMeta(ModelWithPrivacyMeta):
+    class PrivacyMeta:
+        fields = ["chars"]
+
+
+class InheritedModelWithoutPrivacyMeta(ModelWithoutPrivacyMeta):
+    title = models.CharField(max_length=255)
+
+
+
 class TargetModel(models.Model):
     """
     Target model for tests, no private data

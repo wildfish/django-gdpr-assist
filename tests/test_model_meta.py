@@ -25,6 +25,7 @@ from .tests_app.models import (
     ModelWithoutPrivacyMeta,
     ModelWithPrivacyMeta,
     ModelWithPrivacyMetaCanNotAnonymise,
+    InheritedModelWithPrivacyMeta, InheritedModelWithoutPrivacyMeta,
 )
 
 
@@ -56,50 +57,64 @@ class TestPrivacyMeta(TestCase):
         self.assertEqual("Attribute invalid_attr not defined", str(cm.exception))
 
 
-class TestModelDefinitionWithPrivacyMeta(TestCase):
+class BaseTestModelDefinition:
+    model = None
+
     def test_model_registered_automatically(self):
-        self.assertIn(ModelWithPrivacyMeta, registry.models.keys())
+        self.assertIn(self.model, registry.models.keys())
 
     def test_meta_class_removed(self):
-        self.assertFalse(hasattr(ModelWithPrivacyMeta, "PrivacyMeta"))
+        self.assertFalse(hasattr(self.model, "PrivacyMeta"))
 
     def test_meta_class_instance_added(self):
-        self.assertTrue(hasattr(ModelWithPrivacyMeta, "_privacy_meta"))
-        self.assertIsInstance(ModelWithPrivacyMeta._privacy_meta, PrivacyMeta)
+        self.assertTrue(hasattr(self.model, "_privacy_meta"))
+        self.assertIsInstance(self.model._privacy_meta, PrivacyMeta)
 
     def test_meta_class_instance_registered(self):
         self.assertEqual(
-            ModelWithPrivacyMeta._privacy_meta, registry.models[ModelWithPrivacyMeta]
+            self.model._privacy_meta, registry.models[self.model]
         )
 
     def test_privacy_meta_attrs(self):
-        meta = ModelWithPrivacyMeta._privacy_meta
-        self.assertEqual(meta.fields, ["chars", "email"])
+        meta = self.model._privacy_meta
+        self.assertEqual(meta.fields, self.expected_fields)
 
     def test_model_cast_to_privacy_model(self):
-        self.assertTrue(issubclass(ModelWithPrivacyMeta, PrivacyModel))
+        self.assertTrue(issubclass(self.model, PrivacyModel))
 
     def test_model_has_anonymised_field(self):
-        obj = ModelWithPrivacyMeta.objects.create(
+        obj = self.model.objects.create(
             chars="test", email="test@example.com"
         )
         obj.refresh_from_db()
         self.assertFalse(obj.is_anonymised())
 
     def test_manager_cast_to_privacy_manager(self):
-        self.assertIsInstance(ModelWithPrivacyMeta.objects, PrivacyManager)
+        self.assertIsInstance(self.model.objects, PrivacyManager)
 
     def test_queryset_cast_to_privacy_queryset(self):
-        self.assertIsInstance(ModelWithPrivacyMeta.objects.all(), PrivacyQuerySet)
+        self.assertIsInstance(self.model.objects.all(), PrivacyQuerySet)
 
     def test_meta_class_can_anonymise__can(self):
-        self.assertTrue(ModelWithPrivacyMeta.check_can_anonymise())
+        self.assertTrue(self.model.check_can_anonymise())
+
+
+class TestModelDefinitionWithPrivacyMeta(BaseTestModelDefinition, TestCase):
+    model = ModelWithPrivacyMeta
+    expected_fields = ["chars", "email"]
 
     def test_meta_class_can_anonymise__can_not(self):
         self.assertFalse(ModelWithPrivacyMetaCanNotAnonymise.check_can_anonymise())
 
 
-class TestModelDefinitionWithoutPrivacyMeta(TestCase):
+class TestModelDefinitionInheritedFromWithPrivacyMeta(BaseTestModelDefinition, TestCase):
+    model = InheritedModelWithPrivacyMeta
+    expected_fields = ["chars"]
+
+
+class BaseModelDefinitionWithoutPrivacyMeta:
+    model = None
+
     class PrivacyMeta:
         """
         Test privacy meta class for ModelWithoutPrivacyMeta
@@ -108,44 +123,52 @@ class TestModelDefinitionWithoutPrivacyMeta(TestCase):
         fields = ["chars", "email"]
 
     def tearDown(self):
-        registry.models.pop(ModelWithoutPrivacyMeta, None)
-        ModelWithoutPrivacyMeta.__bases__ = tuple(
-            b for b in ModelWithoutPrivacyMeta.__bases__ if b is not PrivacyModel
+        registry.models.pop(self.model, None)
+        self.model.__bases__ = tuple(
+            b for b in self.model.__bases__ if b is not PrivacyModel
         )
 
     def register(self):
-        gdpr_assist.register(ModelWithoutPrivacyMeta, self.PrivacyMeta)
+        gdpr_assist.register(self.model, self.PrivacyMeta)
 
     def test_model_not_registered(self):
-        self.assertNotIn(ModelWithoutPrivacyMeta, registry.models.keys())
+        self.assertNotIn(self.model, registry.models.keys())
 
     def test_model_registered_manually__is_registered(self):
         self.register()
-        self.assertIn(ModelWithoutPrivacyMeta, registry.models.keys())
+        self.assertIn(self.model, registry.models.keys())
 
     def test_model_registered_manually__meta_class_instance_added(self):
         self.register()
-        self.assertTrue(hasattr(ModelWithoutPrivacyMeta, "_privacy_meta"))
-        self.assertIsInstance(ModelWithoutPrivacyMeta._privacy_meta, PrivacyMeta)
+        self.assertTrue(hasattr(self.model, "_privacy_meta"))
+        self.assertIsInstance(self.model._privacy_meta, PrivacyMeta)
 
     def test_model_registered_manually__meta_class_instance_registered(self):
         self.register()
         self.assertEqual(
-            ModelWithoutPrivacyMeta._privacy_meta,
-            registry.models[ModelWithoutPrivacyMeta],
+            self.model._privacy_meta,
+            registry.models[self.model],
         )
 
     def test_model_registered_manually__privacy_meta_attrs(self):
         self.register()
-        meta = ModelWithPrivacyMeta._privacy_meta
+        meta = self.model._privacy_meta
         self.assertEqual(meta.fields, self.PrivacyMeta.fields)
 
     def test_model_registered_manually_without_privacy_meta__meta_class_instance_added(
         self
     ):
-        gdpr_assist.register(ModelWithoutPrivacyMeta)
-        self.assertTrue(hasattr(ModelWithoutPrivacyMeta, "_privacy_meta"))
-        self.assertIsInstance(ModelWithoutPrivacyMeta._privacy_meta, PrivacyMeta)
+        gdpr_assist.register(self.model)
+        self.assertTrue(hasattr(self.model, "_privacy_meta"))
+        self.assertIsInstance(self.model._privacy_meta, PrivacyMeta)
+
+
+class TestModelDefinitionWithoutPrivacyMeta(BaseModelDefinitionWithoutPrivacyMeta, TestCase):
+    model = ModelWithoutPrivacyMeta
+
+
+class TestModelDefinitionInheritedWithoutPrivacyMeta(BaseModelDefinitionWithoutPrivacyMeta, TestCase):
+    model = InheritedModelWithoutPrivacyMeta
 
 
 class TestAppConfig(TestCase):

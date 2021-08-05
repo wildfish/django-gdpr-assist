@@ -1,6 +1,7 @@
 """
 Model-related functionality
 """
+import inspect
 import sys
 from copy import copy
 
@@ -272,7 +273,9 @@ class PrivacyModel(models.Model):
             model   The model to turn into a PrivacyModel subclass.
         """
         # Make the model subclass PrivacyModel
-        model.__bases__ = (PrivacyModel,) + model.__bases__
+        # If model does not already inherit from PrivacyModel via a parent only.
+        if PrivacyModel not in model.mro():
+            model.__bases__ = (PrivacyModel,) + model.__bases__
 
         # Tell the field it's now a member of the new model
         # We need to do this manually, as the base class has been added after
