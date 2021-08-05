@@ -91,7 +91,7 @@ Roadmap
 
 Features planned for future releases:
 
-* Settings to customise the ``anonymised`` field name and ``anonymise()``
+* Settings to customise the ``anonymise()``
   method name on registered models - see :doc:`anonymising`
 * Subclass the queryset of ``on_delete=ANONYMISE(..)`` related models which
   aren't registered, so that bulk deletion always results in anonymisation -

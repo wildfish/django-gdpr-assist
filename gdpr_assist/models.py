@@ -196,8 +196,14 @@ class PrivacyMeta(object):
 
 
 class PrivacyAnonymised(models.Model):
+    """
+        object_id is CharField so we can support models which are UUID pks based also.
+
+        Django supports object_id being of a different type to the related object -
+        https://docs.djangoproject.com/en/3.1/ref/contrib/contenttypes/#generic-relations
+    """
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    object_id = models.CharField(max_length=36)
     anonymised_object = GenericForeignKey("content_type", "object_id")
 
 

@@ -3,6 +3,8 @@ Test models
 """
 from __future__ import unicode_literals
 
+import uuid
+
 from django.db import models
 
 import gdpr_assist
@@ -332,3 +334,26 @@ class ForthSearchModel(models.Model):
         search_fields = ["email"]
         export_exclude = ["email"]
         can_anonymise = False
+
+
+class UUIDasPK(models.Model):
+    """
+    Test PrivacyMeta definition on the model with non-standard pk
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    chars = models.CharField(max_length=255)
+
+    class PrivacyMeta:
+        fields = ["chars"]
+
+
+class UUIDasPKSmallField(models.Model):
+    """
+    Test PrivacyMeta definition on the model with non-standard pk, where the field to be anoonymised
+    is smaller then a UUID (which will be used as the value).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    chars = models.CharField(max_length=10)
+
+    class PrivacyMeta:
+        fields = ["chars"]

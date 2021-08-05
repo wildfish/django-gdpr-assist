@@ -26,6 +26,8 @@ from .tests_app.models import (
     PrivateUnregisteredTargetModel,
     TestModelForKnownCustomField,
     UnknownCustomField,
+    UUIDasPK,
+    UUIDasPKSmallField,
     forbidden_models,
     not_nullable_models,
     nullable_models,
@@ -853,6 +855,31 @@ class TestOtherAnonymisation(TestAnonymisationBase):
         obj.anonymise(force=True)
         self.assertTrue(obj.is_anonymised())
         self.assertEqual(obj.field, "")
+
+
+class TestAlternatePKAnonymisation(TestCase):
+    """
+    Tests for models without standard PKs
+    """
+    databases = "__all__"
+
+    def test_anonymise_uuid_model(self):
+        obj = UUIDasPK.objects.create(chars="Test")
+        self.assertFalse(obj.is_anonymised())
+        self.assertEqual(obj.chars, "Test")
+
+        obj.anonymise()
+        self.assertTrue(obj.is_anonymised())
+        self.assertEqual(obj.chars, str(obj.pk))
+
+    def test_anonymise_uuid_model__field_to_be_anonymised_smaller_then_uuid(self):
+        obj = UUIDasPKSmallField.objects.create(chars="Test")
+        self.assertFalse(obj.is_anonymised())
+        self.assertEqual(obj.chars, "Test")
+
+        obj.anonymise()
+        self.assertTrue(obj.is_anonymised())
+        self.assertEqual(obj.chars, str(obj.pk)[:10])
 
 
 class TestQuerySet(TestCase):

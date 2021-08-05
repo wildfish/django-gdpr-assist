@@ -2,24 +2,15 @@
 Anonymising objects
 ===================
 
-Model changes
-=============
+Models
+======
 
-Once a model has been registered with gdpr-assist, its instances will have
-some additional attributes:
-
-
-``obj.anonymised = BooleanField()``
------------------------------------
-
-This is a boolean value stored in the database to register whether the object
-has been anonymised or not.
-
+Call this to anonymise the private fields on the object.
 
 ``obj.anonymise()``
 -------------------
 
-Call this to anonymise the private fields on the object.
+Once an object is anonymised a reference to that anonymisation will be recorded in ``PrivacyAnonymised``.
 
 
 How anonymisation works
