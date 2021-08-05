@@ -34,7 +34,7 @@ def runtests(args):
                 "django.contrib.messages",
                 "gdpr_assist",
                 "tests",
-                "tests.gdpr_assist_tests_app",
+                "tests.tests_app",
             ],
             MIDDLEWARE=[
                 "django.middleware.common.CommonMiddleware",
@@ -56,7 +56,7 @@ def runtests(args):
                 }
             ],
             GDPR_CAN_ANONYMISE_DATABASE=True,
-            ROOT_URLCONF="tests.gdpr_assist_tests_app.urls",
+            ROOT_URLCONF="tests.tests_app.urls",
         )
 
         # Build database settings
@@ -69,7 +69,7 @@ def runtests(args):
 
         engine = os.environ.get("DATABASE_ENGINE")
         if engine:
-            if engine == "pgsql":
+            if engine == "postgresql":
                 DATABASE["ENGINE"] = "django.db.backends.postgresql_psycopg2"
                 DATABASE["HOST"] = "localhost"
             elif engine == "mysql":
@@ -121,6 +121,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Framework :: Django",
         "Framework :: Django :: 2.2",
         "Framework :: Django :: 3.0",

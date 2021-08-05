@@ -6,7 +6,7 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 import gdpr_assist
-import tests.gdpr_assist_tests_app.models
+import tests.tests_app.models
 
 
 class Migration(migrations.Migration):
@@ -192,7 +192,7 @@ class Migration(migrations.Migration):
                     "field",
                     models.ManyToManyField(
                         related_name="_testmodelforbiddenformanytomanyfield_field_+",
-                        to="gdpr_assist_tests_app.TargetModel",
+                        to="tests_app.TargetModel",
                     ),
                 ),
             ],
@@ -211,7 +211,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "field",
-                    tests.gdpr_assist_tests_app.models.UnknownCustomField(
+                    tests.tests_app.models.UnknownCustomField(
                         max_length=255
                     ),
                 ),
@@ -414,7 +414,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="+",
-                        to="gdpr_assist_tests_app.TargetModel",
+                        to="tests_app.TargetModel",
                     ),
                 ),
             ],
@@ -478,7 +478,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "field",
-                    tests.gdpr_assist_tests_app.models.KnownCustomField(max_length=255),
+                    tests.tests_app.models.KnownCustomField(max_length=255),
                 ),
             ],
         ),
@@ -671,7 +671,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="+",
-                        to="gdpr_assist_tests_app.TargetModel",
+                        to="tests_app.TargetModel",
                     ),
                 ),
             ],
@@ -755,7 +755,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="+",
-                        to="gdpr_assist_tests_app.TargetModel",
+                        to="tests_app.TargetModel",
                     ),
                 ),
             ],
@@ -912,7 +912,7 @@ class Migration(migrations.Migration):
                     models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="+",
-                        to="gdpr_assist_tests_app.TargetModel",
+                        to="tests_app.TargetModel",
                     ),
                 ),
             ],
@@ -1138,7 +1138,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=gdpr_assist.ANONYMISE(django.db.models.deletion.SET_NULL),
                 related_name="onetoonefield",
-                to="gdpr_assist_tests_app.PrivateTargetModel",
+                to="tests_app.PrivateTargetModel",
             ),
         ),
         migrations.AddField(
@@ -1149,7 +1149,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=gdpr_assist.ANONYMISE(django.db.models.deletion.SET_NULL),
                 related_name="foreignkey",
-                to="gdpr_assist_tests_app.PrivateUnregisteredTargetModel",
+                to="tests_app.PrivateUnregisteredTargetModel",
             ),
         ),
         migrations.AddField(
@@ -1160,7 +1160,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=gdpr_assist.ANONYMISE(django.db.models.deletion.SET_NULL),
                 related_name="foreignkey",
-                to="gdpr_assist_tests_app.PrivateTargetModel",
+                to="tests_app.PrivateTargetModel",
             ),
         ),
         migrations.AddField(
@@ -1171,7 +1171,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=gdpr_assist.ANONYMISE(django.db.models.deletion.SET_NULL),
                 related_name="foreignkey",
-                to="gdpr_assist_tests_app.PrivateTargetCanNotAnonymiseModel",
+                to="tests_app.PrivateTargetCanNotAnonymiseModel",
             ),
         ),
     ]

@@ -7,7 +7,7 @@ from model_bakery import baker
 
 from gdpr_assist.models import EventLog
 
-from .gdpr_assist_tests_app.models import (
+from .tests_app.models import (
     ModelWithoutPrivacyMeta,
     ModelWithPrivacyMeta,
     ModelWithPrivacyMetaCanNotAnonymise,
@@ -30,7 +30,7 @@ class TestLogger(TestCase):
 
         log = EventLog.objects.first()
         self.assertEqual(log.event, EventLog.EVENT_DELETE)
-        self.assertEqual(log.app_label, "gdpr_assist_tests_app")
+        self.assertEqual(log.app_label, "tests_app")
         self.assertEqual(log.model_name, "ModelWithPrivacyMeta")
         self.assertEqual(log.target_pk, str(obj_pk))
 
@@ -43,7 +43,7 @@ class TestLogger(TestCase):
 
         log = EventLog.objects.first()
         self.assertEqual(log.event, EventLog.EVENT_ANONYMISE)
-        self.assertEqual(log.app_label, "gdpr_assist_tests_app")
+        self.assertEqual(log.app_label, "tests_app")
         self.assertEqual(log.model_name, "ModelWithPrivacyMeta")
         self.assertEqual(log.target_pk, str(obj.pk))
 

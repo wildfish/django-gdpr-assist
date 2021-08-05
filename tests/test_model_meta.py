@@ -21,7 +21,7 @@ from gdpr_assist.models import (
 from gdpr_assist.registry import registry
 
 from .base import MigrationTestCase
-from .gdpr_assist_tests_app.models import (
+from .tests_app.models import (
     ModelWithoutPrivacyMeta,
     ModelWithPrivacyMeta,
     ModelWithPrivacyMetaCanNotAnonymise,
@@ -39,7 +39,7 @@ class TestRegistry(TestCase):
                 ModelWithPrivacyMeta, ModelWithPrivacyMeta._privacy_meta
             )
         self.assertEqual(
-            "Model gdpr_assist_tests_app.ModelWithPrivacyMeta already registered",
+            "Model tests_app.ModelWithPrivacyMeta already registered",
             str(cm.exception),
         )
 
