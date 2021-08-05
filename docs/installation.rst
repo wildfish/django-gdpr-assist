@@ -67,7 +67,7 @@ Set this to ``True`` to enable the ``anonymise_db`` management command. You
 will want this to be ``False`` on your production deployment.
 
 
-```SILENCED_SYSTEM_CHECKS``
+``SILENCED_SYSTEM_CHECKS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default, gdpr-assist performs migration checks to ensure that you've followed
