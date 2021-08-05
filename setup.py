@@ -57,6 +57,7 @@ def runtests(args):
             ],
             GDPR_CAN_ANONYMISE_DATABASE=True,
             ROOT_URLCONF="tests.tests_app.urls",
+            SECRET_KEY="test",
         )
 
         # Build database settings
@@ -66,8 +67,6 @@ def runtests(args):
 
         DATABASE["TEST"] = MEMORY_DATABASE.copy()
         GDPR_DATABASE["TEST"] = MEMORY_DATABASE.copy()
-
-        SECRET_KEY = "test"
 
         engine = os.environ.get("DATABASE_ENGINE")
         if engine:
