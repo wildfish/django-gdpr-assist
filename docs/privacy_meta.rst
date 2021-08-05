@@ -43,7 +43,7 @@ than on the model - for example when you want to be able to export or anonymise
 a third-party object, or if you have a particularly complex privacy meta
 definition and want to store it in a separate file for clarity.
 
-The ``gdpr_assist.register_model(<ModelClass>, [<PrivacyMetaClass>])`` function
+The ``gdpr_assist.register(<ModelClass>, [<PrivacyMetaClass>])`` function
 will let you manually register the model with an optional ``PrivacyMeta``
 class.
 
