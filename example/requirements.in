@@ -6,4 +6,4 @@ ipdb
 
 # Example project
 Django<3.3
-django-autofixture
+model_bakery
