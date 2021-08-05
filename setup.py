@@ -67,6 +67,8 @@ def runtests(args):
         DATABASE["TEST"] = MEMORY_DATABASE.copy()
         GDPR_DATABASE["TEST"] = MEMORY_DATABASE.copy()
 
+        SECRET_KEY = "test"
+
         engine = os.environ.get("DATABASE_ENGINE")
         if engine:
             if engine == "postgresql":
@@ -126,6 +128,7 @@ setup(
         "Framework :: Django :: 2.2",
         "Framework :: Django :: 3.0",
         "Framework :: Django :: 3.1",
+        "Framework :: Django :: 3.2",
     ],
     install_requires=["django-yaa-settings>=1.1"],
     extras_require={
