@@ -4,7 +4,7 @@ Anonymisation support for Django ModelAdmin classes
 import django
 from django.conf.urls import url
 from django.contrib import admin, messages
-from django.http import Http404, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
