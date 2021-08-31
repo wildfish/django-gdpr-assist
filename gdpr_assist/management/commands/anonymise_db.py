@@ -118,7 +118,7 @@ Are you sure you want to do this?
                 strategy = strategies.get(category)
                 if strategy is None:
                     raise CommandError(
-                        """Missing anonymisation strategy for model {model}!""",
+                        """Missing anonymisation strategy for model {}!""".format(model),
                         """Please check your anonymisation settings."""
                     )
 
@@ -132,7 +132,7 @@ Are you sure you want to do this?
                         model.objects.all().anonymise()
                     else:
                         raise CommandError(
-                            """Cannot anonymise {category} model {model}!""",
+                            """Cannot anonymise {} model {}!""".format(category, model),
                             """Please check your anonymisation settings."""
                         )
 
@@ -142,7 +142,7 @@ Are you sure you want to do this?
                 elif strategy == StrategyHelper.STRATEGY_RETAIN:
                     if issubclass(model, PrivacyModel) and model.check_can_anonymise():
                         raise CommandError(
-                            """Refusing to retain anonymisable model {model}!""",
+                            """Refusing to retain anonymisable model {}!""".format(model),
                             """Please check your anonymisation settings."""
                         )
 
