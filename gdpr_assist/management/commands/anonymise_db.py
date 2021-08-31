@@ -39,11 +39,11 @@ class StrategyHelper:
             try:
                 category, strategy = token.strip().split(":")
             except ValueError:
-                raise CommandError(f"Could not parse strategy assignment: {token}")
+                raise CommandError("Could not parse strategy assignment: {}".format(token))
             if category not in StrategyHelper.DEFAULT_STRATEGIES:
-                raise CommandError(f"Unknown data category: {category}")
+                raise CommandError("Unknown data category: {}".format(category))
             if strategy not in StrategyHelper.AVAILABLE_STRATEGIES:
-                raise CommandError(f"Unknown anonymisation strategy: {strategy}")
+                raise CommandError("Unknown anonymisation strategy: {}".format(strategy))
             strategies[category] = strategy
 
         # Assign a default strategy for any remaining categories
