@@ -1,6 +1,10 @@
 """
 Test management commands
 """
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import sys
 from io import StringIO
 
@@ -77,8 +81,20 @@ class TestStrategyHelper(TestCase):
 
         self.assertEqual(expected, strategies)
 
+    def test_strategy_parser_non_assignment(self):
+        text = "untagged:retain,anonymisable"
+
+        with self.assertRaises(CommandError):
+            StrategyHelper.parse(text)
+
     def test_strategy_parser_invalid_assignments(self):
         text = "untagged:remove"
+
+        with self.assertRaises(CommandError):
+            StrategyHelper.parse(text)
+
+    def test_strategy_parser_unknown_category(self):
+        text = "nonanonymisable:delete"
 
         with self.assertRaises(CommandError):
             StrategyHelper.parse(text)
@@ -137,6 +153,16 @@ class TestAnonymiseCommand(CommandTestCase):
         self.assertEqual(obj_1.chars, str(obj_1.pk))
         self.assertEqual(obj_1.email, "{}@anon.example.com".format(obj_1.pk))
 
+    def test_anonymise_command__deletes_data(self):
+        obj_1 = ModelWithPrivacyMeta.objects.create(
+            chars="test", email="test@example.com"
+        )
+        self.assertFalse(obj_1.is_anonymised())
+        self.run_command("anonymise_db", interactive=False, strategies="anonymisable:delete")
+
+        with self.assertRaises(ModelWithPrivacyMeta.DoesNotExist):
+            obj_1.refresh_from_db()
+
     def test_anonymise_disabled__raises_error(self):
 
         with self.assertRaises(ValueError) as cm:
@@ -184,6 +210,16 @@ class TestAnonymiseCommand(CommandTestCase):
         self.assertTrue(obj_1.check_can_anonymise())
         with self.assertRaises(CommandError):
             self.run_command("anonymise_db", interactive=False, strategies=strategies)
+
+    @mock.patch('gdpr_assist.management.commands.anonymise_db.StrategyHelper.category_for_model')
+    def test_refuse_run_incomplete_strategy(self, category_for_model):
+        ModelWithPrivacyMeta.objects.create(
+            chars="test", email="test@example.com"
+        )
+        category_for_model.return_value = None
+
+        with self.assertRaises(CommandError):
+            self.run_command("anonymise_db", interactive=False)
 
 
 class TestRerunCommand(CommandTestCase):
