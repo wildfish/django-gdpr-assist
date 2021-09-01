@@ -137,7 +137,7 @@ Are you sure you want to do this?
                         )
 
                 elif strategy == StrategyHelper.STRATEGY_DELETE:
-                    model.objects.all.delete()
+                    model.objects.all().delete()
 
                 elif strategy == StrategyHelper.STRATEGY_RETAIN:
                     if issubclass(model, PrivacyModel) and model.check_can_anonymise():
