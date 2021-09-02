@@ -3,6 +3,7 @@ Anonymise all personal data in the database
 """
 from django.apps import apps
 from django.core.management import BaseCommand, CommandError
+from django.db import router
 
 from ... import app_settings
 from ...models import PrivacyModel
@@ -84,6 +85,18 @@ class Command(BaseCommand):
             help="Configures the anonymisation strategies that will be applied.",
         )
 
+    @staticmethod
+    def _models_for_anonymisation():
+        """
+        Return an iterable of the Django models that should be considered for
+        bulk anonymisation.  This should omit, for example, internal metadata
+        tables used by the gdpr_assist library.
+        """
+        for model in apps.get_models():
+            if router.db_for_write(model) == app_settings.GDPR_LOG_DATABASE_NAME:
+                continue
+            yield model
+
     def handle(self, *args, **options):
         if not app_settings.GDPR_CAN_ANONYMISE_DATABASE:
             raise ValueError("Database anonymisation is not enabled")
@@ -93,7 +106,7 @@ class Command(BaseCommand):
 
         # Validate that we can determine a specific anonymisation strategy
         # for every model in the application before proceeding
-        for model in apps.get_models():
+        for model in self._models_for_anonymisation():
             category = StrategyHelper.category_for_model(model)
             strategy = strategies.get(category)
             if strategy is None:
@@ -126,7 +139,7 @@ Are you sure you want to do this?
         if confirm == "yes":
 
             # Begin applying the requested anonymisation strategy to each model
-            for model in apps.get_models():
+            for model in self._models_for_anonymisation():
                 category = StrategyHelper.category_for_model(model)
                 strategy = strategies.get(category)
 
