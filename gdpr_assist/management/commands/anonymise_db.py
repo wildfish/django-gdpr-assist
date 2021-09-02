@@ -91,6 +91,17 @@ class Command(BaseCommand):
         interactive = options["interactive"]
         strategies = StrategyHelper.parse(options["strategies"])
 
+        # Validate that we can determine a specific anonymisation strategy
+        # for every model in the application before proceeding
+        for model in apps.get_models():
+            category = StrategyHelper.category_for_model(model)
+            strategy = strategies.get(category)
+            if strategy is None:
+                raise CommandError(
+                    """Missing anonymisation strategy for model {}!""".format(model),
+                    """Please check your anonymisation settings."""
+                )
+
         if interactive:  # pragma: no cover
             self.stdout.write(
                 "The following data anonymisation strategies will be applied:"
@@ -113,16 +124,6 @@ Are you sure you want to do this?
             confirm = "yes"
 
         if confirm == "yes":
-            # Validate that we can determine a specific anonymisation strategy
-            # for every model in the application before modifying any data
-            for model in apps.get_models():
-                category = StrategyHelper.category_for_model(model)
-                strategy = strategies.get(category)
-                if strategy is None:
-                    raise CommandError(
-                        """Missing anonymisation strategy for model {}!""".format(model),
-                        """Please check your anonymisation settings."""
-                    )
 
             # Begin applying the requested anonymisation strategy to each model
             for model in apps.get_models():
