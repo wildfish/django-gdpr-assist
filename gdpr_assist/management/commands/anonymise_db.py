@@ -96,7 +96,7 @@ class Command(BaseCommand):
                 "The following data anonymisation strategies will be applied:"
             )
             for category, strategy in strategies.items():
-                self.stdout.write(" - {category} data: {strategy.upper()}")
+                self.stdout.write(" - {} data: {}".format(category, strategy.upper()))
 
             confirm = input(
                 """Warning!
