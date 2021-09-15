@@ -145,7 +145,8 @@ Are you sure you want to do this?
 
                 if strategy == StrategyHelper.STRATEGY_ANONYMISE:
                     if issubclass(model, PrivacyModel) and model.check_can_anonymise():
-                        model.objects.all().anonymise()
+                        for obj in model.objects.all().iterator():
+                            obj.anonymise()
                     else:
                         raise CommandError(
                             """Cannot anonymise {} model {}!""".format(category, model),
@@ -153,7 +154,8 @@ Are you sure you want to do this?
                         )
 
                 elif strategy == StrategyHelper.STRATEGY_DELETE:
-                    model.objects.all().delete()
+                    for obj in model.objects.all().iterator():
+                        obj.delete()
 
                 elif strategy == StrategyHelper.STRATEGY_RETAIN:
                     if issubclass(model, PrivacyModel) and model.check_can_anonymise():
