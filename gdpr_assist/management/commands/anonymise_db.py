@@ -1,8 +1,6 @@
 """
 Anonymise all personal data in the database
 """
-import gc
-
 from django.apps import apps
 from django.core.management import BaseCommand, CommandError
 from django.db import router
@@ -147,10 +145,7 @@ Are you sure you want to do this?
 
                 if strategy == StrategyHelper.STRATEGY_ANONYMISE:
                     if issubclass(model, PrivacyModel) and model.check_can_anonymise():
-                        for idx, obj in enumerate(model.objects.all()):
-                            if idx % 10000 == 0:
-                                gc.collect()
-                            obj.anonymise()
+                        model.objects.all().anonymise()
                     else:
                         raise CommandError(
                             """Cannot anonymise {} model {}!""".format(category, model),
@@ -158,10 +153,7 @@ Are you sure you want to do this?
                         )
 
                 elif strategy == StrategyHelper.STRATEGY_DELETE:
-                    for idx, obj in enumerate(model.objects.all()):
-                        if idx % 10000 == 0:
-                            gc.collect()
-                        obj.delete()
+                    model.objects.all().delete()
 
                 elif strategy == StrategyHelper.STRATEGY_RETAIN:
                     if issubclass(model, PrivacyModel) and model.check_can_anonymise():
