@@ -224,7 +224,7 @@ class PrivacyModel(models.Model):
             return
 
         # Only anonymise things once to avoid a circular anonymisation
-        if self.is_anonymised() and not force:
+        if not force and self.is_anonymised():
             return
 
         pre_anonymise.send(sender=self.__class__, instance=self)
