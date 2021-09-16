@@ -40,7 +40,7 @@ Are you sure you want to do this?
 
         if confirm == "yes":
             for model in registry.models_allowed_to_anonymise():
-                model.objects.all().anonymise()
+                model.objects.all().anonymise(for_bulk=True)
 
             msg = "{} models anonymised.".format(
                 len(registry.models_allowed_to_anonymise())
