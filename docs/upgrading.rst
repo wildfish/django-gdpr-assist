@@ -111,7 +111,7 @@ Changelog
 
 Features:
 
-* Add support for Django 3.2
+* Add support for Django 3.2, 4.0.
 
 
 1.3.0, 2020-08-14
