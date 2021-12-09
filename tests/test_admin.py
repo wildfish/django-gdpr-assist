@@ -5,7 +5,6 @@ import csv
 import zipfile
 from io import BytesIO, TextIOWrapper
 
-import django
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.test import Client, TestCase
