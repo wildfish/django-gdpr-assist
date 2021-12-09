@@ -134,6 +134,7 @@ setup(
             "tox",
             "pillow",
             "model_bakery",
+            "freezegun",
             # Docs
             "sphinx",
             "sphinx-autobuild",
