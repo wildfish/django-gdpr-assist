@@ -55,7 +55,7 @@ class PersonProfile(models.Model):
     )
     age = models.IntegerField(blank=True, null=True)
     address = models.TextField(blank=True)
-    has_children = models.NullBooleanField()
+    has_children = models.BooleanField(null=True)
 
     class PrivacyMeta(object):
         fields = ["age", "address"]

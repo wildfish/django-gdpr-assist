@@ -4,6 +4,7 @@ Anonymisation functionality
 import datetime
 import uuid
 
+import django
 from django.db import models
 from django.utils.timezone import now
 
@@ -65,7 +66,12 @@ def anonymise_binary(instance, field_name, field, value):
     return b""
 
 
-@register(models.BooleanField, models.NullBooleanField)
+boolean_fields = [models.BooleanField]
+if django.VERSION < (4, 0):  # NullBooleanField deprecated @ 4.0
+    boolean_fields.append(models.NullBooleanField)
+
+
+@register(*boolean_fields)
 def anonymise_boolean(instance, field_name, field, value):
     if field.null:
         return None
