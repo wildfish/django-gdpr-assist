@@ -2,12 +2,12 @@
 Anonymisation support for Django ModelAdmin classes
 """
 import django
-from django.conf.urls import url
+from django.urls import re_path
 from django.contrib import admin, messages
 from django.http import Http404, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .. import app_settings
 
@@ -50,7 +50,7 @@ class ModelAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super(ModelAdmin, self).get_urls()
         extra_urls = [
-            url(
+            re_path(
                 r"^anonymise/$",
                 self.admin_site.admin_view(self.anonymise_view),
                 name="{}_{}_anonymise".format(

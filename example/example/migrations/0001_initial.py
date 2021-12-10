@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
                 ("anonymised", models.BooleanField(default=False)),
                 ("age", models.IntegerField(blank=True, null=True)),
                 ("address", models.TextField(blank=True)),
-                ("has_children", models.NullBooleanField()),
+                ("has_children", models.BooleanField(null=True)),
                 (
                     "person",
                     models.ForeignKey(

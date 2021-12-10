@@ -26,6 +26,7 @@ def runtests(args):
         )
 
         SETTINGS = dict(
+            DEFAULT_AUTO_FIELD="django.db.models.BigAutoField",
             INSTALLED_APPS=[
                 "django.contrib.auth",
                 "django.contrib.admin",

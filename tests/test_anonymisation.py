@@ -5,7 +5,9 @@ import datetime
 import os
 import uuid
 from decimal import Decimal
+from unittest import skipIf
 
+import django
 from django.db import models
 from django.test import TestCase
 
@@ -199,6 +201,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         self.assertTrue(obj.is_anonymised())
         self.assertEqual(obj.field, False)
 
+    @skipIf(django.VERSION >= (4, 0), reason="NullBooleanField deprecated @ 4.0")
     def test_nullbooleanfield__anonymise_to_none(self):
         # Trick question, NullBooleanField is always nullable
         value = True
@@ -527,6 +530,19 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertTrue(obj.is_anonymised())
         self.assertIsNone(obj.field)
 
+    @skipIf(django.VERSION < (3, 1), reason="Nullable BooleanField added @ 3.1")
+    def test_booleanfield__anonymise_to_none(self):
+        value = True
+        obj = self.create(models.BooleanField, value)
+        self.assertFalse(obj.is_anonymised())
+        orig = obj.field
+        self.assertEqual(orig, value)
+
+        obj.anonymise()
+        self.assertTrue(obj.is_anonymised())
+        self.assertIsNone(obj.field)
+
+    @skipIf(django.VERSION >= (4, 0), reason="NullBooleanField deprecated @ 4.0")
     def test_nullbooleanfield__anonymise_to_none(self):
         # Trick question, NullBooleanField is always nullable
         value = True

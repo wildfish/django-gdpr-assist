@@ -761,21 +761,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="TestModelForNullableNullBooleanField",
-            fields=[
-                (
-                    "id",
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("field", models.NullBooleanField()),
-            ],
-        ),
-        migrations.CreateModel(
             name="TestModelForNullableOneToOneField",
             fields=[
                 (
@@ -917,21 +902,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("field", models.UUIDField(blank=True, null=True)),
-            ],
-        ),
-        migrations.CreateModel(
-            name="TestModelForNullBooleanField",
-            fields=[
-                (
-                    "id",
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("field", models.NullBooleanField()),
             ],
         ),
         migrations.CreateModel(
@@ -1228,3 +1198,60 @@ class Migration(migrations.Migration):
             ],
         ),
     ]
+
+    if django.VERSION < (4, 0):  # NullBooleanField deprecated @ 4.0
+        operations.extend(
+            [
+                migrations.CreateModel(
+                    name="TestModelForNullBooleanField",
+                    fields=[
+                        (
+                            "id",
+                            models.AutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("field", models.NullBooleanField()),
+                    ],
+                ),
+                migrations.CreateModel(
+                    name="TestModelForNullableNullBooleanField",
+                    fields=[
+                        (
+                            "id",
+                            models.AutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("field", models.NullBooleanField()),
+                    ],
+                ),
+            ]
+        )
+
+    if django.VERSION > (3, 0):  # Nullable BooleanField added @ 3.1
+        operations.extend(
+            [
+                migrations.CreateModel(
+                    name="TestModelForNullableBooleanField",
+                    fields=[
+                        (
+                            "id",
+                            models.AutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("field", models.BooleanField(null=True)),
+                    ],
+                ),
+            ]
+        )
