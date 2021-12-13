@@ -23,7 +23,7 @@ If a field is not nullable, the value will be set to a sensible default:
 
 * Numbers will be set to ``0``
 * Strings will be set to a string representation of the primary key field
-* Booleans will be set to ``False`` (although ``NullBooleanField`` will always
+* Booleans will be set to ``False`` (although ``BooleanField(null=True)`` will always
   be nullable)
 * ``DateField`` and ``DateTimeField`` will be set to the current date and time
 * ``TimeField`` will be set to ``00:00``

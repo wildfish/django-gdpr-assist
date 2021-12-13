@@ -7,7 +7,8 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
-from autofixture import AutoFixture, generators
+from model_bakery import baker
+from model_bakery.recipe import seq
 
 from .models import HealthRecord, MailingListLog, Person, PersonProfile
 
@@ -51,31 +52,9 @@ class IndexView(TemplateView):
         return context
 
     def populate_data(self):
-        people = AutoFixture(
-            Person,
-            field_values={"anonymised": False, "name": generators.FirstNameGenerator()},
-        ).create(5)
+        people = baker.make(Person, name=seq('Name'), _quantity=5)
 
         for person in people:
-            AutoFixture(
-                HealthRecord, field_values={"anonymised": False, "person": person}
-            ).create(random.randint(1, 3))
-
-            AutoFixture(
-                PersonProfile,
-                field_values={
-                    "anonymised": False,
-                    "person": person,
-                    "age": generators.IntegerGenerator(5, 55),
-                    "address": generators.LoremGenerator(max_length=100),
-                },
-            ).create(random.randint(1, 3))
-
-            AutoFixture(
-                MailingListLog,
-                field_values={
-                    "anonymised": False,
-                    "email": person.email,
-                    "sent_at": generators.DateTimeGenerator(),
-                },
-            ).create(random.randint(1, 3))
+            baker.make(HealthRecord, person=person, _quantity=random.randint(1, 3))
+            baker.make(PersonProfile, person=person, age=random.randint(5, 555))
+            baker.make(MailingListLog, email=person.email, _quantity=random.randint(1, 3))

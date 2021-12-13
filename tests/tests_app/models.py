@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import uuid
 
+import django
 from django.db import models
 
 import gdpr_assist
@@ -97,38 +98,42 @@ def field_model_factory(model_name, field_instance, field_name="field"):
 
 
 # Test all fields that gdpr-assist can blank without nulling
+fields = [
+    models.BigIntegerField(),
+    models.IntegerField(),
+    models.PositiveIntegerField(),
+    models.PositiveSmallIntegerField(),
+    models.SmallIntegerField(),
+    models.CharField(max_length=255),
+    models.SlugField(),
+    models.TextField(),
+    models.BinaryField(),
+    models.BooleanField(),
+    models.DateField(),
+    models.DateTimeField(),
+    models.DurationField(),
+    models.TimeField(),
+    models.DecimalField(decimal_places=2, max_digits=7),
+    models.FloatField(),
+    models.FileField(),
+    models.FilePathField(),
+    models.ImageField(),
+    models.EmailField(),
+    models.GenericIPAddressField(),
+    models.URLField(),
+    models.UUIDField(),
+    models.ForeignKey(TargetModel, on_delete=models.CASCADE, related_name="+"),
+    models.OneToOneField(TargetModel, on_delete=models.CASCADE, related_name="+"),
+]
+
+if django.VERSION < (4, 0):  # NullBooleanField deprecated @ 4.0
+    fields.append(models.NullBooleanField())
 
 not_nullable_models = {
     field.__class__: field_model_factory("TestModelFor{}", field)
-    for field in [
-        models.BigIntegerField(),
-        models.IntegerField(),
-        models.PositiveIntegerField(),
-        models.PositiveSmallIntegerField(),
-        models.SmallIntegerField(),
-        models.CharField(max_length=255),
-        models.SlugField(),
-        models.TextField(),
-        models.BinaryField(),
-        models.BooleanField(),
-        models.NullBooleanField(),
-        models.DateField(),
-        models.DateTimeField(),
-        models.DurationField(),
-        models.TimeField(),
-        models.DecimalField(decimal_places=2, max_digits=7),
-        models.FloatField(),
-        models.FileField(),
-        models.FilePathField(),
-        models.ImageField(),
-        models.EmailField(),
-        models.GenericIPAddressField(),
-        models.URLField(),
-        models.UUIDField(),
-        models.ForeignKey(TargetModel, on_delete=models.CASCADE, related_name="+"),
-        models.OneToOneField(TargetModel, on_delete=models.CASCADE, related_name="+"),
-    ]
+    for field in fields
 }
+
 not_nullable_models.update(
     {
         "UUIDField-unique": field_model_factory(
@@ -141,48 +146,57 @@ not_nullable_models.update(
 # Test all fields that can be nulled
 #
 # Excludes BooleanField - can never be null
+nullable_fields = [
+    models.BigIntegerField(blank=True, null=True),
+    models.IntegerField(blank=True, null=True),
+    models.PositiveIntegerField(blank=True, null=True),
+    models.PositiveSmallIntegerField(blank=True, null=True),
+    models.SmallIntegerField(blank=True, null=True),
+    models.CharField(max_length=255, blank=True),
+    models.SlugField(blank=True),
+    models.TextField(blank=True),
+    models.BinaryField(blank=True, null=True),
+    models.DateField(blank=True, null=True),
+    models.DateTimeField(blank=True, null=True),
+    models.DurationField(blank=True, null=True),
+    models.TimeField(blank=True, null=True),
+    models.DecimalField(decimal_places=2, max_digits=7, blank=True, null=True),
+    models.FloatField(blank=True, null=True),
+    models.FileField(blank=True, null=True),
+    models.FilePathField(blank=True, null=True),
+    models.ImageField(blank=True, null=True),
+    models.EmailField(blank=True, null=True),
+    models.GenericIPAddressField(blank=True, null=True),
+    models.URLField(blank=True, null=True),
+    models.UUIDField(blank=True, null=True),
+    models.ForeignKey(
+        TargetModel,
+        blank=True,
+        null=True,
+        related_name="+",
+        on_delete=models.CASCADE,
+    ),
+    models.OneToOneField(
+        TargetModel,
+        blank=True,
+        null=True,
+        related_name="+",
+        on_delete=models.CASCADE,
+    ),
+]
+
+
+if django.VERSION < (4, 0):  # NullBooleanField deprecated @ 4.0
+    nullable_fields.append(models.NullBooleanField())
+
+
+if django.VERSION > (3, 0):  # Nullable BooleanField added @ 3.1
+    nullable_fields.append(models.BooleanField(blank=True, null=True))
+
 
 nullable_models = {
     field.__class__: field_model_factory("TestModelForNullable{}", field)
-    for field in [
-        models.BigIntegerField(blank=True, null=True),
-        models.IntegerField(blank=True, null=True),
-        models.PositiveIntegerField(blank=True, null=True),
-        models.PositiveSmallIntegerField(blank=True, null=True),
-        models.SmallIntegerField(blank=True, null=True),
-        models.CharField(max_length=255, blank=True),
-        models.SlugField(blank=True),
-        models.TextField(blank=True),
-        models.BinaryField(blank=True, null=True),
-        models.NullBooleanField(blank=True, null=True),
-        models.DateField(blank=True, null=True),
-        models.DateTimeField(blank=True, null=True),
-        models.DurationField(blank=True, null=True),
-        models.TimeField(blank=True, null=True),
-        models.DecimalField(decimal_places=2, max_digits=7, blank=True, null=True),
-        models.FloatField(blank=True, null=True),
-        models.FileField(blank=True, null=True),
-        models.FilePathField(blank=True, null=True),
-        models.ImageField(blank=True, null=True),
-        models.EmailField(blank=True, null=True),
-        models.GenericIPAddressField(blank=True, null=True),
-        models.URLField(blank=True, null=True),
-        models.UUIDField(blank=True, null=True),
-        models.ForeignKey(
-            TargetModel,
-            blank=True,
-            null=True,
-            related_name="+",
-            on_delete=models.CASCADE,
-        ),
-        models.OneToOneField(
-            TargetModel,
-            blank=True,
-            null=True,
-            related_name="+",
-            on_delete=models.CASCADE,
-        ),
-    ]
+    for field in nullable_fields
 }
 
 
