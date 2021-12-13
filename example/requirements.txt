@@ -4,8 +4,6 @@
 #
 #    pip-compile
 #
-appnope==0.1.2
-    # via ipython
 asgiref==3.4.1
     # via django
 backcall==0.2.0
@@ -16,7 +14,7 @@ decorator==5.0.9
     # via
     #   ipdb
     #   ipython
-django==3.2.6
+django==3.2.10
     # via
     #   -r requirements.in
     #   model-bakery
