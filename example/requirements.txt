@@ -4,8 +4,6 @@
 #
 #    pip-compile
 #
-appnope==0.1.2
-    # via ipython
 asgiref==3.4.1
     # via django
 backcall==0.2.0
@@ -60,7 +58,7 @@ pygments==2.9.0
     # via ipython
 pytz==2021.1
     # via django
-sqlparse==0.4.1
+sqlparse==0.4.2
     # via django
 toml==0.10.2
     # via ipdb
