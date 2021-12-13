@@ -113,6 +113,9 @@ Features:
 
 * Add support for Django 3.2, 4.0.
 
+Fix:
+
+* Update PrivacyModel cast to support inheriting from another privacy model.
 
 1.3.0, 2020-08-14
 -----------------

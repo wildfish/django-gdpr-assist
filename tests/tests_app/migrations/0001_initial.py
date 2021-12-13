@@ -83,6 +83,25 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='InheritedModelWithoutPrivacyMeta',
+            fields=[
+                ('modelwithoutprivacymeta_ptr',
+                 models.OneToOneField(
+                     auto_created=True,
+                     on_delete=django.db.models.deletion.CASCADE,
+                     parent_link=True,
+                     primary_key=True,
+                     serialize=False,
+                     to='tests_app.modelwithoutprivacymeta')
+                 ),
+                ("title", models.CharField(max_length=255)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=('tests_app.modelwithoutprivacymeta',),
+        ),
+        migrations.CreateModel(
             name="ModelWithPrivacyMeta",
             fields=[
                 (
@@ -97,6 +116,24 @@ class Migration(migrations.Migration):
                 ("chars", models.CharField(max_length=255)),
                 ("email", models.EmailField(max_length=254)),
             ],
+        ),
+        migrations.CreateModel(
+            name='InheritedModelWithPrivacyMeta',
+            fields=[
+                ('modelwithprivacymeta_ptr',
+                 models.OneToOneField(
+                     auto_created=True,
+                     on_delete=django.db.models.deletion.CASCADE,
+                     parent_link=True,
+                     primary_key=True,
+                     serialize=False,
+                     to='tests_app.modelwithprivacymeta')
+                 ),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=('tests_app.modelwithprivacymeta',),
         ),
         migrations.CreateModel(
             name="OneToOneFieldModel",
