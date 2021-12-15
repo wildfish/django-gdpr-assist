@@ -14,7 +14,7 @@ from gdpr_assist.signals import pre_anonymise
 
 
 class UserPrivacyMeta:
-    fields = ['username', 'email']
+    fields = ["username", "email"]
 
 
 register(User, UserPrivacyMeta)

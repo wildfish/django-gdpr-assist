@@ -127,4 +127,4 @@ STATIC_URL = "/static/"
 # Enable anonymise_db command
 GDPR_CAN_ANONYMISE_DATABASE = True
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
