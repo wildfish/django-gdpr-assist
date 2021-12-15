@@ -3,12 +3,21 @@ Example models for GDPR-assist
 """
 import random
 
+from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
+from gdpr_assist import register
 from gdpr_assist.deletion import ANONYMISE
 from gdpr_assist.signals import pre_anonymise
+
+
+class UserPrivacyMeta:
+    fields = ['username', 'email']
+
+
+register(User, UserPrivacyMeta)
 
 
 class Person(models.Model):
