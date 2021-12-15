@@ -16,7 +16,7 @@ class Registry(object):
         # (related models without privacy meta)
         self.watching_on_delete = []
 
-    def register(self, model, privacy_meta=None):
+    def register(self, model, privacy_meta=None, default_manager_name=None):
         """
         Register this model as one to track
         """
@@ -46,7 +46,7 @@ class Registry(object):
 
         # Register
         self.models[model] = privacy_meta
-        PrivacyModel._cast_class(model, privacy_meta)
+        PrivacyModel._cast_class(model, privacy_meta, default_manager_name=default_manager_name)
 
     def search(self, term):
         """

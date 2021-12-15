@@ -63,9 +63,8 @@ and its queryset to ``models.PrivacyQuerySet`` to add the necessary
 anonymisation attributes and methods.
 
 Note on ``use_in_migrations`` usage. If the model registered's objects
-manager sets use_in_migrations=``use_in_migrations = True`` the manager with not be
-cast, but duplicated to ``Model.objects_anonymised``, this is to prevent migrations being
-created for third party models.
+manager sets use_in_migrations=``use_in_migrations = True`` `objects` is not
+cast, instead, default_manager_name must be used to give an alternate name.
 
 Once all models are registered, ``apps.GdprAppConfig.ready`` looks at all
 registered models for a ``OneToOneField`` or ``ForeignKey`` which have

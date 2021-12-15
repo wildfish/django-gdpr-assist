@@ -36,6 +36,7 @@ from .tests_app.models import (
 )
 
 
+
 class TestRegistry(TestCase):
     """
     Tests for the registry not covered elsewhere
@@ -134,9 +135,10 @@ class BaseModelDefinitionWithoutPrivacyMeta:
         self.model.__bases__ = tuple(
             b for b in self.model.__bases__ if b is not PrivacyModel
         )
+        self.model.objects = models.Manager()
 
-    def register(self):
-        gdpr_assist.register(self.model, self.PrivacyMeta)
+    def register(self, default_manager_name=None):
+        gdpr_assist.register(self.model, self.PrivacyMeta, default_manager_name)
 
     def test_model_not_registered(self):
         self.assertNotIn(self.model, registry.models.keys())
@@ -168,6 +170,15 @@ class BaseModelDefinitionWithoutPrivacyMeta:
         gdpr_assist.register(self.model)
         self.assertTrue(hasattr(self.model, "_privacy_meta"))
         self.assertIsInstance(self.model._privacy_meta, PrivacyMeta)
+
+    def test_model_registered_manually_manager_cast_name_is_default(self):
+        self.register()
+        self.assertIsInstance(self.model.objects, PrivacyManager)
+
+    def test_model_registered_manually_manager_cast_name_is_as_specified(self):
+        self.register(default_manager_name="abc")
+        self.assertNotIsInstance(self.model.objects, PrivacyManager)
+        self.assertIsInstance(self.model.abc, PrivacyManager)
 
 
 class TestModelDefinitionWithoutPrivacyMeta(BaseModelDefinitionWithoutPrivacyMeta, TestCase):
@@ -276,7 +287,7 @@ class TestExternalUseInMigration(TestCase):
         class UserPrivacyMeta:
             fields = ["username", "email"]
 
-        gdpr_assist.register(User, UserPrivacyMeta)
+        gdpr_assist.register(User, UserPrivacyMeta, default_manager_name="abc")
 
         project_state_after_register = ProjectState()
         self._add_user_project_state_models(project_state_after_register)
@@ -293,8 +304,22 @@ class TestExternalUseInMigration(TestCase):
         class UserPrivacyMeta:
             fields = ["username", "email"]
 
-        gdpr_assist.register(User, UserPrivacyMeta)
+        gdpr_assist.register(User, UserPrivacyMeta, default_manager_name="abc")
 
         self.assertIsInstance(User.objects, UserManager)
-        self.assertIsInstance(User.objects_anonymised, PrivacyManager)
+        self.assertIsInstance(User.abc, PrivacyManager)
 
+
+    def test_manager_default_manager_name_not_set(self):
+        class UserPrivacyMeta:
+            fields = ["username", "email"]
+
+        with self.assertRaises(RuntimeError) as ex:
+            gdpr_assist.register(User, UserPrivacyMeta)
+
+        self.assertEqual(
+            str(ex.exception),
+            "Registered gdpr_assist model Users manager specified 'use_in_migrations=True', with no name provided."
+        )
+        self.assertIsInstance(User.objects, UserManager)
+        self.assertNotIsInstance(User.objects, PrivacyManager)

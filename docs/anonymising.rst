@@ -118,9 +118,10 @@ Deleting querysets
 gdpr-assist modifies the queryset of registered models so that a bulk deletion
 will anonymise any related objects which use ``ANONYMISE(..)``.
 
-Note on ``use_in_migrations`` useage. If the model registered's objects
-manager sets use_in_migrations=``use_in_migrations = True`` you must use `Model.objects_anonymised`
-for querysets.
+Note on ``use_in_migrations`` usage. If the model registered's objects
+manager sets use_in_migrations=``use_in_migrations = True`` the default queryset (``objects``)
+will not be changed, it will instead be available at the name set on register(..., default_manager_name="abc")
+this is to allow for registering of third party models which make use of use_in_migrations.
 
 Note that Django does not send delete signals for bulk delete operations in
 other for situations, so to anonymise related objects when a queryset is

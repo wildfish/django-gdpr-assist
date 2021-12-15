@@ -1,7 +1,6 @@
 """
 Model-related functionality
 """
-import inspect
 import sys
 from copy import copy, deepcopy
 
@@ -263,7 +262,7 @@ class PrivacyModel(models.Model):
         EventLog.objects.log_anonymise(self)
 
     @classmethod
-    def _cast_class(cls, model, privacy_meta):
+    def _cast_class(cls, model, privacy_meta, default_manager_name=None):
         """
         Change the model to subclass PrivacyModel/
 
@@ -289,13 +288,22 @@ class PrivacyModel(models.Model):
             model.objects.__class__, PrivacyManager
         ):
             to_cast = model.objects
+            if not default_manager_name:
+                if to_cast.use_in_migrations:
+                    raise RuntimeError(f"Registered gdpr_assist model {model.__name__}s manager "
+                                       "specified 'use_in_migrations=True', with no name provided.")
+                else:
+                    default_manager_name = "objects"
 
-            # if manager is use_in_migrations, we can't cast, we must duplicate to
-            # avoid third party migrations.
+            # copy the manager to the defined name.
+            setattr(model, default_manager_name, deepcopy(to_cast))
+
+            # if used in migrations, disable for the copy.
             if to_cast.use_in_migrations:
-                model.objects_anonymised = deepcopy(to_cast)
-                model.objects_anonymised.use_in_migrations = False
-                to_cast = model.objects_anonymised
+                setattr(getattr(model, default_manager_name), "use_in_migrations", True)
+
+            # cast the copied manager, if name is defaults, it will override.
+            to_cast = getattr(model, default_manager_name)
 
             PrivacyManager._cast_class(to_cast)
 

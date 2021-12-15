@@ -116,8 +116,8 @@ Features:
 
 Fix:
 
-* Resolve issue 48, use_in_migrations. Managers with use_in_migrations=True will no longer be case, but duplicated
-to ``Model.objects_anoynmised``.
+* Resolve issue 48, use_in_migrations. Managers with use_in_migrations=True will no longer be cast, instead a
+duplicate is created using the name provided at register(..., default_manager_name="abc").
 * Update PrivacyModel cast to support inheriting from another privacy model.
 
 1.3.0, 2020-08-14

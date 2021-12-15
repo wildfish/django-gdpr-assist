@@ -17,7 +17,7 @@ class UserPrivacyMeta:
     fields = ["username", "email"]
 
 
-register(User, UserPrivacyMeta)
+register(User, UserPrivacyMeta, default_manager_name="objects_anonymised")
 
 
 class Person(models.Model):
