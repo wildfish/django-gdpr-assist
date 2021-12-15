@@ -62,7 +62,7 @@ model to ``models.PrivacyModel``, its manager to ``models.PrivacyManager``
 and its queryset to ``models.PrivacyQuerySet`` to add the necessary
 anonymisation attributes and methods.
 
-Note on ``use_in_migrations`` useage. If the model registered's objects
+Note on ``use_in_migrations`` usage. If the model registered's objects
 manager sets use_in_migrations=``use_in_migrations = True`` the manager with not be
 cast, but duplicated to ``Model.objects_anonymised``, this is to prevent migrations being
 created for third party models.
