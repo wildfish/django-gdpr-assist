@@ -17,7 +17,7 @@ from model_bakery import baker
 import gdpr_assist
 from gdpr_assist.models import PrivacyAnonymised
 
-from .base import MigrationTestCase
+from .base import SimpleMigrationTestCase
 from .tests_app.models import (
     ForeignKeyModel,
     ForeignKeyToCanNotAnonymisedModel,
@@ -71,7 +71,7 @@ class TestOnDeleteAnonymise(TestCase):
         self.assertEqual("Cannot ANONYMISE(PROTECT)", str(cm.exception))
 
 
-class TestOnDeleteAnonymiseDeconstruct(MigrationTestCase):
+class TestOnDeleteAnonymiseDeconstruct(SimpleMigrationTestCase):
     """
     Test on_delete=ANONYMISE can be deconstructed
     """

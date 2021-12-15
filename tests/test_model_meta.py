@@ -1,13 +1,19 @@
 """
 Test model privacy definitions
 """
+from django.contrib.contenttypes.models import ContentType
+from django.db.migrations.autodetector import MigrationAutodetector
+from django.db.migrations.executor import MigrationExecutor
+from django.db.migrations.state import ProjectState, ModelState
+
 try:
     from unittest import mock
 except ImportError:
     import mock
 
 from django.apps import apps
-from django.db import models
+from django.contrib.auth.models import User, UserManager, Group, Permission
+from django.db import models, connection
 from django.test import TestCase
 
 import gdpr_assist
@@ -18,9 +24,10 @@ from gdpr_assist.models import (
     PrivacyModel,
     PrivacyQuerySet,
 )
+
 from gdpr_assist.registry import registry
 
-from .base import MigrationTestCase
+from .base import SimpleMigrationTestCase
 from .tests_app.models import (
     ModelWithoutPrivacyMeta,
     ModelWithPrivacyMeta,
@@ -229,9 +236,9 @@ class TestAppConfig(TestCase):
             )
 
 
-class TestRegisteredModelMigration(MigrationTestCase):
+class TestRegisteredModelMigration(SimpleMigrationTestCase):
     """
-    Check registered models can be migratated
+    Check registered models can be migrated
     """
 
     def test_manager_deconstruct__deconstructs(self):
@@ -242,3 +249,52 @@ class TestRegisteredModelMigration(MigrationTestCase):
         # And check it serialises back
         obj = self.serialize_round_trip(ModelWithPrivacyMeta.objects)
         self.assertIsInstance(obj, models.Manager)
+
+
+class TestExternalUseInMigration(TestCase):
+    """
+    Tests to ensure that no migrations are created for any registered models.
+    """
+    def tearDown(self):
+        registry.models.pop(User, None)
+        User.__bases__ = tuple(
+            b for b in User.__bases__ if b is not PrivacyModel
+        )
+
+    def _add_user_project_state_models(self, project_state):
+        """ To test ProjectState() on User we will always need to add related."""
+        for model in [User, Group, Permission, ContentType]:
+            project_state.add_model(ModelState.from_model(model))
+
+    def test_registering_external_does_not_change_state(self):
+        project_state_before_register = ProjectState()
+        self._add_user_project_state_models(project_state_before_register)
+
+        # Ensure User manager is use_in_migrations
+        self.assertTrue(User.objects.use_in_migrations)
+
+        class UserPrivacyMeta:
+            fields = ["username", "email"]
+
+        gdpr_assist.register(User, UserPrivacyMeta)
+
+        project_state_after_register = ProjectState()
+        self._add_user_project_state_models(project_state_after_register)
+
+        executor = MigrationExecutor(connection)
+        autodetector = MigrationAutodetector(
+            project_state_before_register, project_state_after_register
+        )
+
+        changes = autodetector.changes(graph=executor.loader.graph)
+        self.assertEqual({}, changes)
+
+    def test_manager_original_objects_not_cast(self):
+        class UserPrivacyMeta:
+            fields = ["username", "email"]
+
+        gdpr_assist.register(User, UserPrivacyMeta)
+
+        self.assertIsInstance(User.objects, UserManager)
+        self.assertIsInstance(User.objects_anonymised, PrivacyManager)
+

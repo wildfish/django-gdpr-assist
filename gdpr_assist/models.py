@@ -3,7 +3,7 @@ Model-related functionality
 """
 import inspect
 import sys
-from copy import copy
+from copy import copy, deepcopy
 
 from django.apps import apps
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -288,7 +288,16 @@ class PrivacyModel(models.Model):
         if hasattr(model, "objects") and not issubclass(
             model.objects.__class__, PrivacyManager
         ):
-            PrivacyManager._cast_class(model.objects)
+            to_cast = model.objects
+
+            # if manager is use_in_migrations, we can't cast, we must duplicate to
+            # avoid third party migrations.
+            if to_cast.use_in_migrations:
+                model.objects_anonymised = deepcopy(to_cast)
+                model.objects_anonymised.use_in_migrations = False
+                to_cast = model.objects_anonymised
+
+            PrivacyManager._cast_class(to_cast)
 
         return model
 
