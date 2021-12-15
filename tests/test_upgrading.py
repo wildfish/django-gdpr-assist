@@ -127,6 +127,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
                 ("anonymised_migration", "0002_migrate_anonymised"),
                 ("anonymised_migration", "0003_auto_20201020_0102"),
                 ('gdpr_assist', '0003_auto_20210205_1657'),
+                ('gdpr_assist', '0004_auto_20211215_1057')
             ],
         )
 
@@ -150,6 +151,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
                 ("no_anonymised_migration", "0001_initial"),
                 ("gdpr_assist", "0002_privacyanonymised"),
                 ('gdpr_assist', '0003_auto_20210205_1657'),
+                ('gdpr_assist', '0004_auto_20211215_1057'),
                 ("no_anonymised_migration", "0002_auto_20201020_0102"),
             ],
         )
@@ -174,6 +176,7 @@ class TestMigrateGdprAnonymisedCheck(MigrationTestCase):
                 ("missing_anonymised_migration", "0001_initial"),
                 ("gdpr_assist", "0002_privacyanonymised"),
                 ('gdpr_assist', '0003_auto_20210205_1657'),
+                ('gdpr_assist', '0004_auto_20211215_1057'),
                 ("missing_anonymised_migration", "0002_auto_20201020_0102"),
             ],
         )
@@ -211,7 +214,8 @@ class TestMGASeparateMigratesAnonymisedCheck(MigrationTestCase):
             [
                 ('anonymised_migration', '0002_migrate_anonymised'),
                 ('anonymised_migration', '0003_auto_20201020_0102'),
-                ('gdpr_assist', '0003_auto_20210205_1657')
+                ('gdpr_assist', '0003_auto_20210205_1657'),
+                ('gdpr_assist', '0004_auto_20211215_1057'),
             ],
         )
 
@@ -244,6 +248,7 @@ class TestMGASeparateMigratesMissingAnonymisedCheck(MigrationTestCase):
             self.plan_to_names(plan),
             [
                 ('gdpr_assist', '0003_auto_20210205_1657'),
+                ('gdpr_assist', '0004_auto_20211215_1057'),
                 ("missing_anonymised_migration", "0002_auto_20201020_0102")
             ]
         )
