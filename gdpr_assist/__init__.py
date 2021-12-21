@@ -10,6 +10,6 @@ __version__ = "1.3.0"
 default_app_config = "gdpr_assist.apps.GdprAppConfig"
 
 
-def register(model, privacy_meta=None, default_manager_name=None):
+def register(model, privacy_meta=None, gdpr_default_manager_name=None):
     from .registry import registry
-    registry.register(model, privacy_meta, default_manager_name)
+    registry.register(model, privacy_meta, gdpr_default_manager_name)

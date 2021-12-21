@@ -129,8 +129,9 @@ class PrivacyMeta(object):
     export_exclude = None
     export_filename = None
 
-    def __init__(self, model):
+    def __init__(self, model, gdpr_default_manager_name=None):
         self.model = model
+        self.gdpr_default_manager_name = gdpr_default_manager_name if gdpr_default_manager_name else "objects"
 
     def __getattr__(self, item):
         """
@@ -222,6 +223,11 @@ class PrivacyModel(models.Model):
     def check_can_anonymise(cls):
         return cls.get_privacy_meta().can_anonymise
 
+    @classmethod
+    def anonymisable_manager(cls):
+        name = cls.get_privacy_meta().gdpr_default_manager_name
+        return getattr(cls, name)
+
     def anonymise(self, force=False, for_bulk=False):
         privacy_meta = self.get_privacy_meta()
 
@@ -262,7 +268,7 @@ class PrivacyModel(models.Model):
         EventLog.objects.log_anonymise(self)
 
     @classmethod
-    def _cast_class(cls, model, privacy_meta, default_manager_name=None):
+    def _cast_class(cls, model, privacy_meta):
         """
         Change the model to subclass PrivacyModel/
 
@@ -282,28 +288,27 @@ class PrivacyModel(models.Model):
         field = copy(PrivacyModel._meta.get_field("anonymised_relation"))
         field.contribute_to_class(model, "anonymised_relation")
 
+        gdpr_default_manager_name = privacy_meta.gdpr_default_manager_name
+
         # Make the managers subclass PrivacyManager
         # TODO: loop through all managers
         if hasattr(model, "objects") and not issubclass(
             model.objects.__class__, PrivacyManager
         ):
             to_cast = model.objects
-            if not default_manager_name:
-                if to_cast.use_in_migrations:
-                    raise RuntimeError(f"Registered gdpr_assist model {model.__name__}s manager "
-                                       "specified 'use_in_migrations=True', with no name provided.")
-                else:
-                    default_manager_name = "objects"
+            if to_cast.use_in_migrations and gdpr_default_manager_name == "objects":
+                raise RuntimeError(f"Registered gdpr_assist model {model.__name__}s manager "
+                                   "specified 'use_in_migrations=True', with no name provided.")
 
             # copy the manager to the defined name.
-            setattr(model, default_manager_name, deepcopy(to_cast))
+            setattr(model, gdpr_default_manager_name, deepcopy(to_cast))
 
             # if used in migrations, disable for the copy.
             if to_cast.use_in_migrations:
-                setattr(getattr(model, default_manager_name), "use_in_migrations", True)
+                setattr(getattr(model, gdpr_default_manager_name), "use_in_migrations", True)
 
             # cast the copied manager, if name is defaults, it will override.
-            to_cast = getattr(model, default_manager_name)
+            to_cast = getattr(model, gdpr_default_manager_name)
 
             PrivacyManager._cast_class(to_cast)
 

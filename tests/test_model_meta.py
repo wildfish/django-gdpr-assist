@@ -137,8 +137,8 @@ class BaseModelDefinitionWithoutPrivacyMeta:
         )
         self.model.objects = models.Manager()
 
-    def register(self, default_manager_name=None):
-        gdpr_assist.register(self.model, self.PrivacyMeta, default_manager_name)
+    def register(self, gdpr_default_manager_name=None):
+        gdpr_assist.register(self.model, self.PrivacyMeta, gdpr_default_manager_name)
 
     def test_model_not_registered(self):
         self.assertNotIn(self.model, registry.models.keys())
@@ -176,7 +176,7 @@ class BaseModelDefinitionWithoutPrivacyMeta:
         self.assertIsInstance(self.model.objects, PrivacyManager)
 
     def test_model_registered_manually_manager_cast_name_is_as_specified(self):
-        self.register(default_manager_name="abc")
+        self.register(gdpr_default_manager_name="abc")
         self.assertNotIsInstance(self.model.objects, PrivacyManager)
         self.assertIsInstance(self.model.abc, PrivacyManager)
 
@@ -287,7 +287,7 @@ class TestExternalUseInMigration(TestCase):
         class UserPrivacyMeta:
             fields = ["username", "email"]
 
-        gdpr_assist.register(User, UserPrivacyMeta, default_manager_name="abc")
+        gdpr_assist.register(User, UserPrivacyMeta, gdpr_default_manager_name="abc")
 
         project_state_after_register = ProjectState()
         self._add_user_project_state_models(project_state_after_register)
@@ -304,13 +304,13 @@ class TestExternalUseInMigration(TestCase):
         class UserPrivacyMeta:
             fields = ["username", "email"]
 
-        gdpr_assist.register(User, UserPrivacyMeta, default_manager_name="abc")
+        gdpr_assist.register(User, UserPrivacyMeta, gdpr_default_manager_name="abc")
 
         self.assertIsInstance(User.objects, UserManager)
         self.assertIsInstance(User.abc, PrivacyManager)
 
 
-    def test_manager_default_manager_name_not_set(self):
+    def test_manager_gdpr_default_manager_name_not_set(self):
         class UserPrivacyMeta:
             fields = ["username", "email"]
 

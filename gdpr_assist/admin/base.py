@@ -62,7 +62,7 @@ class ModelAdmin(admin.ModelAdmin):
 
     def anonymise_view(self, request):
         ids_raw = (request.POST or request.GET).get("ids")
-        objects = self.model.objects.filter(pk__in=ids_raw.split(","))
+        objects = self.model.anonymisable_manager().filter(pk__in=ids_raw.split(","))
         verbose_name = (
             self.model._meta.verbose_name.title()
             if objects.count() == 1
