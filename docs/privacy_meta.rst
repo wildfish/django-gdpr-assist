@@ -54,12 +54,12 @@ For example::
     class UserPrivacyMeta:
         fields = ['first_name', 'last_name', 'email']
 
-    gdpr_assist.register(User, UserPrivacyMeta, default_manager_name="objects_anonymised")
+    gdpr_assist.register(User, UserPrivacyMeta, gdpr_default_manager_name="objects_anonymised")
 
 If you omit the privacy meta class, one will be generated for you with the
 default attributes.
 
-Note that ``default_manager_name`` is optional and by default ``objects`` will be cast to
+Note that ``gdpr_default_manager_name`` is optional and by default ``objects`` will be cast to
 a PrivacyManager, except in the case of Models in which their manager users use_in_migrations,
 as the User example above does. In these cases a alternate name must be provided and user for
 queryset anonymisation in order not to create migrations for third parties.

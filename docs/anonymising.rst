@@ -120,7 +120,7 @@ will anonymise any related objects which use ``ANONYMISE(..)``.
 
 Note on ``use_in_migrations`` usage. If the model registered's objects
 manager sets use_in_migrations=``use_in_migrations = True`` the default queryset (``objects``)
-will not be changed, it will instead be available at the name set on register(..., default_manager_name="abc")
+will not be changed, it will instead be available at the name set on register(..., gdpr_default_manager_name="abc")
 this is to allow for registering of third party models which make use of use_in_migrations.
 
 Note that Django does not send delete signals for bulk delete operations in

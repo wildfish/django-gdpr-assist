@@ -128,6 +128,7 @@ class PrivacyMeta(object):
     export_fields = None
     export_exclude = None
     export_filename = None
+    gdpr_default_manager_name = None
 
     def __init__(self, model, gdpr_default_manager_name=None):
         self.model = model

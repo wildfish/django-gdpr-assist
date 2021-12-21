@@ -99,6 +99,7 @@ class BaseTestModelDefinition:
 
     def test_manager_cast_to_privacy_manager(self):
         self.assertIsInstance(self.model.objects, PrivacyManager)
+        self.assertIsInstance(self.model.anonymisable_manager(), PrivacyManager)
 
     def test_queryset_cast_to_privacy_queryset(self):
         self.assertIsInstance(self.model.objects.all(), PrivacyQuerySet)
@@ -266,16 +267,26 @@ class TestExternalUseInMigration(TestCase):
     """
     Tests to ensure that no migrations are created for any registered models.
     """
-    def tearDown(self):
+    def _add_user_project_state_models(self, project_state):
+        """ To test ProjectState() on User we will always need to add related."""
+        for model in [User, Group, Permission, ContentType]:
+            project_state.add_model(ModelState.from_model(model))
+
+    def _register(self, default_manager_name):
+        class UserPrivacyMeta:
+            fields = ["username", "email"]
+
+        gdpr_assist.register(User, UserPrivacyMeta, default_manager_name)
+
+    def _deregister(self):
         registry.models.pop(User, None)
         User.__bases__ = tuple(
             b for b in User.__bases__ if b is not PrivacyModel
         )
 
-    def _add_user_project_state_models(self, project_state):
-        """ To test ProjectState() on User we will always need to add related."""
-        for model in [User, Group, Permission, ContentType]:
-            project_state.add_model(ModelState.from_model(model))
+    def setUp(self):
+        self._deregister()
+        self._register("abc")
 
     def test_registering_external_does_not_change_state(self):
         project_state_before_register = ProjectState()
@@ -283,11 +294,6 @@ class TestExternalUseInMigration(TestCase):
 
         # Ensure User manager is use_in_migrations
         self.assertTrue(User.objects.use_in_migrations)
-
-        class UserPrivacyMeta:
-            fields = ["username", "email"]
-
-        gdpr_assist.register(User, UserPrivacyMeta, gdpr_default_manager_name="abc")
 
         project_state_after_register = ProjectState()
         self._add_user_project_state_models(project_state_after_register)
@@ -301,21 +307,21 @@ class TestExternalUseInMigration(TestCase):
         self.assertEqual({}, changes)
 
     def test_manager_original_objects_not_cast(self):
-        class UserPrivacyMeta:
-            fields = ["username", "email"]
-
-        gdpr_assist.register(User, UserPrivacyMeta, gdpr_default_manager_name="abc")
-
+        # registered in test_app/admin.py
         self.assertIsInstance(User.objects, UserManager)
         self.assertIsInstance(User.abc, PrivacyManager)
+        self.assertIsInstance(User.anonymisable_manager(), PrivacyManager)
 
 
     def test_manager_gdpr_default_manager_name_not_set(self):
+        self._deregister()
+
         class UserPrivacyMeta:
             fields = ["username", "email"]
 
         with self.assertRaises(RuntimeError) as ex:
             gdpr_assist.register(User, UserPrivacyMeta)
+
 
         self.assertEqual(
             str(ex.exception),

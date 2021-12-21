@@ -90,6 +90,27 @@ class TestModelAdmin(AdminTestCase):
             response, '<li class="success">2 Model With Privacy Metas anonymised</li>'
         )
 
+    def test_anonymise_view_submit__redirect_to_anonymise_view__alternate_manager(self):
+        obj_1 = baker.make(User)
+        obj_2 = baker.make(User)
+
+        response = self.client.post(
+            "/admin/auth/user/anonymise/",
+            {"ids": ",".join([str(obj_1.pk), str(obj_2.pk)])},
+            follow=True,
+        )
+
+        obj_1.refresh_from_db()
+        obj_2.refresh_from_db()
+        self.assertTrue(obj_1.is_anonymised())
+        self.assertTrue(obj_2.is_anonymised())
+
+        self.assertEqual(response.redirect_chain, [("/admin/auth/user/", 302)])
+
+        self.assertContains(
+            response, '<li class="success">2 Users anonymised</li>'
+        )
+
     def test_anonymise_action_submit__can_anonymise_disabled__404(self):
         obj_1 = baker.make(ModelWithPrivacyMetaCanNotAnonymise)
         obj_2 = baker.make(ModelWithPrivacyMetaCanNotAnonymise)

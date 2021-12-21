@@ -8,6 +8,7 @@ from decimal import Decimal
 from unittest import skipIf
 
 import django
+from django.contrib.auth.models import User
 from django.db import models
 from django.test import TestCase
 
@@ -912,6 +913,23 @@ class TestQuerySet(TestCase):
         for i in range(5):
             objs[i].refresh_from_db()
             self.assertEqual(objs[i].chars, "")
+
+
+    def test_queryset_anonymise__anonymise_all__alternate_manager(self):
+        objs = baker.make(User, _quantity=5)
+        qs = User.anonymisable_manager().filter(pk__in=[obj.pk for obj in objs]).order_by("id")
+
+        qs.anonymise()
+        for i in range(5):
+            objs[i].refresh_from_db()
+            self.assertEqual(objs[i].email, f"{objs[i].id}@anon.example.com")
+
+    def test_queryset_anonymise__anonymise_all__alternate_manager__wrong_manager(self):
+        objs = baker.make(User, _quantity=5)
+        qs = User.objects.filter(pk__in=[obj.pk for obj in objs])
+
+        with self.assertRaises(AttributeError):
+            qs.anonymise()
 
     def test_queryset_anonymise__anonymise_not_propagated(self):
         targets = []

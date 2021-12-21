@@ -38,7 +38,6 @@ class Registry(object):
 
         # Instantiate the new class
         privacy_meta = privacy_meta(model, gdpr_default_manager_name)
-        print(gdpr_default_manager_name)
 
         # Move the processed PrivacyMeta onto the attribute _privacy_meta
         setattr(model, app_settings.GDPR_PRIVACY_INSTANCE_NAME, privacy_meta)
