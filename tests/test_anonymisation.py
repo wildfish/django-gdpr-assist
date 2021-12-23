@@ -981,9 +981,9 @@ class TestQuerySet(TestCase):
 
         qs = PrivateTargetModel.objects.filter(pk__in=[obj.pk for obj in objs])
 
-        # Expects 5 + 8
-        # 5 (1 per log object)
-        with self.assertNumQueries(5, using="gdpr_log"):
+        # Expects 1 + 8
+        # 1 for 5 log objects
+        with self.assertNumQueries(1, using="gdpr_log"):
             # 1 query to get objects from PrivateTargetModel
             # 1 query to ger objects to prefetch to PrivacyAnonymised
             # 5 (1 per object to anonymise it)

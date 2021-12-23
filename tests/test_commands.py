@@ -82,9 +82,9 @@ class TestAnonymiseCommand(CommandTestCase):
 
         models_to_anon = [m for m in registry.models if m.get_privacy_meta().can_anonymise]
 
-        # Expects 2 + (X * models + 2)
-        # 2 (1 per log object)
-        with self.assertNumQueries(2, using="gdpr_log"):
+        # Expects 1 + (X * models + 2)
+        # 1 for both log objects
+        with self.assertNumQueries(1, using="gdpr_log"):
             # X command will run for each test model
             # 2 (1 update per object)
             # 1 insert into PrivacyAnonymised
