@@ -249,6 +249,7 @@ class PrivacyModel(models.Model):
 
         # Anonymise data
         privacy_obj = PrivacyAnonymised(anonymised_object=self)
+
         if not for_bulk:
             privacy_obj.save()
 
