@@ -20,20 +20,20 @@ def get_cast_class(orig_cls, new_base_cls):
     The class will be placed in the module of orig_cls
     """
     # Determine name and module for cast class
-    current_module = inspect.getmodule(new_base_cls)
+    orig_module = inspect.getmodule(orig_cls)
     new_cls_name = f"{CAST_CLASS_PREFIX}{orig_cls.__name__}"
 
     # See if we've already cast this class
-    if hasattr(current_module, new_cls_name):
-        new_cls = getattr(current_module, new_cls_name)
+    if hasattr(orig_module, new_cls_name):
+        new_cls = getattr(orig_module, new_cls_name)
     else:
         # Make a subclass and the original class
         new_cls = type(new_cls_name, (new_base_cls, orig_cls), {})
 
         # Add to original module
-        new_cls.__module__ = current_module.__name__
+        new_cls.__module__ = orig_module.__name__
 
-        setattr(current_module, new_cls_name, new_cls)
+        setattr(orig_module, new_cls_name, new_cls)
 
     return new_cls
 
