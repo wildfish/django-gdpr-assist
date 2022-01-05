@@ -102,14 +102,14 @@ class BaseTestModelDefinition:
         self.assertIsInstance(manager, PrivacyManager)
         self.assertEqual(
             f"{manager.__module__}.{manager.__class__.__name__}",
-            "gdpr_assist.models.CastPrivacyManager"
+            "django.db.models.manager.CastPrivacyManager"
         )
 
         alt_manager = self.model.anonymisable_manager()
         self.assertIsInstance(alt_manager, PrivacyManager)
         self.assertEqual(
             f"{alt_manager.__module__}.{alt_manager.__class__.__name__}",
-            "gdpr_assist.models.CastPrivacyManager"
+            "django.db.models.manager.CastPrivacyManager"
         )
 
     def test_queryset_cast_to_privacy_queryset(self):
@@ -117,7 +117,7 @@ class BaseTestModelDefinition:
         self.assertIsInstance(qs, PrivacyQuerySet)
         self.assertEqual(
             f"{qs.__module__}.{qs.__class__.__name__}",
-            "gdpr_assist.models.CastPrivacyQuerySet"
+            "django.db.models.query.CastPrivacyQuerySet"
         )
 
     def test_meta_class_can_anonymise__can(self):
@@ -272,7 +272,7 @@ class TestRegisteredModelMigration(SimpleMigrationTestCase):
     def test_manager_deconstruct__deconstructs(self):
         # This should serialise to the privacy manager
         string, imports = self.serialize(ModelWithPrivacyMeta.objects)
-        self.assertEqual(string, "gdpr_assist.models.CastPrivacyManager()")
+        self.assertEqual(string, "django.db.models.manager.CastPrivacyManager()")
 
         # And check it serialises back
         obj = self.serialize_round_trip(ModelWithPrivacyMeta.objects)
