@@ -98,11 +98,27 @@ class BaseTestModelDefinition:
         self.assertFalse(obj.is_anonymised())
 
     def test_manager_cast_to_privacy_manager(self):
-        self.assertIsInstance(self.model.objects, PrivacyManager)
-        self.assertIsInstance(self.model.anonymisable_manager(), PrivacyManager)
+        manager = self.model.objects
+        self.assertIsInstance(manager, PrivacyManager)
+        self.assertEqual(
+            f"{manager.__module__}.{manager.__class__.__name__}",
+            "gdpr_assist.models.CastPrivacyManager"
+        )
+
+        alt_manager = self.model.anonymisable_manager()
+        self.assertIsInstance(alt_manager, PrivacyManager)
+        self.assertEqual(
+            f"{alt_manager.__module__}.{alt_manager.__class__.__name__}",
+            "gdpr_assist.models.CastPrivacyManager"
+        )
 
     def test_queryset_cast_to_privacy_queryset(self):
-        self.assertIsInstance(self.model.objects.all(), PrivacyQuerySet)
+        qs = self.model.objects.all()
+        self.assertIsInstance(qs, PrivacyQuerySet)
+        self.assertEqual(
+            f"{qs.__module__}.{qs.__class__.__name__}",
+            "gdpr_assist.models.CastPrivacyQuerySet"
+        )
 
     def test_meta_class_can_anonymise__can(self):
         self.assertTrue(self.model.check_can_anonymise())

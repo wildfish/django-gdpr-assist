@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from . import handlers  # noqa
 from . import app_settings
 from .anonymiser import anonymise_field, anonymise_related_objects
+from .cast import cast_instance
 from .signals import post_anonymise, pre_anonymise
 
 
@@ -66,14 +67,7 @@ class PrivacyQuerySet(models.query.QuerySet):
         QuerySet will become CastPrivacyQuerySet.
         """
         # Make a subclass of PrivacyQuerySet and the original class
-        orig_cls = queryset.__class__
-        new_cls_name = str("CastPrivacy{}".format(orig_cls.__name__))
-        queryset.__class__ = type(new_cls_name, (cls, orig_cls), {})
-
-        # add to current module
-        current_module = sys.modules[__name__]
-        setattr(current_module, new_cls_name, queryset.__class__)
-
+        cast_instance(queryset, cls)
         return queryset
 
 
@@ -115,14 +109,7 @@ class PrivacyManager(models.Manager):
         Also add the new manager to the module, so it can be imported for migrations.
         """
         # Make a subclass of PrivacyQuerySet and the original class
-        orig_cls = manager.__class__
-        new_cls_name = str("CastPrivacy{}".format(orig_cls.__name__))
-        manager.__class__ = type(new_cls_name, (cls, orig_cls), {})
-
-        # add to current module
-        current_module = sys.modules[__name__]
-        setattr(current_module, new_cls_name, manager.__class__)
-
+        cast_instance(manager, cls)
         return manager
 
 
