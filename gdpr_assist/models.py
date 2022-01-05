@@ -244,12 +244,15 @@ class PrivacyModel(models.Model):
             anonymiser = getattr(privacy_meta, "anonymise_{}".format(field_name))
             anonymiser(self)
 
-        # Log the obj class and pk
-        log_obj = self._log_gdpr_anonymise(for_bulk=for_bulk)
+        if app_settings.GDPR_LOG_ON_ANONYMISE:
+            # Log the obj class and pk
+            log_obj = self._log_gdpr_anonymise(for_bulk=for_bulk)
 
-        if for_bulk:
-            privacy_obj._log_obj = log_obj
+            if for_bulk:
+                privacy_obj._log_obj = log_obj
 
+        # TODO - we don't bulk save the objects being anonymised as they could send signals. However,
+        # we possibly check this or perhaps provide an override setting for large anonymisations.
         self.save()
         post_anonymise.send(sender=self.__class__, instance=self)
 
