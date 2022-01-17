@@ -981,13 +981,15 @@ class TestQuerySet(TestCase):
 
         qs = PrivateTargetModel.objects.filter(pk__in=[obj.pk for obj in objs])
 
-        # Expects 8
-        # 1 query to get objects from PrivateTargetModel
-        # 1 query to ger objects to prefetch to PrivacyAnonymised
-        # 5 (1 per object to anonymise it)
-        # 1 bulk insert of the PrivacyAnonymised objects
-        with self.assertNumQueries(8):
-            qs.anonymise()
+        # Expects 1 + 8
+        # 1 for 5 log objects
+        with self.assertNumQueries(1, using="gdpr_log"):
+            # 1 query to get objects from PrivateTargetModel
+            # 1 query to ger objects to prefetch to PrivacyAnonymised
+            # 5 (1 per object to anonymise it)
+            # 1 bulk insert of the PrivacyAnonymised objects
+            with self.assertNumQueries(8, using="default"):
+                qs.anonymise()
 
         self.assertEqual(PrivacyAnonymised.objects.count(), 5)
 
@@ -1003,14 +1005,15 @@ class TestQuerySet(TestCase):
 
         qs = PrivateTargetModel.objects.filter(pk__in=[obj.pk for obj in objs])
 
-        # Expects 12
-        # 1 query to get objects from PrivateTargetModel
-        # 1 query to ger objects to prefetch to PrivacyAnonymised
-        # 5 (1 per object to anonymise it)
-        # 5 (1 per object to create PrivacyAnonymised)
-        # 1 bulk insert of the PrivacyAnonymised objects
-        with self.assertNumQueries(12):
-            qs.anonymise(for_bulk=False)
+        # Expects 5 + 12
+        # 5 (1 per log object)
+        with self.assertNumQueries(5, using="gdpr_log"):
+            # 1 query to get objects from PrivateTargetModel
+            # 1 query to ger objects to prefetch to PrivacyAnonymised
+            # 5 (1 per object to anonymise it)
+            # 5 (1 per object to create PrivacyAnonymised)
+            with self.assertNumQueries(12, using="default"):
+                qs.anonymise(for_bulk=False)
 
         self.assertEqual(PrivacyAnonymised.objects.count(), 5)
 

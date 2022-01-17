@@ -67,6 +67,22 @@ Set this to ``True`` to enable the ``anonymise_db`` management command. You
 will want this to be ``False`` on your production deployment.
 
 
+``GDPR_LOG_ON_ANONYMISE = True``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set this to ``False`` to disable entries being created on the fly in the logging
+database (see ``GDPR_LOG_DATABASE_NAME``) during anonymisation, this may be useful
+for large initial anonyimisation tasks.
+
+By default log entries are created when a instance is anonymised and in bulk when
+calling the ``anonymise_db`` command.
+
+If you set this to ``False`` you can manually create logging for any instance you
+have anonymised later via ``instance._log_gdpr_anonymise()``, handling
+``post_anonymise`` signal or processing over ``PrivacyAnonymised`` as required i.e
+a celery queue or cronjob.
+
+
 ``SILENCED_SYSTEM_CHECKS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

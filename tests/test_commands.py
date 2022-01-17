@@ -7,6 +7,8 @@ from io import StringIO
 from django.core.management import call_command
 from django.test import TestCase
 
+from gdpr_assist.registry import registry
+
 from .tests_app.models import (
     ModelWithPrivacyMeta,
     ModelWithPrivacyMetaCanNotAnonymise,
@@ -69,6 +71,54 @@ class TestAnonymiseCommand(CommandTestCase):
         self.assertTrue(obj_1.is_anonymised())
         self.assertEqual(obj_1.chars, str(obj_1.pk))
         self.assertEqual(obj_1.email, "{}@anon.example.com".format(obj_1.pk))
+
+    def test_anonymise_command__anonymises_data__bulk(self):
+        obj_1 = ModelWithPrivacyMeta.objects.create(
+            chars="test", email="test@example.com"
+        )
+        obj_2 = ModelWithPrivacyMeta.objects.create(
+            chars="test2", email="test2@example.com"
+        )
+
+        models_to_anon = [m for m in registry.models if m.get_privacy_meta().can_anonymise]
+
+        # Expects 1 + (X * models + 2)
+        # 1 for both log objects
+        with self.assertNumQueries(1, using="gdpr_log"):
+            # X command will run for each test model
+            # 2 (1 update per object)
+            # 1 insert into PrivacyAnonymised
+            # 2 queries to PrivacyAnonymised
+            with self.assertNumQueries(len(models_to_anon) + 5, using="default"):
+                self.run_command("anonymise_db", interactive=False)
+
+        for o in [obj_1, obj_2]:
+            o.refresh_from_db()
+            self.assertTrue(o.is_anonymised())
+
+    def test_anonymise_command__anonymises_data__not_bulk(self):
+        obj_1 = ModelWithPrivacyMeta.objects.create(
+            chars="test", email="test@example.com"
+        )
+        obj_2 = ModelWithPrivacyMeta.objects.create(
+            chars="test2", email="test2@example.com"
+        )
+
+        models_to_anon = [m for m in registry.models if m.get_privacy_meta().can_anonymise]
+
+        # Expects 2 + (X * models + 2)
+        # 2 (1 per log object)
+        with self.assertNumQueries(2, using="gdpr_log"):
+            # X command will run for each test model
+            # 2 (1 update per object)
+            # 2 insert into PrivacyAnonymised
+            # 4 queries to PrivacyAnonymised
+            with self.assertNumQueries(len(models_to_anon) + 8, using="default"):
+                self.run_command("anonymise_db", interactive=False, bulk=False)
+
+        for o in [obj_1, obj_2]:
+            o.refresh_from_db()
+            self.assertTrue(o.is_anonymised())
 
     def test_anonymise_disabled__raises_error(self):
 

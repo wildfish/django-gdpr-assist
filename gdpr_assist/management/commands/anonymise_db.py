@@ -20,10 +20,19 @@ class Command(BaseCommand):
             help="Tells Django to NOT prompt the user for input of any kind.",
         )
 
+        parser.add_argument(
+            "--bulk",
+            action="store_true",
+            dest="bulk",
+            default=True,
+            help="Anonymise in bulk, default is per object.",
+        )
+
     def handle(self, *args, **options):
         if not app_settings.GDPR_CAN_ANONYMISE_DATABASE:
             raise ValueError("Database anonymisation is not enabled")
         interactive = options["interactive"]
+        bulk = options["bulk"]
 
         if interactive:  # pragma: no cover
             confirm = input(
@@ -37,11 +46,13 @@ Are you sure you want to do this?
 
         else:
             confirm = "yes"
-
         if confirm == "yes":
             for model in registry.models_allowed_to_anonymise():
-                for obj in model.objects.all().iterator():
-                    obj.anonymise()
+                if bulk:
+                    model.anonymisable_manager().all().anonymise()
+                else:
+                    for obj in model.objects.all().iterator():
+                        obj.anonymise()
 
             msg = "{} models anonymised.".format(
                 len(registry.models_allowed_to_anonymise())

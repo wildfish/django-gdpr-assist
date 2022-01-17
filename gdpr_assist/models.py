@@ -34,13 +34,18 @@ class PrivacyQuerySet(models.query.QuerySet):
             return
 
         bulk_objects = []
+        bulk_log_objects = []
         for obj in self:
             privacy_obj = obj.anonymise(for_bulk=for_bulk)
             if privacy_obj:
                 bulk_objects.append(privacy_obj)
+                if hasattr(privacy_obj, "_log_obj"):
+                    bulk_log_objects.append(privacy_obj._log_obj)
 
         if bulk_objects and for_bulk:
             PrivacyAnonymised.objects.bulk_create(bulk_objects)
+            if bulk_log_objects:
+                EventLog.objects.bulk_create(bulk_log_objects)
 
     def delete(self, *args, **kwargs):
         """
@@ -231,6 +236,7 @@ class PrivacyModel(models.Model):
 
         # Anonymise data
         privacy_obj = PrivacyAnonymised(anonymised_object=self)
+
         if not for_bulk:
             privacy_obj.save()
 
@@ -238,9 +244,15 @@ class PrivacyModel(models.Model):
             anonymiser = getattr(privacy_meta, "anonymise_{}".format(field_name))
             anonymiser(self)
 
-        # Log the obj class and pk
-        self._log_gdpr_anonymise()
+        if app_settings.GDPR_LOG_ON_ANONYMISE:
+            # Log the obj class and pk
+            log_obj = self._log_gdpr_anonymise(for_bulk=for_bulk)
 
+            if for_bulk:
+                privacy_obj._log_obj = log_obj
+
+        # TODO - we don't bulk save the objects being anonymised as they could send signals. However,
+        # we possibly check this or perhaps provide an override setting for large anonymisations.
         self.save()
         post_anonymise.send(sender=self.__class__, instance=self)
 
@@ -252,8 +264,8 @@ class PrivacyModel(models.Model):
     def _log_gdpr_delete(self):
         EventLog.objects.log_delete(self)
 
-    def _log_gdpr_anonymise(self):
-        EventLog.objects.log_anonymise(self)
+    def _log_gdpr_anonymise(self, for_bulk=False):
+        return EventLog.objects.log_anonymise(self, for_bulk=for_bulk)
 
     @classmethod
     def _cast_class(cls, model, privacy_meta):
@@ -310,17 +322,22 @@ class EventLogManager(models.Manager):
     def log_delete(self, instance):
         self.log(self.model.EVENT_DELETE, instance)
 
-    def log_anonymise(self, instance):
-        self.log(self.model.EVENT_ANONYMISE, instance)
+    def log_anonymise(self, instance, for_bulk=False):
+        obj = self.log(self.model.EVENT_ANONYMISE, instance, for_bulk=for_bulk)
+        return obj
 
-    def log(self, event, instance):
+    def log(self, event, instance, for_bulk=False):
         cls = instance.__class__
-        self.create(
-            event=event,
-            app_label=cls._meta.app_label,
-            model_name=cls._meta.object_name,
-            target_pk=instance.pk,
-        )
+        kwargs = {
+            "event": event,
+            "app_label": cls._meta.app_label,
+            "model_name": cls._meta.object_name,
+            "target_pk": instance.pk
+        }
+        if for_bulk:
+            return self.model(**kwargs)
+        else:
+            return self.create(**kwargs)
 
 
 class EventLog(models.Model):
