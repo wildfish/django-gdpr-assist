@@ -62,6 +62,13 @@ model to ``models.PrivacyModel``, its manager to ``models.PrivacyManager``
 and its queryset to ``models.PrivacyQuerySet`` to add the necessary
 anonymisation attributes and methods.
 
+Note on ``use_in_migrations`` usage. If the model registered's objects
+manager sets use_in_migrations=``use_in_migrations = True`` `objects` is not
+cast, instead, ``gdpr_default_manager_name`` must be used to give an alternate name.
+
+``Model.anonymisable_manager()`` can also be used to access the PrivacyManager
+regardless of  ``gdpr_default_manager_name``.
+
 Once all models are registered, ``apps.GdprAppConfig.ready`` looks at all
 registered models for a ``OneToOneField`` or ``ForeignKey`` which have
 ``on_delete=ANONYMISE(..)``, and then logs the related models with the registry

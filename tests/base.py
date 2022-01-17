@@ -5,7 +5,7 @@ from django.db.migrations.writer import MigrationWriter
 from django.test import TestCase
 
 
-class MigrationTestCase(TestCase):
+class SimpleMigrationTestCase(TestCase):
     """
     Based on django.tests.migrations.test_+writer.WriterTests
     """

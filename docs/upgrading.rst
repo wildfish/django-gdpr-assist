@@ -112,9 +112,12 @@ Changelog
 Features:
 
 * Add support for Django 3.2, 4.0.
+* Updated example project.
 
 Fix:
 
+* Resolve issue 48, use_in_migrations. Managers with use_in_migrations=True will no longer be cast, instead a
+duplicate is created using the name provided at register(..., gdpr_default_manager_name="abc").
 * Update PrivacyModel cast to support inheriting from another privacy model.
 
 1.3.0, 2020-08-14

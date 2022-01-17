@@ -5,5 +5,5 @@ ipython
 ipdb
 
 # Example project
-Django<3.3
+Django<4.1
 model_bakery
