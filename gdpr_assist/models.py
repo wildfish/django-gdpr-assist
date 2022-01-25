@@ -2,18 +2,19 @@
 Model-related functionality
 """
 import sys
-from copy import copy
+from copy import copy, deepcopy
 
 from django.apps import apps
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from . import handlers  # noqa
 from . import app_settings
 from .anonymiser import anonymise_field, anonymise_related_objects
+from .cast import cast_instance
 from .signals import post_anonymise, pre_anonymise
 
 
@@ -33,13 +34,18 @@ class PrivacyQuerySet(models.query.QuerySet):
             return
 
         bulk_objects = []
+        bulk_log_objects = []
         for obj in self:
             privacy_obj = obj.anonymise(for_bulk=for_bulk)
             if privacy_obj:
                 bulk_objects.append(privacy_obj)
+                if hasattr(privacy_obj, "_log_obj"):
+                    bulk_log_objects.append(privacy_obj._log_obj)
 
         if bulk_objects and for_bulk:
             PrivacyAnonymised.objects.bulk_create(bulk_objects)
+            if bulk_log_objects:
+                EventLog.objects.bulk_create(bulk_log_objects)
 
     def delete(self, *args, **kwargs):
         """
@@ -61,14 +67,7 @@ class PrivacyQuerySet(models.query.QuerySet):
         QuerySet will become CastPrivacyQuerySet.
         """
         # Make a subclass of PrivacyQuerySet and the original class
-        orig_cls = queryset.__class__
-        new_cls_name = str("CastPrivacy{}".format(orig_cls.__name__))
-        queryset.__class__ = type(new_cls_name, (cls, orig_cls), {})
-
-        # add to current module
-        current_module = sys.modules[__name__]
-        setattr(current_module, new_cls_name, queryset.__class__)
-
+        cast_instance(queryset, cls)
         return queryset
 
 
@@ -110,14 +109,7 @@ class PrivacyManager(models.Manager):
         Also add the new manager to the module, so it can be imported for migrations.
         """
         # Make a subclass of PrivacyQuerySet and the original class
-        orig_cls = manager.__class__
-        new_cls_name = str("CastPrivacy{}".format(orig_cls.__name__))
-        manager.__class__ = type(new_cls_name, (cls, orig_cls), {})
-
-        # add to current module
-        current_module = sys.modules[__name__]
-        setattr(current_module, new_cls_name, manager.__class__)
-
+        cast_instance(manager, cls)
         return manager
 
 
@@ -128,9 +120,11 @@ class PrivacyMeta(object):
     export_fields = None
     export_exclude = None
     export_filename = None
+    gdpr_default_manager_name = None
 
-    def __init__(self, model):
+    def __init__(self, model, gdpr_default_manager_name=None):
         self.model = model
+        self.gdpr_default_manager_name = gdpr_default_manager_name if gdpr_default_manager_name else "objects"
 
     def __getattr__(self, item):
         """
@@ -222,6 +216,11 @@ class PrivacyModel(models.Model):
     def check_can_anonymise(cls):
         return cls.get_privacy_meta().can_anonymise
 
+    @classmethod
+    def anonymisable_manager(cls):
+        name = cls.get_privacy_meta().gdpr_default_manager_name
+        return getattr(cls, name)
+
     def anonymise(self, force=False, for_bulk=False):
         privacy_meta = self.get_privacy_meta()
 
@@ -237,6 +236,7 @@ class PrivacyModel(models.Model):
 
         # Anonymise data
         privacy_obj = PrivacyAnonymised(anonymised_object=self)
+
         if not for_bulk:
             privacy_obj.save()
 
@@ -244,9 +244,15 @@ class PrivacyModel(models.Model):
             anonymiser = getattr(privacy_meta, "anonymise_{}".format(field_name))
             anonymiser(self)
 
-        # Log the obj class and pk
-        self._log_gdpr_anonymise()
+        if app_settings.GDPR_LOG_ON_ANONYMISE:
+            # Log the obj class and pk
+            log_obj = self._log_gdpr_anonymise(for_bulk=for_bulk)
 
+            if for_bulk:
+                privacy_obj._log_obj = log_obj
+
+        # TODO - we don't bulk save the objects being anonymised as they could send signals. However,
+        # we possibly check this or perhaps provide an override setting for large anonymisations.
         self.save()
         post_anonymise.send(sender=self.__class__, instance=self)
 
@@ -258,8 +264,8 @@ class PrivacyModel(models.Model):
     def _log_gdpr_delete(self):
         EventLog.objects.log_delete(self)
 
-    def _log_gdpr_anonymise(self):
-        EventLog.objects.log_anonymise(self)
+    def _log_gdpr_anonymise(self, for_bulk=False):
+        return EventLog.objects.log_anonymise(self, for_bulk=for_bulk)
 
     @classmethod
     def _cast_class(cls, model, privacy_meta):
@@ -272,7 +278,9 @@ class PrivacyModel(models.Model):
             model   The model to turn into a PrivacyModel subclass.
         """
         # Make the model subclass PrivacyModel
-        model.__bases__ = (PrivacyModel,) + model.__bases__
+        # If model does not already inherit from PrivacyModel via a parent only.
+        if PrivacyModel not in model.mro():
+            model.__bases__ = (PrivacyModel,) + model.__bases__
 
         # Tell the field it's now a member of the new model
         # We need to do this manually, as the base class has been added after
@@ -280,12 +288,29 @@ class PrivacyModel(models.Model):
         field = copy(PrivacyModel._meta.get_field("anonymised_relation"))
         field.contribute_to_class(model, "anonymised_relation")
 
+        gdpr_default_manager_name = privacy_meta.gdpr_default_manager_name
+
         # Make the managers subclass PrivacyManager
         # TODO: loop through all managers
         if hasattr(model, "objects") and not issubclass(
             model.objects.__class__, PrivacyManager
         ):
-            PrivacyManager._cast_class(model.objects)
+            to_cast = model.objects
+            if to_cast.use_in_migrations and gdpr_default_manager_name == "objects":
+                raise RuntimeError(f"Registered gdpr_assist model {model.__name__}s manager "
+                                   "specified 'use_in_migrations=True', with no name provided.")
+
+            # copy the manager to the defined name.
+            setattr(model, gdpr_default_manager_name, deepcopy(to_cast))
+
+            # if used in migrations, disable for the copy.
+            if to_cast.use_in_migrations:
+                setattr(getattr(model, gdpr_default_manager_name), "use_in_migrations", True)
+
+            # cast the copied manager, if name is defaults, it will override.
+            to_cast = getattr(model, gdpr_default_manager_name)
+
+            PrivacyManager._cast_class(to_cast)
 
         return model
 
@@ -297,17 +322,22 @@ class EventLogManager(models.Manager):
     def log_delete(self, instance):
         self.log(self.model.EVENT_DELETE, instance)
 
-    def log_anonymise(self, instance):
-        self.log(self.model.EVENT_ANONYMISE, instance)
+    def log_anonymise(self, instance, for_bulk=False):
+        obj = self.log(self.model.EVENT_ANONYMISE, instance, for_bulk=for_bulk)
+        return obj
 
-    def log(self, event, instance):
+    def log(self, event, instance, for_bulk=False):
         cls = instance.__class__
-        self.create(
-            event=event,
-            app_label=cls._meta.app_label,
-            model_name=cls._meta.object_name,
-            target_pk=instance.pk,
-        )
+        kwargs = {
+            "event": event,
+            "app_label": cls._meta.app_label,
+            "model_name": cls._meta.object_name,
+            "target_pk": instance.pk
+        }
+        if for_bulk:
+            return self.model(**kwargs)
+        else:
+            return self.create(**kwargs)
 
 
 class EventLog(models.Model):

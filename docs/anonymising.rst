@@ -23,7 +23,7 @@ If a field is not nullable, the value will be set to a sensible default:
 
 * Numbers will be set to ``0``
 * Strings will be set to a string representation of the primary key field
-* Booleans will be set to ``False`` (although ``NullBooleanField`` will always
+* Booleans will be set to ``False`` (although ``BooleanField(null=True)`` will always
   be nullable)
 * ``DateField`` and ``DateTimeField`` will be set to the current date and time
 * ``TimeField`` will be set to ``00:00``
@@ -117,6 +117,11 @@ Deleting querysets
 
 gdpr-assist modifies the queryset of registered models so that a bulk deletion
 will anonymise any related objects which use ``ANONYMISE(..)``.
+
+Note on ``use_in_migrations`` usage. If the model registered's objects
+manager sets use_in_migrations=``use_in_migrations = True`` the default queryset (``objects``)
+will not be changed, it will instead be available at the name set on register(..., gdpr_default_manager_name="abc")
+this is to allow for registering of third party models which make use of use_in_migrations.
 
 Note that Django does not send delete signals for bulk delete operations in
 other for situations, so to anonymise related objects when a queryset is

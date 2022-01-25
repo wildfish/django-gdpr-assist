@@ -77,6 +77,13 @@ class Command(BaseCommand):
             help="Tells Django to NOT prompt the user for input of any kind.",
         )
         parser.add_argument(
+            "--bulk",
+            action="store_true",
+            dest="bulk",
+            default=True,
+            help="Anonymise in bulk, default is per object.",
+        )
+        parser.add_argument(
             "--data-strategies",
             "--strategies",
             "-s",
@@ -102,6 +109,7 @@ class Command(BaseCommand):
             raise ValueError("Database anonymisation is not enabled")
 
         interactive = options["interactive"]
+        bulk = options["bulk"]
         strategies = StrategyHelper.parse(options["strategies"])
 
         # Validate that we can determine a specific anonymisation strategy
@@ -135,7 +143,6 @@ Are you sure you want to do this?
 
         else:
             confirm = "yes"
-
         if confirm == "yes":
 
             # Begin applying the requested anonymisation strategy to each model
@@ -145,8 +152,11 @@ Are you sure you want to do this?
 
                 if strategy == StrategyHelper.STRATEGY_ANONYMISE:
                     if issubclass(model, PrivacyModel) and model.check_can_anonymise():
-                        for obj in model.objects.all().iterator():
-                            obj.anonymise(force=True, for_bulk=True)
+                        if bulk:
+                            model.anonymisable_manager().all().anonymise()
+                        else:
+                            for obj in model.objects.all().iterator():
+                                obj.anonymise()
                     else:
                         raise CommandError(
                             """Cannot anonymise {} model {}!""".format(category, model),

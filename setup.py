@@ -5,7 +5,7 @@ import sys
 from setuptools import find_packages, setup
 
 
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 
 
 def read(fname):
@@ -26,6 +26,7 @@ def runtests(args):
         )
 
         SETTINGS = dict(
+            DEFAULT_AUTO_FIELD="django.db.models.BigAutoField",
             INSTALLED_APPS=[
                 "django.contrib.auth",
                 "django.contrib.admin",
@@ -57,6 +58,7 @@ def runtests(args):
             ],
             GDPR_CAN_ANONYMISE_DATABASE=True,
             ROOT_URLCONF="tests.tests_app.urls",
+            SECRET_KEY="test",
         )
 
         # Build database settings
@@ -126,6 +128,7 @@ setup(
         "Framework :: Django :: 2.2",
         "Framework :: Django :: 3.0",
         "Framework :: Django :: 3.1",
+        "Framework :: Django :: 3.2",
     ],
     install_requires=["django-yaa-settings>=1.1"],
     extras_require={
@@ -134,6 +137,7 @@ setup(
             "tox",
             "pillow",
             "model_bakery",
+            "freezegun",
             # Docs
             "sphinx",
             "sphinx-autobuild",

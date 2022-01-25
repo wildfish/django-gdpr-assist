@@ -14,6 +14,9 @@ class PrivacySettings(AppSettings):
     # Internal name for the GDPR log database
     GDPR_LOG_DATABASE_NAME = "gdpr_log"
 
+    # Whether to write to log database during anonymisation.
+    GDPR_LOG_ON_ANONYMISE = True
+
     # Disable anonymise_db command by default - we don't want people running it
     # on production by accident
     GDPR_CAN_ANONYMISE_DATABASE = False

@@ -85,7 +85,7 @@ class PersonalDataAdmin(admin.ModelAdmin):
                 for content_type_id, pks in group_pks.items():
                     content_type = ContentType.objects.get_for_id(content_type_id)
                     model = content_type.model_class()
-                    qs = model.objects.filter(pk__in=pks)
+                    qs = model.anonymisable_manager().filter(pk__in=pks)
                     if qs.exists():
                         querysets[model] = qs
 

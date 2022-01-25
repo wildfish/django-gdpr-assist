@@ -83,6 +83,25 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='InheritedModelWithoutPrivacyMeta',
+            fields=[
+                ('modelwithoutprivacymeta_ptr',
+                 models.OneToOneField(
+                     auto_created=True,
+                     on_delete=django.db.models.deletion.CASCADE,
+                     parent_link=True,
+                     primary_key=True,
+                     serialize=False,
+                     to='tests_app.modelwithoutprivacymeta')
+                 ),
+                ("title", models.CharField(max_length=255)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=('tests_app.modelwithoutprivacymeta',),
+        ),
+        migrations.CreateModel(
             name="ModelWithPrivacyMeta",
             fields=[
                 (
@@ -97,6 +116,24 @@ class Migration(migrations.Migration):
                 ("chars", models.CharField(max_length=255)),
                 ("email", models.EmailField(max_length=254)),
             ],
+        ),
+        migrations.CreateModel(
+            name='InheritedModelWithPrivacyMeta',
+            fields=[
+                ('modelwithprivacymeta_ptr',
+                 models.OneToOneField(
+                     auto_created=True,
+                     on_delete=django.db.models.deletion.CASCADE,
+                     parent_link=True,
+                     primary_key=True,
+                     serialize=False,
+                     to='tests_app.modelwithprivacymeta')
+                 ),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=('tests_app.modelwithprivacymeta',),
         ),
         migrations.CreateModel(
             name="OneToOneFieldModel",
@@ -724,21 +761,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="TestModelForNullableNullBooleanField",
-            fields=[
-                (
-                    "id",
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("field", models.NullBooleanField()),
-            ],
-        ),
-        migrations.CreateModel(
             name="TestModelForNullableOneToOneField",
             fields=[
                 (
@@ -880,21 +902,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("field", models.UUIDField(blank=True, null=True)),
-            ],
-        ),
-        migrations.CreateModel(
-            name="TestModelForNullBooleanField",
-            fields=[
-                (
-                    "id",
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("field", models.NullBooleanField()),
             ],
         ),
         migrations.CreateModel(
@@ -1191,3 +1198,60 @@ class Migration(migrations.Migration):
             ],
         ),
     ]
+
+    if django.VERSION < (4, 0):  # NullBooleanField deprecated @ 4.0
+        operations.extend(
+            [
+                migrations.CreateModel(
+                    name="TestModelForNullBooleanField",
+                    fields=[
+                        (
+                            "id",
+                            models.AutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("field", models.NullBooleanField()),
+                    ],
+                ),
+                migrations.CreateModel(
+                    name="TestModelForNullableNullBooleanField",
+                    fields=[
+                        (
+                            "id",
+                            models.AutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("field", models.NullBooleanField()),
+                    ],
+                ),
+            ]
+        )
+
+    if django.VERSION > (3, 0):  # Nullable BooleanField added @ 3.1
+        operations.extend(
+            [
+                migrations.CreateModel(
+                    name="TestModelForNullableBooleanField",
+                    fields=[
+                        (
+                            "id",
+                            models.AutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("field", models.BooleanField(null=True)),
+                    ],
+                ),
+            ]
+        )

@@ -15,20 +15,26 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.5"
           - "3.6"
           - "3.7"
           - "3.8"
           - "3.9"
+          - "3.10"
         django-version:
           - "2.2"
           - "3.0"
           - "3.1"
+          - "3.2"
+          - "4.0"
         exclude:
-          - python-version: "3.5"
-            django-version: "3.0"
-          - python-version: "3.5"
-            django-version: "3.1"
+          - python-version: "3.6"
+            django-version: "4.0"
+          - python-version: "3.7"
+            django-version: "4.0"
+          - python-version: "3.10"
+            django-version: "2.2"
+          - python-version: "3.10"
+            django-version: "2.1"
     services:
       postgres:
         image: postgres:10.8
@@ -67,20 +73,26 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.5"
           - "3.6"
           - "3.7"
           - "3.8"
           - "3.9"
+          - "3.10"
         django-version:
           - "2.2"
           - "3.0"
           - "3.1"
+          - "3.2"
+          - "4.0"
         exclude:
-          - python-version: "3.5"
-            django-version: "3.0"
-          - python-version: "3.5"
-            django-version: "3.1"
+          - python-version: "3.6"
+            django-version: "4.0"
+          - python-version: "3.7"
+            django-version: "4.0"
+          - python-version: "3.10"
+            django-version: "2.2"
+          - python-version: "3.10"
+            django-version: "2.1"
     services:
       mysql:
         image: mysql:8

@@ -5,7 +5,10 @@ import datetime
 import os
 import uuid
 from decimal import Decimal
+from unittest import skipIf
 
+import django
+from django.contrib.auth.models import User
 from django.db import models
 from django.test import TestCase
 
@@ -15,7 +18,7 @@ from model_bakery import baker
 import gdpr_assist
 from gdpr_assist.models import PrivacyAnonymised
 
-from .base import MigrationTestCase
+from .base import SimpleMigrationTestCase
 from .tests_app.models import (
     ForeignKeyModel,
     ForeignKeyToCanNotAnonymisedModel,
@@ -69,7 +72,7 @@ class TestOnDeleteAnonymise(TestCase):
         self.assertEqual("Cannot ANONYMISE(PROTECT)", str(cm.exception))
 
 
-class TestOnDeleteAnonymiseDeconstruct(MigrationTestCase):
+class TestOnDeleteAnonymiseDeconstruct(SimpleMigrationTestCase):
     """
     Test on_delete=ANONYMISE can be deconstructed
     """
@@ -199,6 +202,7 @@ class TestNotNullableAnonymisation(TestAnonymisationBase):
         self.assertTrue(obj.is_anonymised())
         self.assertEqual(obj.field, False)
 
+    @skipIf(django.VERSION >= (4, 0), reason="NullBooleanField deprecated @ 4.0")
     def test_nullbooleanfield__anonymise_to_none(self):
         # Trick question, NullBooleanField is always nullable
         value = True
@@ -527,6 +531,19 @@ class TestNullableAnonymisation(TestAnonymisationBase):
         self.assertTrue(obj.is_anonymised())
         self.assertIsNone(obj.field)
 
+    @skipIf(django.VERSION < (3, 1), reason="Nullable BooleanField added @ 3.1")
+    def test_booleanfield__anonymise_to_none(self):
+        value = True
+        obj = self.create(models.BooleanField, value)
+        self.assertFalse(obj.is_anonymised())
+        orig = obj.field
+        self.assertEqual(orig, value)
+
+        obj.anonymise()
+        self.assertTrue(obj.is_anonymised())
+        self.assertIsNone(obj.field)
+
+    @skipIf(django.VERSION >= (4, 0), reason="NullBooleanField deprecated @ 4.0")
     def test_nullbooleanfield__anonymise_to_none(self):
         # Trick question, NullBooleanField is always nullable
         value = True
@@ -897,6 +914,23 @@ class TestQuerySet(TestCase):
             objs[i].refresh_from_db()
             self.assertEqual(objs[i].chars, "")
 
+
+    def test_queryset_anonymise__anonymise_all__alternate_manager(self):
+        objs = baker.make(User, _quantity=5)
+        qs = User.anonymisable_manager().filter(pk__in=[obj.pk for obj in objs]).order_by("id")
+
+        qs.anonymise()
+        for i in range(5):
+            objs[i].refresh_from_db()
+            self.assertEqual(objs[i].email, f"{objs[i].id}@anon.example.com")
+
+    def test_queryset_anonymise__anonymise_all__alternate_manager__wrong_manager(self):
+        objs = baker.make(User, _quantity=5)
+        qs = User.objects.filter(pk__in=[obj.pk for obj in objs])
+
+        with self.assertRaises(AttributeError):
+            qs.anonymise()
+
     def test_queryset_anonymise__anonymise_not_propagated(self):
         targets = []
         for i in range(5):
@@ -947,13 +981,15 @@ class TestQuerySet(TestCase):
 
         qs = PrivateTargetModel.objects.filter(pk__in=[obj.pk for obj in objs])
 
-        # Expects 8
-        # 1 query to get objects from PrivateTargetModel
-        # 1 query to ger objects to prefetch to PrivacyAnonymised
-        # 5 (1 per object to anonymise it)
-        # 1 bulk insert of the PrivacyAnonymised objects
-        with self.assertNumQueries(8):
-            qs.anonymise()
+        # Expects 1 + 8
+        # 1 for 5 log objects
+        with self.assertNumQueries(1, using="gdpr_log"):
+            # 1 query to get objects from PrivateTargetModel
+            # 1 query to ger objects to prefetch to PrivacyAnonymised
+            # 5 (1 per object to anonymise it)
+            # 1 bulk insert of the PrivacyAnonymised objects
+            with self.assertNumQueries(8, using="default"):
+                qs.anonymise()
 
         self.assertEqual(PrivacyAnonymised.objects.count(), 5)
 
@@ -969,14 +1005,15 @@ class TestQuerySet(TestCase):
 
         qs = PrivateTargetModel.objects.filter(pk__in=[obj.pk for obj in objs])
 
-        # Expects 12
-        # 1 query to get objects from PrivateTargetModel
-        # 1 query to ger objects to prefetch to PrivacyAnonymised
-        # 5 (1 per object to anonymise it)
-        # 5 (1 per object to create PrivacyAnonymised)
-        # 1 bulk insert of the PrivacyAnonymised objects
-        with self.assertNumQueries(12):
-            qs.anonymise(for_bulk=False)
+        # Expects 5 + 12
+        # 5 (1 per log object)
+        with self.assertNumQueries(5, using="gdpr_log"):
+            # 1 query to get objects from PrivateTargetModel
+            # 1 query to ger objects to prefetch to PrivacyAnonymised
+            # 5 (1 per object to anonymise it)
+            # 5 (1 per object to create PrivacyAnonymised)
+            with self.assertNumQueries(12, using="default"):
+                qs.anonymise(for_bulk=False)
 
         self.assertEqual(PrivacyAnonymised.objects.count(), 5)
 

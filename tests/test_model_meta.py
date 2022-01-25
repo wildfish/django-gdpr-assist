@@ -1,13 +1,19 @@
 """
 Test model privacy definitions
 """
+from django.contrib.contenttypes.models import ContentType
+from django.db.migrations.autodetector import MigrationAutodetector
+from django.db.migrations.executor import MigrationExecutor
+from django.db.migrations.state import ProjectState, ModelState
+
 try:
     from unittest import mock
 except ImportError:
     import mock
 
 from django.apps import apps
-from django.db import models
+from django.contrib.auth.models import User, UserManager, Group, Permission
+from django.db import models, connection
 from django.test import TestCase
 
 import gdpr_assist
@@ -18,14 +24,17 @@ from gdpr_assist.models import (
     PrivacyModel,
     PrivacyQuerySet,
 )
+
 from gdpr_assist.registry import registry
 
-from .base import MigrationTestCase
+from .base import SimpleMigrationTestCase
 from .tests_app.models import (
     ModelWithoutPrivacyMeta,
     ModelWithPrivacyMeta,
     ModelWithPrivacyMetaCanNotAnonymise,
+    InheritedModelWithPrivacyMeta, InheritedModelWithoutPrivacyMeta,
 )
+
 
 
 class TestRegistry(TestCase):
@@ -56,50 +65,81 @@ class TestPrivacyMeta(TestCase):
         self.assertEqual("Attribute invalid_attr not defined", str(cm.exception))
 
 
-class TestModelDefinitionWithPrivacyMeta(TestCase):
+class BaseTestModelDefinition:
+    model = None
+
     def test_model_registered_automatically(self):
-        self.assertIn(ModelWithPrivacyMeta, registry.models.keys())
+        self.assertIn(self.model, registry.models.keys())
 
     def test_meta_class_removed(self):
-        self.assertFalse(hasattr(ModelWithPrivacyMeta, "PrivacyMeta"))
+        self.assertFalse(hasattr(self.model, "PrivacyMeta"))
 
     def test_meta_class_instance_added(self):
-        self.assertTrue(hasattr(ModelWithPrivacyMeta, "_privacy_meta"))
-        self.assertIsInstance(ModelWithPrivacyMeta._privacy_meta, PrivacyMeta)
+        self.assertTrue(hasattr(self.model, "_privacy_meta"))
+        self.assertIsInstance(self.model._privacy_meta, PrivacyMeta)
 
     def test_meta_class_instance_registered(self):
         self.assertEqual(
-            ModelWithPrivacyMeta._privacy_meta, registry.models[ModelWithPrivacyMeta]
+            self.model._privacy_meta, registry.models[self.model]
         )
 
     def test_privacy_meta_attrs(self):
-        meta = ModelWithPrivacyMeta._privacy_meta
-        self.assertEqual(meta.fields, ["chars", "email"])
+        meta = self.model._privacy_meta
+        self.assertEqual(meta.fields, self.expected_fields)
 
     def test_model_cast_to_privacy_model(self):
-        self.assertTrue(issubclass(ModelWithPrivacyMeta, PrivacyModel))
+        self.assertTrue(issubclass(self.model, PrivacyModel))
 
     def test_model_has_anonymised_field(self):
-        obj = ModelWithPrivacyMeta.objects.create(
+        obj = self.model.objects.create(
             chars="test", email="test@example.com"
         )
         obj.refresh_from_db()
         self.assertFalse(obj.is_anonymised())
 
     def test_manager_cast_to_privacy_manager(self):
-        self.assertIsInstance(ModelWithPrivacyMeta.objects, PrivacyManager)
+        manager = self.model.objects
+        self.assertIsInstance(manager, PrivacyManager)
+        self.assertEqual(
+            f"{manager.__module__}.{manager.__class__.__name__}",
+            "django.db.models.manager.CastPrivacyManager"
+        )
+
+        alt_manager = self.model.anonymisable_manager()
+        self.assertIsInstance(alt_manager, PrivacyManager)
+        self.assertEqual(
+            f"{alt_manager.__module__}.{alt_manager.__class__.__name__}",
+            "django.db.models.manager.CastPrivacyManager"
+        )
 
     def test_queryset_cast_to_privacy_queryset(self):
-        self.assertIsInstance(ModelWithPrivacyMeta.objects.all(), PrivacyQuerySet)
+        qs = self.model.objects.all()
+        self.assertIsInstance(qs, PrivacyQuerySet)
+        self.assertEqual(
+            f"{qs.__module__}.{qs.__class__.__name__}",
+            "django.db.models.query.CastPrivacyQuerySet"
+        )
 
     def test_meta_class_can_anonymise__can(self):
-        self.assertTrue(ModelWithPrivacyMeta.check_can_anonymise())
+        self.assertTrue(self.model.check_can_anonymise())
+
+
+class TestModelDefinitionWithPrivacyMeta(BaseTestModelDefinition, TestCase):
+    model = ModelWithPrivacyMeta
+    expected_fields = ["chars", "email"]
 
     def test_meta_class_can_anonymise__can_not(self):
         self.assertFalse(ModelWithPrivacyMetaCanNotAnonymise.check_can_anonymise())
 
 
-class TestModelDefinitionWithoutPrivacyMeta(TestCase):
+class TestModelDefinitionInheritedFromWithPrivacyMeta(BaseTestModelDefinition, TestCase):
+    model = InheritedModelWithPrivacyMeta
+    expected_fields = ["chars"]
+
+
+class BaseModelDefinitionWithoutPrivacyMeta:
+    model = None
+
     class PrivacyMeta:
         """
         Test privacy meta class for ModelWithoutPrivacyMeta
@@ -108,44 +148,62 @@ class TestModelDefinitionWithoutPrivacyMeta(TestCase):
         fields = ["chars", "email"]
 
     def tearDown(self):
-        registry.models.pop(ModelWithoutPrivacyMeta, None)
-        ModelWithoutPrivacyMeta.__bases__ = tuple(
-            b for b in ModelWithoutPrivacyMeta.__bases__ if b is not PrivacyModel
+        registry.models.pop(self.model, None)
+        self.model.__bases__ = tuple(
+            b for b in self.model.__bases__ if b is not PrivacyModel
         )
+        self.model.objects = models.Manager()
 
-    def register(self):
-        gdpr_assist.register(ModelWithoutPrivacyMeta, self.PrivacyMeta)
+    def register(self, gdpr_default_manager_name=None):
+        gdpr_assist.register(self.model, self.PrivacyMeta, gdpr_default_manager_name)
 
     def test_model_not_registered(self):
-        self.assertNotIn(ModelWithoutPrivacyMeta, registry.models.keys())
+        self.assertNotIn(self.model, registry.models.keys())
 
     def test_model_registered_manually__is_registered(self):
         self.register()
-        self.assertIn(ModelWithoutPrivacyMeta, registry.models.keys())
+        self.assertIn(self.model, registry.models.keys())
 
     def test_model_registered_manually__meta_class_instance_added(self):
         self.register()
-        self.assertTrue(hasattr(ModelWithoutPrivacyMeta, "_privacy_meta"))
-        self.assertIsInstance(ModelWithoutPrivacyMeta._privacy_meta, PrivacyMeta)
+        self.assertTrue(hasattr(self.model, "_privacy_meta"))
+        self.assertIsInstance(self.model._privacy_meta, PrivacyMeta)
 
     def test_model_registered_manually__meta_class_instance_registered(self):
         self.register()
         self.assertEqual(
-            ModelWithoutPrivacyMeta._privacy_meta,
-            registry.models[ModelWithoutPrivacyMeta],
+            self.model._privacy_meta,
+            registry.models[self.model],
         )
 
     def test_model_registered_manually__privacy_meta_attrs(self):
         self.register()
-        meta = ModelWithPrivacyMeta._privacy_meta
+        meta = self.model._privacy_meta
         self.assertEqual(meta.fields, self.PrivacyMeta.fields)
 
     def test_model_registered_manually_without_privacy_meta__meta_class_instance_added(
         self
     ):
-        gdpr_assist.register(ModelWithoutPrivacyMeta)
-        self.assertTrue(hasattr(ModelWithoutPrivacyMeta, "_privacy_meta"))
-        self.assertIsInstance(ModelWithoutPrivacyMeta._privacy_meta, PrivacyMeta)
+        gdpr_assist.register(self.model)
+        self.assertTrue(hasattr(self.model, "_privacy_meta"))
+        self.assertIsInstance(self.model._privacy_meta, PrivacyMeta)
+
+    def test_model_registered_manually_manager_cast_name_is_default(self):
+        self.register()
+        self.assertIsInstance(self.model.objects, PrivacyManager)
+
+    def test_model_registered_manually_manager_cast_name_is_as_specified(self):
+        self.register(gdpr_default_manager_name="abc")
+        self.assertNotIsInstance(self.model.objects, PrivacyManager)
+        self.assertIsInstance(self.model.abc, PrivacyManager)
+
+
+class TestModelDefinitionWithoutPrivacyMeta(BaseModelDefinitionWithoutPrivacyMeta, TestCase):
+    model = ModelWithoutPrivacyMeta
+
+
+class TestModelDefinitionInheritedWithoutPrivacyMeta(BaseModelDefinitionWithoutPrivacyMeta, TestCase):
+    model = InheritedModelWithoutPrivacyMeta
 
 
 class TestAppConfig(TestCase):
@@ -206,16 +264,84 @@ class TestAppConfig(TestCase):
             )
 
 
-class TestRegisteredModelMigration(MigrationTestCase):
+class TestRegisteredModelMigration(SimpleMigrationTestCase):
     """
-    Check registered models can be migratated
+    Check registered models can be migrated
     """
 
     def test_manager_deconstruct__deconstructs(self):
         # This should serialise to the privacy manager
         string, imports = self.serialize(ModelWithPrivacyMeta.objects)
-        self.assertEqual(string, "gdpr_assist.models.CastPrivacyManager()")
+        self.assertEqual(string, "django.db.models.manager.CastPrivacyManager()")
 
         # And check it serialises back
         obj = self.serialize_round_trip(ModelWithPrivacyMeta.objects)
         self.assertIsInstance(obj, models.Manager)
+
+
+class TestExternalUseInMigration(TestCase):
+    """
+    Tests to ensure that no migrations are created for any registered models.
+    """
+    def _add_user_project_state_models(self, project_state):
+        """ To test ProjectState() on User we will always need to add related."""
+        for model in [User, Group, Permission, ContentType]:
+            project_state.add_model(ModelState.from_model(model))
+
+    def _register(self, default_manager_name):
+        class UserPrivacyMeta:
+            fields = ["username", "email"]
+
+        gdpr_assist.register(User, UserPrivacyMeta, default_manager_name)
+
+    def _deregister(self):
+        registry.models.pop(User, None)
+        User.__bases__ = tuple(
+            b for b in User.__bases__ if b is not PrivacyModel
+        )
+
+    def setUp(self):
+        self._deregister()
+        self._register("abc")
+
+    def test_registering_external_does_not_change_state(self):
+        project_state_before_register = ProjectState()
+        self._add_user_project_state_models(project_state_before_register)
+
+        # Ensure User manager is use_in_migrations
+        self.assertTrue(User.objects.use_in_migrations)
+
+        project_state_after_register = ProjectState()
+        self._add_user_project_state_models(project_state_after_register)
+
+        executor = MigrationExecutor(connection)
+        autodetector = MigrationAutodetector(
+            project_state_before_register, project_state_after_register
+        )
+
+        changes = autodetector.changes(graph=executor.loader.graph)
+        self.assertEqual({}, changes)
+
+    def test_manager_original_objects_not_cast(self):
+        # registered in test_app/admin.py
+        self.assertIsInstance(User.objects, UserManager)
+        self.assertIsInstance(User.abc, PrivacyManager)
+        self.assertIsInstance(User.anonymisable_manager(), PrivacyManager)
+
+
+    def test_manager_gdpr_default_manager_name_not_set(self):
+        self._deregister()
+
+        class UserPrivacyMeta:
+            fields = ["username", "email"]
+
+        with self.assertRaises(RuntimeError) as ex:
+            gdpr_assist.register(User, UserPrivacyMeta)
+
+
+        self.assertEqual(
+            str(ex.exception),
+            "Registered gdpr_assist model Users manager specified 'use_in_migrations=True', with no name provided."
+        )
+        self.assertIsInstance(User.objects, UserManager)
+        self.assertNotIsInstance(User.objects, PrivacyManager)

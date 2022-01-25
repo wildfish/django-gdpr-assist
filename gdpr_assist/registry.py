@@ -16,7 +16,7 @@ class Registry(object):
         # (related models without privacy meta)
         self.watching_on_delete = []
 
-    def register(self, model, privacy_meta=None):
+    def register(self, model, privacy_meta=None, gdpr_default_manager_name=None):
         """
         Register this model as one to track
         """
@@ -37,7 +37,7 @@ class Registry(object):
             privacy_meta = type("PrivacyMeta", (privacy_meta, PrivacyMeta, object), {})
 
         # Instantiate the new class
-        privacy_meta = privacy_meta(model)
+        privacy_meta = privacy_meta(model, gdpr_default_manager_name)
 
         # Move the processed PrivacyMeta onto the attribute _privacy_meta
         setattr(model, app_settings.GDPR_PRIVACY_INSTANCE_NAME, privacy_meta)
