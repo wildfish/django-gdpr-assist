@@ -196,6 +196,7 @@ class PrivacyAnonymised(models.Model):
         Django supports object_id being of a different type to the related object -
         https://docs.djangoproject.com/en/3.1/ref/contrib/contenttypes/#generic-relations
     """
+    id = models.BigAutoField("ID", primary_key=True, auto_created=True)  # to handle move to BigAutoField
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.CharField(max_length=36)
     anonymised_object = GenericForeignKey("content_type", "object_id")
@@ -345,6 +346,7 @@ class EventLog(models.Model):
     EVENT_ANONYMISE = "anonymise"
     EVENT_CHOICES = ((EVENT_DELETE, _("Delete")), (EVENT_ANONYMISE, _("Anonymise")))
 
+    id = models.BigAutoField("ID", primary_key=True, auto_created=True)  # to handle move to BigAutoField
     event = models.CharField(
         max_length=max((len(k) for k, v in EVENT_CHOICES)), choices=EVENT_CHOICES
     )
