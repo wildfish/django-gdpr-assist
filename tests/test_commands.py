@@ -1,17 +1,26 @@
 """
 Test management commands
 """
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import sys
 from io import StringIO
 
-from django.core.management import call_command
+from django.core.management import (
+    CommandError,
+    call_command,
+)
 from django.test import TestCase
 
+from gdpr_assist.management.commands.anonymise_db import StrategyHelper
 from gdpr_assist.registry import registry
 
 from .tests_app.models import (
     ModelWithPrivacyMeta,
     ModelWithPrivacyMetaCanNotAnonymise,
+    ModelWithoutPrivacyMeta,
 )
 
 
@@ -33,6 +42,79 @@ class Capturing(list):
         self.extend(str(line) for line in self._stringio.getvalue().splitlines())
         sys.stdout = self._stdout
         sys.stderr = self._stderr
+
+
+class TestStrategyHelper(TestCase):
+
+    def test_strategy_parser_defaults(self):
+        text = ""
+        expected = {
+            "anonymisable": "anonymise",
+            "unanonymisable": "retain",
+            "untagged": "retain",
+        }
+
+        strategies = StrategyHelper.parse(text)
+
+        self.assertEqual(expected, strategies)
+
+    def test_strategy_parser_custom(self):
+        text = "unanonymisable:delete,untagged:delete"
+        expected = {
+            "anonymisable": "anonymise",
+            "unanonymisable": "delete",
+            "untagged": "delete",
+        }
+
+        strategies = StrategyHelper.parse(text)
+
+        self.assertEqual(expected, strategies)
+
+    def test_strategy_parser_padding(self):
+        text = " anonymisable:anonymise ,	unanonymisable:delete ,untagged:retain "
+        expected = {
+            "anonymisable": "anonymise",
+            "unanonymisable": "delete",
+            "untagged": "retain",
+        }
+
+        strategies = StrategyHelper.parse(text)
+
+        self.assertEqual(expected, strategies)
+
+    def test_strategy_parser_non_assignment(self):
+        text = "untagged:retain,anonymisable"
+
+        with self.assertRaises(CommandError):
+            StrategyHelper.parse(text)
+
+    def test_strategy_parser_invalid_assignments(self):
+        text = "untagged:remove"
+
+        with self.assertRaises(CommandError):
+            StrategyHelper.parse(text)
+
+    def test_strategy_parser_unknown_category(self):
+        text = "nonanonymisable:delete"
+
+        with self.assertRaises(CommandError):
+            StrategyHelper.parse(text)
+
+    def test_category_for_model(self):
+        models = [
+            ModelWithPrivacyMeta,
+            ModelWithPrivacyMetaCanNotAnonymise,
+            ModelWithoutPrivacyMeta,
+        ]
+        expected = [
+            "anonymisable",
+            "unanonymisable",
+            "untagged",
+        ]
+
+        categories = [StrategyHelper.category_for_model(model) for model in models]
+
+        self.assertEqual(expected, categories)
 
 
 class CommandTestCase(TestCase):
@@ -68,9 +150,21 @@ class TestAnonymiseCommand(CommandTestCase):
         self.run_command("anonymise_db", interactive=False)
 
         obj_1.refresh_from_db()
-        self.assertTrue(obj_1.is_anonymised())
+        # TODO: anonymise_db currently anonymises with for_bulk=True, meaning
+        # that no per-object anonymisation record is held
+        # self.assertTrue(obj_1.is_anonymised())
         self.assertEqual(obj_1.chars, str(obj_1.pk))
         self.assertEqual(obj_1.email, "{}@anon.example.com".format(obj_1.pk))
+
+    def test_anonymise_command__deletes_data(self):
+        obj_1 = ModelWithPrivacyMeta.objects.create(
+            chars="test", email="test@example.com"
+        )
+        self.assertFalse(obj_1.is_anonymised())
+        self.run_command("anonymise_db", interactive=False, strategies="anonymisable:delete")
+
+        with self.assertRaises(ModelWithPrivacyMeta.DoesNotExist):
+            obj_1.refresh_from_db()
 
     def test_anonymise_command__anonymises_data__bulk(self):
         obj_1 = ModelWithPrivacyMeta.objects.create(
@@ -137,6 +231,46 @@ class TestAnonymiseCommand(CommandTestCase):
 
         obj_1.refresh_from_db()
         self.assertFalse(obj_1.is_anonymised())
+
+    def test_refuse_anonymise_unanonymisable(self):
+        obj_1 = ModelWithPrivacyMetaCanNotAnonymise.objects.create(
+            chars="test", email="test@example.com"
+        )
+        strategies = "unanonymisable:anonymise"
+
+        self.assertFalse(obj_1.check_can_anonymise())
+        with self.assertRaises(CommandError):
+            self.run_command("anonymise_db", interactive=False, strategies=strategies)
+
+    def test_refuse_anonymise_untagged(self):
+        obj_1 = ModelWithoutPrivacyMeta.objects.create(
+            chars="test", email="test@example.com"
+        )
+        strategies = "untagged:anonymise"
+
+        self.assertFalse(hasattr(obj_1, "check_can_anonymise"))
+        with self.assertRaises(CommandError):
+            self.run_command("anonymise_db", interactive=False, strategies=strategies)
+
+    def test_refuse_retain_anonymisable(self):
+        obj_1 = ModelWithPrivacyMeta.objects.create(
+            chars="test", email="test@example.com"
+        )
+        strategies = "anonymisable:retain"
+
+        self.assertTrue(obj_1.check_can_anonymise())
+        with self.assertRaises(CommandError):
+            self.run_command("anonymise_db", interactive=False, strategies=strategies)
+
+    @mock.patch('gdpr_assist.management.commands.anonymise_db.StrategyHelper.category_for_model')
+    def test_refuse_run_incomplete_strategy(self, category_for_model):
+        ModelWithPrivacyMeta.objects.create(
+            chars="test", email="test@example.com"
+        )
+        category_for_model.return_value = None
+
+        with self.assertRaises(CommandError):
+            self.run_command("anonymise_db", interactive=False)
 
 
 class TestRerunCommand(CommandTestCase):
