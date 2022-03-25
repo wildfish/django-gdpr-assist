@@ -7,7 +7,6 @@ from django.db import router
 
 from ... import app_settings
 from ...models import PrivacyModel
-from ...registry import registry
 
 
 class StrategyHelper:
@@ -146,6 +145,7 @@ Are you sure you want to do this?
         if confirm == "yes":
 
             # Begin applying the requested anonymisation strategy to each model
+            anonymised, deleted, retained = 0, 0, 0
             for model in self._models_for_anonymisation():
                 category = StrategyHelper.category_for_model(model)
                 strategy = strategies.get(category)
@@ -157,6 +157,7 @@ Are you sure you want to do this?
                         else:
                             for obj in model.objects.all().iterator():
                                 obj.anonymise()
+                        anonymised += 1
                     else:
                         raise CommandError(
                             """Cannot anonymise {} model {}!""".format(category, model),
@@ -166,6 +167,7 @@ Are you sure you want to do this?
                 elif strategy == StrategyHelper.STRATEGY_DELETE:
                     for obj in model.objects.all().iterator():
                         obj.delete()
+                    deleted += 1
 
                 elif strategy == StrategyHelper.STRATEGY_RETAIN:
                     if issubclass(model, PrivacyModel) and model.check_can_anonymise():
@@ -173,9 +175,11 @@ Are you sure you want to do this?
                             """Refusing to retain anonymisable model {}!""".format(model),
                             """Please check your anonymisation settings."""
                         )
+                    else:
+                        retained += 1
 
-            msg = "{} models anonymised.".format(
-                len(registry.models_allowed_to_anonymise())
+            msg = "{} models anonymised, {} models deleted and {} models retained.".format(
+                anonymised, deleted, retained
             )
             self.stdout.write(msg)
 
