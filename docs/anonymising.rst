@@ -12,6 +12,11 @@ Call this to anonymise the private fields on the object.
 
 Once an object is anonymised a reference to that anonymisation will be recorded in ``PrivacyAnonymised``.
 
+``obj.is_anonymised = BooleanField()``
+-----------------------------------
+
+This is a boolean value stored in the database to register whether the object
+has been anonymised or not.
 
 How anonymisation works
 =======================
