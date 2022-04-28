@@ -106,6 +106,11 @@ query the model ``gdpr_assist.models.PrivacyAnonymised`` instead.
 Changelog
 =========
 
+1.4.2, 2022-04-28
+-----------------
+
+Fix admin styling issue on person search.
+
 1.4.1, 2022-02-25
 -----------------
 
