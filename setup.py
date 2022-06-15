@@ -5,7 +5,7 @@ import sys
 from setuptools import find_packages, setup
 
 
-VERSION = "1.4.0"
+VERSION = "1.4.2"
 
 
 def read(fname):
@@ -26,7 +26,6 @@ def runtests(args):
         )
 
         SETTINGS = dict(
-            DEFAULT_AUTO_FIELD="django.db.models.BigAutoField",
             INSTALLED_APPS=[
                 "django.contrib.auth",
                 "django.contrib.admin",
