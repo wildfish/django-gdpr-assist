@@ -14,7 +14,7 @@ decorator==5.1.0
     # via
     #   ipdb
     #   ipython
-django==4.0.4
+django==4.0.6
     # via
     #   -r requirements.in
     #   model-bakery
