@@ -21,4 +21,4 @@ class PrivacySettings(AppSettings):
     # on production by accident
     GDPR_CAN_ANONYMISE_DATABASE = False
 
-    DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+    default_auto_field = 'django.db.models.AutoField'
