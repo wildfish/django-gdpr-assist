@@ -25,7 +25,7 @@ def is_on_delete_anonymise(field):
 class GdprAppConfig(AppConfig):
     name = "gdpr_assist"
     verbose_name = "GDPR"
-    default_auto_field = "django.db.models.BigAutoField"
+    default_auto_field = "django.db.models.AutoField"
 
     def ready(self):
         """

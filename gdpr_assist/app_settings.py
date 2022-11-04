@@ -20,5 +20,3 @@ class PrivacySettings(AppSettings):
     # Disable anonymise_db command by default - we don't want people running it
     # on production by accident
     GDPR_CAN_ANONYMISE_DATABASE = False
-
-    default_auto_field = 'django.db.models.AutoField'
