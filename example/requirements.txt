@@ -66,7 +66,7 @@ traitlets==5.1.1
     #   matplotlib-inline
 wcwidth==0.2.5
     # via prompt-toolkit
-wheel==0.37.0
+wheel==0.38.1
     # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
