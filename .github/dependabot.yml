@@ -18,42 +18,6 @@ updates:
   reviewers:
     - "aplazame/squad_core-backend-reviewers"
 
-- package-ecosystem: pip
-  directory: "/docs"
-  schedule:
-    interval: daily
-    time: "09:00"
-    timezone: Europe/Madrid
-  open-pull-requests-limit: 10
-  commit-message:
-    prefix: "[Dep][pip] "
-  #ignore:
-    #- dependency-name: "django"
-      # For django, ignore all updates for version 3.2.x and 4.x
-      #versions: [ "3.2", "4" ]
-  labels:
-    - dependabot
-  reviewers:
-    - "aplazame/squad_core-backend-reviewers"
-
-- package-ecosystem: pip
-  directory: "/example"
-  schedule:
-    interval: daily
-    time: "09:00"
-    timezone: Europe/Madrid
-  open-pull-requests-limit: 10
-  commit-message:
-    prefix: "[Dep][pip] "
-  #ignore:
-    #- dependency-name: "django"
-      # For django, ignore all updates for version 3.2.x and 4.x
-      #versions: [ "3.2", "4" ]
-  labels:
-    - dependabot
-  reviewers:
-    - "aplazame/squad_core-backend-reviewers"
-
 - package-ecosystem: github-actions
   directory: "/.github/workflows"
   schedule:
@@ -63,10 +27,6 @@ updates:
   open-pull-requests-limit: 10
   commit-message:
     prefix: "[Dep][github] "
-  #ignore:
-    #- dependency-name: "django"
-      # For django, ignore all updates for version 3.2.x and 4.x
-      #versions: [ "3.2", "4" ]
   labels:
     - dependabot
   reviewers:
