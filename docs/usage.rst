@@ -22,7 +22,7 @@ Define privacy settings in a ``PrivacyMeta`` class on your model::
             fields = ['display_name', 'private_data']
 
             def anonymise_private_data(self, instance):
-                return 0
+                instance.private_data = 0
 
             def search(self, value):
                 return self.model.objects.filter(display_name__icontains=value)
